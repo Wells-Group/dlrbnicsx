@@ -12,7 +12,7 @@ class HiddenLayersNet(torch.nn.Module):
     activation_function: torch.nn.Module, activation function
     return_numpy: bool, Default False. If True the result will be returned in numpy format, 
     '''
-    def __init__(self, dim_in, dim_hidden_layers, dim_out, activation_function, return_numpy=False):
+    def __init__(self, dim_in, dim_hidden_layers, dim_out, activation_function, return_numpy=False, include_bias=True):
         super().__init__()
         linear_layers = torch.nn.ModuleList()
         ann_dims = torch.nn.ModuleList()
@@ -21,7 +21,7 @@ class HiddenLayersNet(torch.nn.Module):
         ann_dims.insert(len(ann_dims),dim_out)
         del dim_hidden_layers
         for i in range(len(ann_dims)-1):
-            linear_layers.append(torch.nn.Linear(ann_dims[i],ann_dims[i+1]))
+            linear_layers.append(torch.nn.Linear(ann_dims[i],ann_dims[i+1], bias=include_bias))
         self.linear_layers = linear_layers
         self.activation_function = activation_function
         self.return_numpy = return_numpy
@@ -34,19 +34,26 @@ class HiddenLayersNet(torch.nn.Module):
         linear_layers = self.linear_layers
         for i in range(len(linear_layers)-1):
             result = self.activation_function(self.linear_layers[i](result))
-        result = self.activation_function(self.linear_layers[len(linear_layers)-1](result))
+            print(i, result.shape)
+        result = self.linear_layers[len(linear_layers)-1](result)
+        print("Final",result.shape)
         if self.return_numpy == True:
             result = result.detach().numpy()
         return result
 
+
 '''
 input_parameter_set = np.ones([16,7]).astype("f")
 
-model = HiddenLayersNet(input_parameter_set.shape[1], [4,7,8,90], 10, Tanh())
+model = HiddenLayersNet(input_parameter_set.shape[1], [4,22,8,90], 10, Tanh())
+model(input_parameter_set)
 print(type(model(input_parameter_set)))
 
-model = HiddenLayersNet(input_parameter_set.shape[1], [4,7,8,90], 10, Tanh(), return_numpy=True)
+model = HiddenLayersNet(input_parameter_set.shape[1], [4,22,8,90], 10, Tanh(), return_numpy=True)
 print(type(model(input_parameter_set)))
+
+for param in model.parameters():
+    print(param.data.shape)
 '''
 
 # NOTE np.float64 or torch.float32 datatype error. See above: astype("f")
