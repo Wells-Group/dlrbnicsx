@@ -34,9 +34,7 @@ class HiddenLayersNet(torch.nn.Module):
         linear_layers = self.linear_layers
         for i in range(len(linear_layers)-1):
             result = self.activation_function(self.linear_layers[i](result))
-            print(i, result.shape)
         result = self.linear_layers[len(linear_layers)-1](result)
-        print("Final",result.shape)
         if self.return_numpy == True:
             result = result.detach().numpy()
         return result

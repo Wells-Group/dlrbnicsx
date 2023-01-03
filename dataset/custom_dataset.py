@@ -86,7 +86,7 @@ N = 2
 
 customDataset = CustomDataset(problem, reduced_problem, N)
 
-train_dataloader = DataLoader(customDataset, batch_size=1, shuffle=False)
+train_dataloader = DataLoader(customDataset, batch_size=1, shuffle=True)
 test_dataloader = DataLoader(customDataset, batch_size=1)
 
 for X, y in train_dataloader:
