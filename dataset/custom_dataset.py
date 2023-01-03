@@ -34,12 +34,12 @@ class CustomDataset(Dataset):
     
     def __getitem__(self,idx):
         input_data = np.load(self.reduced_problem.input_file_path)[idx,:]
-        label = self.reduced_problem.project_snapshot(self.problem.solve(input_data),self.N)#.array
+        label = self.reduced_problem.project_snapshot(self.problem.solve(input_data),self.N).array.astype("f")
         return self.transform(input_data), self.target_transform(label)
             
     def transform(self, input_data):
         input_data_scaled = (self.reduced_problem.input_scaling_range[1] - self.reduced_problem.input_scaling_range[0]) * (input_data - self.reduced_problem.input_range[0,:]) / (self.reduced_problem.input_range[1,:] - self.reduced_problem.input_range[0,:]) + self.reduced_problem.input_scaling_range[0]
-        return torch.from_numpy(input_data_scaled)
+        return torch.from_numpy(input_data_scaled).to(torch.float32)
     
     def target_transform(self,label):
         output_data_scaled = (self.reduced_problem.output_scaling_range[1] - self.reduced_problem.output_scaling_range[0]) * (label - self.reduced_problem.output_range[0]) / (self.reduced_problem.output_range[1] - self.reduced_problem.output_range[0]) + self.reduced_problem.output_scaling_range[0]
@@ -92,9 +92,11 @@ test_dataloader = DataLoader(customDataset, batch_size=1)
 for X, y in train_dataloader:
     print(f"Shape of training set: {X.shape}")
     print(f"Training set requires grad: {X.requires_grad}")
+    print(f"X dtype: {X.dtype}")
     #print(f"X: {X}")
     print(f"Shape of training set: {y.shape}")
     print(f"Training set requires grad: {y.requires_grad}")
+    print(f"y dtype: {y.dtype}")
     #print(f"y: {y}")
     break
 

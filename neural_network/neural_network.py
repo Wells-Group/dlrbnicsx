@@ -29,7 +29,7 @@ class HiddenLayersNet(torch.nn.Module):
     #Forward pass
     def forward(self, x):
         if type(x) == np.ndarray:
-            x = torch.from_numpy(x)
+            x = torch.from_numpy(x).to(torch.float32)
         result = x
         linear_layers = self.linear_layers
         for i in range(len(linear_layers)-1):
@@ -38,7 +38,6 @@ class HiddenLayersNet(torch.nn.Module):
         if self.return_numpy == True:
             result = result.detach().numpy()
         return result
-
 
 '''
 input_parameter_set = np.ones([16,7]).astype("f")
@@ -51,7 +50,7 @@ model = HiddenLayersNet(input_parameter_set.shape[1], [4,22,8,90], 10, Tanh(), r
 print(type(model(input_parameter_set)))
 
 for param in model.parameters():
-    print(param.data.shape)
+    print(param.data.dtype)
+print(input_parameter_set.dtype)
 '''
-
 # NOTE np.float64 or torch.float32 datatype error. See above: astype("f")
