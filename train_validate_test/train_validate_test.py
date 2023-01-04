@@ -12,6 +12,8 @@ def train_nn(reduced_problem, dataloader, model, device=None):
         dataloder: dataloder of input dataset (dlrbnicsx.dataset.custom_dataset.DataLoader)
         model: Neural network (dlrbnicsx.neural_network.neural_network.HiddenLayersNet)
         device: cuda or cpu
+    Output:
+        loss: float, loss measured with loss_fn using given optimizer
     '''
     if device == None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -27,7 +29,7 @@ def train_nn(reduced_problem, dataloader, model, device=None):
     else:
         NotImplementedError(f"Optimizer {reduced_problem.optimizer} is not implemented")
     # TODO add L1/L2 and more rgularisations WITHOUT weight decay
-    size = len(dataloader.dataset)
+    dataset_size = len(dataloader.dataset)
     model.train() # NOTE
     for batch, (X, y) in enumerate(dataloader):
         # X,y = X.to(device), y.to(device) # TODO
@@ -39,9 +41,9 @@ def train_nn(reduced_problem, dataloader, model, device=None):
         optimizer.step()
         
         if batch % 1 == 0:
-            loss, current = loss.item(), batch * len(X)
-            print(f"Training loss: {loss: >7f} [{current:>5d}]/[{size:>5d}]")
-    return loss
+            current = (batch+1) * len(X)
+            print(f"Training loss: {loss.item(): >7f} [{current:>5d}]/[{dataset_size:>5d}]")
+    return loss.item()
 
 def validate_nn(reduced_problem, dataloader, model, device=None):
     '''
@@ -51,6 +53,8 @@ def validate_nn(reduced_problem, dataloader, model, device=None):
         dataloder: dataloder of input dataset (dlrbnicsx.dataset.custom_dataset.DataLoader)
         model: Neural network (dlrbnicsx.neural_network.neural_network.HiddenLayersNet)
         device: cuda or cpu
+    Output:
+        loss: float, loss measured with loss_fn using given optimizer
     '''
     if device == None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -70,12 +74,15 @@ def validate_nn(reduced_problem, dataloader, model, device=None):
 
 def online_nn(reduced_problem, problem, online_mu, model, N, device=None):
     '''
-    online_mu: np.ndarray [1,num_para] representing online parameter
-    reduced_problem: reduced problem with attributes:
-        input_scaling_range: (2,num_para) np.ndarray, row 0 are the SCALED INPUT min_values and row 1 are the SCALED INPUT max_values
-        output_scaling_range: (2,num_para) np.ndarray, row 0 are the SCALED OUTPUT min_values and row 1 are the SCALED OUTPUT max_values
-        input_range: (2,num_para) np.ndarray, row 0 are the ACTUAL INPUT min_values and row 1 are the ACTUAL INPUT max_values
-        output_range: (2,num_para) np.ndarray, row 0 are the ACTUAL OUTPUT min_values and row 1 are the ACTUAL OUTPUT max_values
+    Inputs:
+        online_mu: np.ndarray [1,num_para] representing online parameter
+        reduced_problem: reduced problem with attributes:
+            input_scaling_range: (2,num_para) np.ndarray, row 0 are the SCALED INPUT min_values and row 1 are the SCALED INPUT max_values
+            output_scaling_range: (2,num_para) np.ndarray, row 0 are the SCALED OUTPUT min_values and row 1 are the SCALED OUTPUT max_values
+            input_range: (2,num_para) np.ndarray, row 0 are the ACTUAL INPUT min_values and row 1 are the ACTUAL INPUT max_values
+            output_range: (2,num_para) np.ndarray, row 0 are the ACTUAL OUTPUT min_values and row 1 are the ACTUAL OUTPUT max_values
+    Output:
+        solution_reduced: rbnicsx.online.create_vector, online solution
     '''
     if device == None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -94,16 +101,19 @@ def online_nn(reduced_problem, problem, online_mu, model, N, device=None):
 
 def error_analysis(reduced_problem, problem, error_analysis_mu, model, N, online_nn, device=None):
     '''
-    error_analysis_mu: np.ndarray of size [1,num_para] representing parameter set at which error analysis needs to be evaluated
-    problem: full order model with method:
-        norm_error(fem_solution,ann_reconstructed_solution) and methods required for online_nn
-        solve: method to compute full order model solution
-    reduced_problem: reduced problem with attributes:
-        reconstruct_solution: Reconstruct FEM solution from reduced basis solution
-        input_scaling_range: (2,num_para) np.ndarray, row 0 are the SCALED INPUT min_values and row 1 are the SCALED INPUT max_values
-        output_scaling_range: (2,num_para) np.ndarray, row 0 are the SCALED OUTPUT min_values and row 1 are the SCALED OUTPUT max_values
-        input_range: (2,num_para) np.ndarray, row 0 are the ACTUAL INPUT min_values and row 1 are the ACTUAL INPUT max_values
-        output_range: (2,num_para) np.ndarray, row 0 are the ACTUAL OUTPUT min_values and row 1 are the ACTUAL OUTPUT max_values
+    Inputs:
+        error_analysis_mu: np.ndarray of size [1,num_para] representing parameter set at which error analysis needs to be evaluated
+        problem: full order model with method:
+            norm_error(fem_solution,ann_reconstructed_solution) and methods required for online_nn
+            solve: method to compute full order model solution
+        reduced_problem: reduced problem with attributes:
+            reconstruct_solution: Reconstruct FEM solution from reduced basis solution
+            input_scaling_range: (2,num_para) np.ndarray, row 0 are the SCALED INPUT min_values and row 1 are the SCALED INPUT max_values
+            output_scaling_range: (2,num_para) np.ndarray, row 0 are the SCALED OUTPUT min_values and row 1 are the SCALED OUTPUT max_values
+            input_range: (2,num_para) np.ndarray, row 0 are the ACTUAL INPUT min_values and row 1 are the ACTUAL INPUT max_values
+            output_range: (2,num_para) np.ndarray, row 0 are the ACTUAL OUTPUT min_values and row 1 are the ACTUAL OUTPUT max_values
+    Outputs:
+        error: float, Error computed with norm error between FEM and RB solution
     '''
     if device == None:
         device = "cuda" if torch.cuda.is_available() else "cpu"

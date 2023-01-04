@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader # wrapper for iterables over dataset
 import numpy as np
 
 class CustomDataset(Dataset):
-    def __init__(self, problem, reduced_problem, N):
+    def __init__(self, problem, reduced_problem, N, input_file_path, output_file_path):
         '''
         problem: FEM problem with attibutes:
             solve: method to compute full order model solution
@@ -15,47 +15,47 @@ class CustomDataset(Dataset):
             output_scaling_range: (2,num_para) np.ndarray, row 0 are the SCALED OUTPUT min_values and row 1 are the SCALED OUTPUT max_values
             input_range: (2,num_para) np.ndarray, row 0 are the ACTUAL INPUT min_values and row 1 are the ACTUAL INPUT max_values
             output_range: (2,num_para) np.ndarray, row 0 are the ACTUAL OUTPUT min_values and row 1 are the ACTUAL OUTPUT max_values
-            input_file_path: Path to ACTUAL INPUT file (numpy array)
+        input_file_path: Path to ACTUAL INPUT file (numpy array)
+        output_file_path: Path to ACTUAL OUTPUT file (numpy array)
         N: int, size of reduced basis
         '''
         assert hasattr(reduced_problem,"input_range")
         assert hasattr(reduced_problem,"input_scaling_range")
         assert hasattr(reduced_problem,"output_range")
         assert hasattr(reduced_problem,"output_scaling_range")
-        assert hasattr(reduced_problem,"input_file_path")
-        assert hasattr(reduced_problem,"project_snapshot")
-        assert hasattr(problem,"solve")
         self.problem = problem
         self.reduced_problem = reduced_problem
         self.N = N
+        self.input_file_path = input_file_path
+        self.output_file_path = output_file_path
         
     def __len__(self):
-        return np.load(self.reduced_problem.input_file_path).shape[0]
+        return np.load(self.input_file_path).shape[0]
     
     def __getitem__(self,idx):
-        input_data = np.load(self.reduced_problem.input_file_path)[idx,:]
-        label = self.reduced_problem.project_snapshot(self.problem.solve(input_data),self.N).array.astype("f")
+        input_data = np.load(self.input_file_path)[idx,:]
+        label = np.load(self.output_file_path)[idx,:]#self.reduced_problem.project_snapshot(self.problem.solve(input_data),self.N).array.astype("f")
         return self.transform(input_data), self.target_transform(label)
             
     def transform(self, input_data):
         input_data_scaled = (self.reduced_problem.input_scaling_range[1] - self.reduced_problem.input_scaling_range[0]) * (input_data - self.reduced_problem.input_range[0,:]) / (self.reduced_problem.input_range[1,:] - self.reduced_problem.input_range[0,:]) + self.reduced_problem.input_scaling_range[0]
         return torch.from_numpy(input_data_scaled).to(torch.float32)
     
-    def target_transform(self,label):
+    def target_transform(self, label):
         output_data_scaled = (self.reduced_problem.output_scaling_range[1] - self.reduced_problem.output_scaling_range[0]) * (label - self.reduced_problem.output_range[0]) / (self.reduced_problem.output_range[1] - self.reduced_problem.output_range[0]) + self.reduced_problem.output_scaling_range[0]
-        return torch.from_numpy(output_data_scaled)
+        return torch.from_numpy(output_data_scaled).to(torch.float32)
     
-    def reverse_transform(self, input_data_scaled): # TODO verify formula
+    def reverse_transform(self, input_data_scaled):
         input_data_scaled = input_data_scaled.detach().numpy()
         input_data = (input_data_scaled - self.reduced_problem.input_scaling_range[0]) * (self.reduced_problem.input_range[1,:] - self.reduced_problem.input_range[0,:]) / (self.reduced_problem.input_scaling_range[1] - self.reduced_problem.input_scaling_range[0]) + self.reduced_problem.input_range[0,:]
         return input_data
     
-    def reverse_target_transform(self,output_data_scaled):# TODO verify formula
+    def reverse_target_transform(self, output_data_scaled):
         output_data_scaled = output_data_scaled.detach().numpy()
         output_data = (output_data_scaled - self.reduced_problem.output_scaling_range[0]) * (self.reduced_problem.output_range[1] - self.reduced_problem.output_range[0]) / (self.reduced_problem.output_scaling_range[1] - self.reduced_problem.output_scaling_range[0]) + self.reduced_problem.output_range[0]
         return output_data
 
-'''
+''' TODO Update with file path attribute
 class ReducedProblem(object):
     def __init__(self):
         super().__init__()
