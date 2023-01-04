@@ -2,13 +2,13 @@ import torch
 
 class DataLoader(torch.utils.data.DataLoader):
     '''
-    Wrapper around DataLoader from torch.utils.data
+    torch.utils.data.DataLoader wrappper
     '''
     pass
 
 def from_numpy(x, dtype=torch.float32):
     '''
-    Conversion from numpy to torch Tensor
+    Conversion from numpy to torch Tensor, torch.from_numpy wrapper
     Input:
     x: numpy array
     dtype: Output torch datatype, Default torch.float32
