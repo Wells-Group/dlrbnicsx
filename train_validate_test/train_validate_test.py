@@ -111,5 +111,5 @@ def error_analysis(reduced_problem, problem, error_analysis_mu, model, N, online
     ann_prediction = online_nn(reduced_problem, problem, error_analysis_mu, model, N, device=device)
     ann_reconstructed_solution = reduced_problem.reconstruct_solution(ann_prediction)
     fem_solution = problem.solve(error_analysis_mu)
-    error = problem.norm_error(fem_solution,ann_reconstructed_solution)
+    error = reduced_problem.norm_error(fem_solution,ann_reconstructed_solution)
     return error
