@@ -19,15 +19,45 @@ class CustomDataset(Dataset):
         output_file_path: Path to ACTUAL OUTPUT file (numpy array)
         N: int, size of reduced basis
         '''
-        assert hasattr(reduced_problem,"input_range")
-        assert hasattr(reduced_problem,"input_scaling_range")
-        assert hasattr(reduced_problem,"output_range")
-        assert hasattr(reduced_problem,"output_scaling_range")
         self.problem = problem
         self.reduced_problem = reduced_problem
         self.N = N
         self.input_file_path = input_file_path
         self.output_file_path = output_file_path
+        
+        if type(input_scaling_range) == list:
+            input_scaling_range = np.array(input_scaling_range)
+        if type(output_scaling_range) == list:
+            output_scaling_range = np.array(output_scaling_range)
+        if type(input_range) == list:
+            input_range = np.array(input_range)
+        if type(output_range) == list:
+            output_range = np.array(output_range)
+        
+        if (np.array(input_scaling_range)==None).any():
+            assert hasattr(self.reduced_problem,"input_scaling_range")         
+            self.input_scaling_range = self.reduced_problem.input_scaling_range
+        else:
+            print(f"Using input scaling range = {input_scaling_range}, ignoring input scaling range specified in {reduced_problem.__class__.__name__}")
+            self.input_scaling_range = input_scaling_range
+        if (np.array(output_scaling_range)==None).any():
+            assert hasattr(reduced_problem,"output_scaling_range")
+            self.output_scaling_range = self.reduced_problem.output_scaling_range
+        else:
+            print(f"Using output scaling range = {output_scaling_range}, ignoring output scaling range specified in {reduced_problem.__class__.__name__}")
+            self.output_scaling_range = output_scaling_range
+        if (np.array(input_range)==None).any():
+            assert hasattr(self.reduced_problem,"input_range")
+            self.input_range = self.reduced_problem.input_range
+        else:
+            print(f"Using input range = {input_range}, ignoring input range specified in {reduced_problem.__class__.__name__}")
+            self.input_range = input_range
+        if (np.array(output_range)==None).any():
+            assert hasattr(self.reduced_problem,"output_range")
+            self.output_range = self.reduced_problem.output_range
+        else:
+            print(f"Using output range = {output_range}, ignoring output range specified in {reduced_problem.__class__.__name__}")
+            self.output_range = output_range
         
     def __len__(self):
         return np.load(self.input_file_path).shape[0]
@@ -38,21 +68,21 @@ class CustomDataset(Dataset):
         return self.transform(input_data), self.target_transform(label)
             
     def transform(self, input_data):
-        input_data_scaled = (self.reduced_problem.input_scaling_range[1] - self.reduced_problem.input_scaling_range[0]) * (input_data - self.reduced_problem.input_range[0,:]) / (self.reduced_problem.input_range[1,:] - self.reduced_problem.input_range[0,:]) + self.reduced_problem.input_scaling_range[0]
+        input_data_scaled = (self.input_scaling_range[1] - self.input_scaling_range[0]) * (input_data - self.input_range[0,:]) / (self.input_range[1,:] - self.input_range[0,:]) + self.input_scaling_range[0]
         return torch.from_numpy(input_data_scaled).to(torch.float32)
     
     def target_transform(self, label):
-        output_data_scaled = (self.reduced_problem.output_scaling_range[1] - self.reduced_problem.output_scaling_range[0]) * (label - self.reduced_problem.output_range[0]) / (self.reduced_problem.output_range[1] - self.reduced_problem.output_range[0]) + self.reduced_problem.output_scaling_range[0]
+        output_data_scaled = (self.output_scaling_range[1] - self.output_scaling_range[0]) * (label - self.output_range[0]) / (self.output_range[1] - self.output_range[0]) + self.output_scaling_range[0]
         return torch.from_numpy(output_data_scaled).to(torch.float32)
     
     def reverse_transform(self, input_data_scaled):
         input_data_scaled = input_data_scaled.detach().numpy()
-        input_data = (input_data_scaled - self.reduced_problem.input_scaling_range[0]) * (self.reduced_problem.input_range[1,:] - self.reduced_problem.input_range[0,:]) / (self.reduced_problem.input_scaling_range[1] - self.reduced_problem.input_scaling_range[0]) + self.reduced_problem.input_range[0,:]
+        input_data = (input_data_scaled - self.input_scaling_range[0]) * (self.input_range[1,:] - self.input_range[0,:]) / (self.input_scaling_range[1] - self.input_scaling_range[0]) + self.input_range[0,:]
         return input_data
     
     def reverse_target_transform(self, output_data_scaled):
         output_data_scaled = output_data_scaled.detach().numpy()
-        output_data = (output_data_scaled - self.reduced_problem.output_scaling_range[0]) * (self.reduced_problem.output_range[1] - self.reduced_problem.output_range[0]) / (self.reduced_problem.output_scaling_range[1] - self.reduced_problem.output_scaling_range[0]) + self.reduced_problem.output_range[0]
+        output_data = (output_data_scaled - self.output_scaling_range[0]) * (self.output_range[1] - self.output_range[0]) / (self.output_scaling_range[1] - self.output_scaling_range[0]) + self.output_range[0]
         return output_data
 
 ''' 
