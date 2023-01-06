@@ -3,16 +3,17 @@ import numpy as np
 from dlrbnicsx.activation_function.activation_function_factory import Tanh, Swish, GaussianRBF
 
 class HiddenLayersNet(torch.nn.Module):
-    #Initialisation of class
     '''
     Inputs:
-    dim_in: int, Number of input parameters
-    dim_hidden_layers: List with length = number of hidden layers and the number of neurons in each hidden layer
-    dim_out: int, Number of output parameters
-    activation_function: torch.nn.Module, activation function
-    return_numpy: bool, Default False. If True the result will be returned in numpy format, 
+        dim_in: int, Number of input parameters
+        dim_hidden_layers: List with length = number of hidden layers and the number of neurons in each hidden layer
+        dim_out: int, Number of output parameters
+        activation_function: torch.nn.Module, activation function
+        return_numpy: bool, Default False. If True the result will be returned in numpy format, 
+        include_bias: bool, Default True. If True bias will be added in the linear layers.
     '''
     def __init__(self, dim_in, dim_hidden_layers, dim_out, activation_function, return_numpy=False, include_bias=True):
+        #Initialisation of class
         super().__init__()
         linear_layers = torch.nn.ModuleList()
         ann_dims = torch.nn.ModuleList()
@@ -26,8 +27,8 @@ class HiddenLayersNet(torch.nn.Module):
         self.activation_function = activation_function
         self.return_numpy = return_numpy
     
-    #Forward pass
     def forward(self, x):
+        #Return the result of forward pass
         if type(x) == np.ndarray:
             x = torch.from_numpy(x).to(torch.float32)
         result = x

@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader # wrapper for iterables over dataset
 import numpy as np
 
 class CustomDataset(Dataset):
-    def __init__(self, problem, reduced_problem, N, input_file_path, output_file_path):
+    def __init__(self, problem, reduced_problem, N, input_file_path, output_file_path, input_scaling_range=None, output_scaling_range=None, input_range=None, output_range=None):
         '''
         problem: FEM problem with attibutes:
             solve: method to compute full order model solution
@@ -55,7 +55,8 @@ class CustomDataset(Dataset):
         output_data = (output_data_scaled - self.reduced_problem.output_scaling_range[0]) * (self.reduced_problem.output_range[1] - self.reduced_problem.output_range[0]) / (self.reduced_problem.output_scaling_range[1] - self.reduced_problem.output_scaling_range[0]) + self.reduced_problem.output_range[0]
         return output_data
 
-''' TODO Update with file path attribute
+''' 
+TODO Update with file path attribute
 class ReducedProblem(object):
     def __init__(self):
         super().__init__()
