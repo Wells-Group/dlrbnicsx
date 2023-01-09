@@ -105,7 +105,7 @@ def validate_nn(reduced_problem, dataloader, model, device=None, loss_func=None)
     print(f"Validation loss: {valid_loss: >7f}")
     return valid_loss
 
-def online_nn(reduced_problem, problem, online_mu, model, N, device=None):
+def online_nn(reduced_problem, problem, online_mu, model, N, device=None, input_scaling_range=None, output_scaling_range=None, input_range=None, output_range=None):
     '''
     Online phase
     Inputs:
@@ -121,19 +121,50 @@ def online_nn(reduced_problem, problem, online_mu, model, N, device=None):
     if device == None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
     model.eval()
-    online_mu_scaled = (reduced_problem.input_scaling_range[1] - reduced_problem.input_scaling_range[0]) * (online_mu - reduced_problem.input_range[0,:]) / (reduced_problem.input_range[1,:] - reduced_problem.input_range[0,:]) + reduced_problem.input_scaling_range[0] # TODO Use transform from dataloader
+    
+    if type(input_scaling_range) == list:
+        input_scaling_range = np.array(input_scaling_range)
+    if type(output_scaling_range) == list:
+        output_scaling_range = np.array(output_scaling_range)
+    if type(input_range) == list:
+        input_range = np.array(input_range)
+    if type(output_range) == list:
+        output_range = np.array(output_range)
+
+    if (np.array(input_scaling_range)==None).any():
+        assert hasattr(reduced_problem,"input_scaling_range")         
+        input_scaling_range = reduced_problem.input_scaling_range
+    else:
+        print(f"Using input scaling range = {input_scaling_range}, ignoring input scaling range specified in {reduced_problem.__class__.__name__}")
+    if (np.array(output_scaling_range)==None).any():
+        assert hasattr(reduced_problem,"output_scaling_range")
+        output_scaling_range = reduced_problem.output_scaling_range
+    else:
+        print(f"Using output scaling range = {output_scaling_range}, ignoring output scaling range specified in {reduced_problem.__class__.__name__}")
+    if (np.array(input_range)==None).any():
+        assert hasattr(reduced_problem,"input_range")
+        input_range = reduced_problem.input_range
+    else:
+        print(f"Using input range = {input_range}, ignoring input range specified in {reduced_problem.__class__.__name__}")
+    if (np.array(output_range)==None).any():
+        assert hasattr(reduced_problem,"output_range")
+        output_range = reduced_problem.output_range
+    else:
+        print(f"Using output range = {output_range}, ignoring output range specified in {reduced_problem.__class__.__name__}")
+
+    online_mu_scaled = (input_scaling_range[1] - input_scaling_range[0]) * (online_mu - input_range[0,:]) / (input_range[1,:] - input_range[0,:]) + input_scaling_range[0] # TODO Use transform from dataloader
     online_mu_scaled_torch = torch.from_numpy(online_mu_scaled).to(torch.float32)
     with torch.no_grad():
         X = online_mu_scaled_torch
         # X = X.to(device) # TODO
         pred_scaled = model(X)
         pred_scaled_numpy = pred_scaled.detach().numpy()
-        pred = (pred_scaled_numpy - reduced_problem.output_scaling_range[0]) * (reduced_problem.output_range[1] - reduced_problem.output_range[0]) / (reduced_problem.output_scaling_range[1] - reduced_problem.output_scaling_range[0]) + reduced_problem.output_range[0] # TODO Use reverse_target_transform from dataloader
+        pred = (pred_scaled_numpy - output_scaling_range[0]) * (output_range[1] - output_range[0]) / (output_scaling_range[1] - output_scaling_range[0]) + output_range[0] # TODO Use reverse_target_transform from dataloader
         solution_reduced = rbnicsx.online.create_vector(N)
         solution_reduced.array = pred
     return solution_reduced
 
-def error_analysis(reduced_problem, problem, error_analysis_mu, model, N, online_nn, device=None, norm_error=None, reconstruct_solution=None):
+def error_analysis(reduced_problem, problem, error_analysis_mu, model, N, online_nn, device=None, norm_error=None, reconstruct_solution=None, input_scaling_range=None, output_scaling_range=None, input_range=None, output_range=None):
     '''
     Inputs:
         error_analysis_mu: np.ndarray of size [1,num_para] representing parameter set at which error analysis needs to be evaluated
@@ -152,7 +183,7 @@ def error_analysis(reduced_problem, problem, error_analysis_mu, model, N, online
     if device == None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
     model.eval()
-    ann_prediction = online_nn(reduced_problem, problem, error_analysis_mu, model, N, device=device) #TODO Update here and error_analysis function call woth respect to arguments of online_nn
+    ann_prediction = online_nn(reduced_problem, problem, error_analysis_mu, model, N, device, input_scaling_range, output_scaling_range, input_range, output_range)
     if reconstruct_solution == None:
         ann_reconstructed_solution = reduced_problem.reconstruct_solution(ann_prediction)
     else:
