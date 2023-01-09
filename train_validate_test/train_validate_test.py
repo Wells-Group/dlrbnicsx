@@ -164,7 +164,7 @@ def online_nn(reduced_problem, problem, online_mu, model, N, device=None, input_
         solution_reduced.array = pred
     return solution_reduced
 
-def error_analysis(reduced_problem, problem, error_analysis_mu, model, N, online_nn, device=None, norm_error=None, reconstruct_solution=None, input_scaling_range=None, output_scaling_range=None, input_range=None, output_range=None):
+def error_analysis(reduced_problem, problem, error_analysis_mu, model, N, online_nn, device=None, norm_error=None, reconstruct_solution=None, input_scaling_range=None, output_scaling_range=None, input_range=None, output_range=None, index=None):
     '''
     Inputs:
         error_analysis_mu: np.ndarray of size [1,num_para] representing parameter set at which error analysis needs to be evaluated
@@ -190,6 +190,9 @@ def error_analysis(reduced_problem, problem, error_analysis_mu, model, N, online
         print(f"Using {reconstruct_solution.__name__}, ignoring RB to FEM solution construction specified in {reduced_problem.__class__.__name__}")
         ann_reconstructed_solution = reconstruct_solution(ann_prediction)
     fem_solution = problem.solve(error_analysis_mu)
+    if type(fem_solution) == tuple:
+        assert index != None
+        fem_solution = fem_solution[index]
     if norm_error == None:
         error = reduced_problem.norm_error(fem_solution,ann_reconstructed_solution)
     else:
