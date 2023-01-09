@@ -152,7 +152,7 @@ def error_analysis(reduced_problem, problem, error_analysis_mu, model, N, online
     if device == None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
     model.eval()
-    ann_prediction = online_nn(reduced_problem, problem, error_analysis_mu, model, N, device=device)
+    ann_prediction = online_nn(reduced_problem, problem, error_analysis_mu, model, N, device=device) #TODO Update here and error_analysis function call woth respect to arguments of online_nn
     if reconstruct_solution == None:
         ann_reconstructed_solution = reduced_problem.reconstruct_solution(ann_prediction)
     else:
