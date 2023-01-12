@@ -1,6 +1,13 @@
 import torch
+import torch.distributed as dist
+import torch.multiprocessing as mp
+
 import numpy as np
-import rbnicsx
+import rbnicsx.online
+
+from dlrbnicsx.dataset.custom_partitioned_dataset import CustomPartitionedDataset
+from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
+from dlrbnicsx.activation_function.activation_function_factory import Tanh, Swish, GaussianRBF
 
 def train_nn(reduced_problem, dataloader, model, device=None, learning_rate=None, loss_func=None, optimizer=None):
     '''
@@ -61,6 +68,11 @@ def train_nn(reduced_problem, dataloader, model, device=None, learning_rate=None
         
         optimizer.zero_grad()
         loss.backward()
+        for param in model.parameters():
+            dist.barrier()
+            #print(f"param before all_reduce: {param.grad.data}")
+            dist.all_reduce(param.grad.data, op=dist.ReduceOp.SUM)
+            #print(f"param after all_reduce: {param.grad.data}")
         optimizer.step()
         
         if batch % 1 == 0:
@@ -101,9 +113,12 @@ def validate_nn(reduced_problem, dataloader, model, device=None, loss_func=None)
         for X, y in dataloader:
             # X,y = X.to(device), y.to(device) # TODO
             pred = model(X)
-            valid_loss += loss_fn(pred, y).item()/loss_fn(torch.zeros_like(y),y).item()
-    print(f"Validation loss: {valid_loss: >7f}")
-    return valid_loss
+            valid_loss += loss_fn(pred, y)/loss_fn(torch.zeros_like(y),y)
+    #print(f"Validation loss before all_reduce: {valid_loss: >7f}")
+    dist.all_reduce(valid_loss, op=dist.ReduceOp.SUM)
+    #print(f"Validation loss after all_reduce: {valid_loss: >7f}")
+    print(f"Validation loss: {valid_loss.item(): >7f}")
+    return valid_loss.item()
 
 def online_nn(reduced_problem, problem, online_mu, model, N, device=None, input_scaling_range=None, output_scaling_range=None, input_range=None, output_range=None):
     '''
@@ -199,3 +214,41 @@ def error_analysis(reduced_problem, problem, error_analysis_mu, model, N, online
         print(f"Using {norm_error.__name__}, ignoring error norm specified in {reduced_problem.__class__.__name__}")
         error = norm_error(fem_solution,ann_reconstructed_solution)
     return error
+
+if __name__ == "__main__":
+    
+    class Problem(object):
+        def __init__(self):
+            super().__init__()
+
+    class ReducedProblem(object):
+        def __init__(self):
+            super().__init__()
+            self.input_range = np.vstack((0.5*np.ones([1,2]),np.ones([1,2])))
+            self.output_range = [0.,1.]
+            self.input_scaling_range = [-1.,1.]
+            self.output_scaling_range = [-1.,1.]
+            self.learning_rate = 1e-4
+            self.optimizer = "Adam"
+            self.loss_fn = "MSE"
+    
+    problem = Problem()
+    reduced_problem = ReducedProblem()
+    reduced_problem.output_range[0], reduced_problem.output_range[1] = np.min(np.load("ann_data/output_training_data.npy")), np.max(np.load("ann_data/output_training_data.npy")) # NOTE Updating output_range based on the computed values instead of user guess.
+    custom_partitioned_dataset = CustomPartitionedDataset(problem, reduced_problem, 10, "ann_data/input_training_data.npy", "ann_data/output_training_data.npy")
+    train_dataloader = torch.utils.data.DataLoader(custom_partitioned_dataset, batch_size=100, shuffle=True)
+    custom_partitioned_dataset = CustomPartitionedDataset(problem, reduced_problem, 10, "ann_data/input_validation_data.npy", "ann_data/output_validation_data.npy")
+    valid_dataloader = torch.utils.data.DataLoader(custom_partitioned_dataset, batch_size=100, shuffle=False)
+    dim_in, dim_out = np.load("ann_data/input_training_data.npy").shape[1], np.load("ann_data/output_training_data.npy").shape[1]
+    model = HiddenLayersNet(dim_in, [4], dim_out, Tanh())
+    for param in model.parameters():
+        #print(f"Params before all_reduce: {param.data}")
+        dist.all_reduce(param.data, op=dist.ReduceOp.SUM) # NOTE This ensures that models in all processes start with same weights and biases
+        #print(f"Params after all_reduce: {param.data}")
+    max_epochs = 3#20000
+    for epoch in range(max_epochs):
+        print(f"Rank {dist.get_rank()} Epoch {epoch} of Maximum epochs {max_epochs}")
+        train_loss = train_nn(reduced_problem, train_dataloader, model)
+        valid_loss = validate_nn(reduced_problem, valid_dataloader, model)
+    online_nn(reduced_problem, problem, np.array([0.2,0.8]), model, dim_out)
+    # error = error_analysis(reduced_problem, problem, error_analysis_mu, model, dim_out, online_nn) # NOTE reduced_problem requires reconstruct_solution, norm_error method. problem requires solve method
