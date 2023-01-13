@@ -3,5 +3,7 @@
 *.npy
 *.pvd
 *.vtu
-/demo/*/*.pvd
+/demo/*/mesh_data/*.pvd
+/demo/*/mesh_data/*.pvtu
+/demo/*/mesh_data/*.vtu
 /demo/*/*.npy
