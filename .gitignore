@@ -1,1 +1,5 @@
 /activation_function/__pycache__
+*.xdmf
+*.npy
+*.pvd
+*.vtu
