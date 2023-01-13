@@ -3,3 +3,5 @@
 *.npy
 *.pvd
 *.vtu
+/demo/*/*.pvd
+/demo/*/*.npy
