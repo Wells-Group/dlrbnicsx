@@ -74,6 +74,7 @@ def train_nn(reduced_problem, dataloader, model, device=None, learning_rate=None
             dist.all_reduce(param.grad.data, op=dist.ReduceOp.SUM)
             #print(f"param after all_reduce: {param.grad.data}")
         optimizer.step()
+        dist.all_reduce(loss, op=dist.ReduceOp.SUM) # TODO If loss reduction argument="SUM". If "MEAN", change divide the loss by dist.get_world_size()
         
         if batch % 1 == 0:
             current = (batch+1) * len(X)
@@ -245,9 +246,9 @@ if __name__ == "__main__":
         #print(f"Params before all_reduce: {param.data}")
         dist.all_reduce(param.data, op=dist.ReduceOp.SUM) # NOTE This ensures that models in all processes start with same weights and biases
         #print(f"Params after all_reduce: {param.data}")
-    max_epochs = 3#20000
+    max_epochs = 5#20000
     for epoch in range(max_epochs):
-        print(f"Rank {dist.get_rank()} Epoch {epoch} of Maximum epochs {max_epochs}")
+        print(f"Rank {dist.get_rank()} Epoch {epoch+1} of Maximum epochs {max_epochs}")
         train_loss = train_nn(reduced_problem, train_dataloader, model)
         valid_loss = validate_nn(reduced_problem, valid_dataloader, model)
     online_nn(reduced_problem, problem, np.array([0.2,0.8]), model, dim_out)

@@ -137,6 +137,20 @@ class Sigmoid(torch.nn.Module):
         else:
             return y
 
+class Identity(torch.nn.Module):
+    def __init__(self,return_numpy=False):
+        super().__init__()
+        self.return_numpy = return_numpy
+    def forward(self,x):
+        if type(x) == np.ndarray:
+            x = torch.from_numpy(x)
+        assert type(x) == torch.Tensor, "Only numpy array or torch tensor are supported"
+        y = x
+        if self.return_numpy == True:
+            return y.detach().numpy()
+        else:
+            return y
+
 #TODO learnable and .backward() activation function
 
 '''x = torch.Tensor([-1.2,0.,3.5])

@@ -81,7 +81,8 @@ class CustomDataset(Dataset):
         return input_data
     
     def reverse_target_transform(self, output_data_scaled):
-        output_data_scaled = output_data_scaled.detach().numpy()
+        if type(output_data_scaled) == torch.Tensor:
+            output_data_scaled = output_data_scaled.detach().numpy()
         output_data = (output_data_scaled - self.output_scaling_range[0]) * (self.output_range[1] - self.output_range[0]) / (self.output_scaling_range[1] - self.output_scaling_range[0]) + self.output_range[0]
         return output_data
 
