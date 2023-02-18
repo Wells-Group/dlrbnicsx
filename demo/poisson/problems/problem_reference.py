@@ -1,23 +1,20 @@
 import abc
-import itertools
 import typing
 
 import dolfinx.fem
 import dolfinx.io
-import gmsh
-import mpi4py.MPI
 import numpy as np
-import numpy.typing
 import petsc4py.PETSc
-import plotly.graph_objects as go
-import ufl
-
 import rbnicsx.backends
 import rbnicsx.online
 import rbnicsx.test
+import ufl
 
 # 2. FEM formulation on reference / undeformed domain
-# TODO VVIP : Since FunctionSpace and dx are defined in ProblemBase and not in ProblemOnDeformedDomain, does dx and trial test function solve problem on the deformed domain?
+
+# TODO VVIP : Since FunctionSpace and dx are defined in ProblemBase and
+# not in ProblemOnDeformedDomain, does dx and trial test function solve
+# problem on the deformed domain?
 
 
 class ProblemBase(abc.ABC):
@@ -27,19 +24,23 @@ class ProblemBase(abc.ABC):
         # Define function space
         V = dolfinx.fem.FunctionSpace(mesh, ("Lagrange", 2))
         self._V = V
+
         # Define trial and test functions
         u = ufl.TrialFunction(V)
         v = ufl.TestFunction(V)
         self._trial = u
         self._test = v
+
         # Define solution
         solution = dolfinx.fem.Function(V)
         self._solution = solution
+
         # Define measures for integration of forms
         dx = ufl.Measure("dx")(subdomain_data=subdomains)
         ds = ufl.Measure("ds")(subdomain_data=boundaries)
         self._dx = dx
         self._ds = ds
+
         # Define symbolic parameters for use in UFL forms
         mu_symb = rbnicsx.backends.SymbolicParameters(mesh, shape=(2, ))
         self._mu_symb = mu_symb
@@ -102,18 +103,18 @@ class ProblemBase(abc.ABC):
 
     def _solve(self) -> dolfinx.fem.Function:
         """Solve the linear problem with KSP."""
-        A = self._assemble_matrix()
-        F = self._assemble_vector()
-        solution = (dolfinx.fem.petsc.LinearProblem(self._a, self._f, bcs=self._bcs,
-                    petsc_options={"ksp_type": "preonly", "pc_type": "lu"})).solve()
-        '''ksp = petsc4py.PETSc.KSP()
-        ksp.create(mesh.comm)
-        ksp.setOperators(A)
-        ksp.setType("preonly")
-        ksp.getPC().setType("lu")
-        #ksp.getPC().setFactorSolverType("mumps")
-        ksp.setFromOptions()
-        solution = self._solution.copy()
-        ksp.solve(F, solution.vector)
-        solution.vector.ghostUpdate(addv=petsc4py.PETSc.InsertMode.INSERT, mode=petsc4py.PETSc.ScatterMode.FORWARD)'''
+        # A = self._assemble_matrix()
+        # F = self._assemble_vector()
+        solution = dolfinx.fem.petsc.LinearProblem(self._a, self._f, bcs=self._bcs, petsc_options={
+                                                   "ksp_type": "preonly", "pc_type": "lu"}).solve()
+        # ksp = petsc4py.PETSc.KSP()
+        # ksp.create(mesh.comm)
+        # ksp.setOperators(A)
+        # ksp.setType("preonly")
+        # ksp.getPC().setType("lu")
+        # #ksp.getPC().setFactorSolverType("mumps")
+        # ksp.setFromOptions()
+        # solution = self._solution.copy()
+        # ksp.solve(F, solution.vector)
+        # solution.vector.ghostUpdate(addv=petsc4py.PETSc.InsertMode.INSERT, mode=petsc4py.PETSc.ScatterMode.FORWARD)
         return solution

@@ -1,21 +1,13 @@
-import abc
-import itertools
 import typing
 
 import dolfinx.fem
 import dolfinx.io
-import gmsh
-import mpi4py.MPI
 import numpy as np
-import numpy.typing
 import petsc4py.PETSc
-import plotly.graph_objects as go
-import ufl
-
 import rbnicsx.backends
 import rbnicsx.online
 import rbnicsx.test
-
+import ufl
 from problems.problem_reference import ProblemBase
 
 # 1. Geometric parametrization
@@ -28,16 +20,20 @@ class HarmonicExtension(rbnicsx.backends.MeshMotion):
     def __init__(self, mesh, subdomains, boundaries, mu: np.typing.NDArray[np.float64]) -> None:
         # Define function space
         M = dolfinx.fem.VectorFunctionSpace(mesh, ("Lagrange", mesh.geometry.cmap.degree))
+
         # Define trial and test functions
         m = ufl.TrialFunction(M)
         n = ufl.TestFunction(M)
+
         # Define bilinear form of the harmonic extension problem
         a_he = dolfinx.fem.form(ufl.inner(ufl.grad(m), ufl.grad(n)) * ufl.dx)
         a_he_cpp = dolfinx.fem.form(a_he)
+
         # Define linear form of the harmonic extension problem
         zero_vector = dolfinx.fem.Constant(mesh, np.zeros(mesh.topology.dim, petsc4py.PETSc.ScalarType))
         f_he = dolfinx.fem.form(ufl.inner(zero_vector, n) * ufl.dx)
         f_he_cpp = dolfinx.fem.form(f_he)
+
         # Define boundary conditions for the harmonic extension problem
         dofs_bc_1 = dolfinx.fem.locate_dofs_topological(M, 1, boundaries.find(1))
         dofs_bc_2 = dolfinx.fem.locate_dofs_topological(M, 1, boundaries.find(2))
@@ -60,14 +56,19 @@ class HarmonicExtension(rbnicsx.backends.MeshMotion):
         bc_4 = dolfinx.fem.dirichletbc(mD_4, dofs_bc_4)
         bc_5 = dolfinx.fem.dirichletbc(mD_5, dofs_bc_5)
         bcs_he = [bc_1, bc_2, bc_3, bc_4, bc_5]
+
         # Assemble the left-hand side matrix of the harmonic extension problem
         A = dolfinx.fem.petsc.assemble_matrix(a_he_cpp, bcs=bcs_he)
         A.assemble()
-        # Assemble the right-hand side vector of the harmonic extension problem # TODO Understand solving and apply_lifting
+
+        # Assemble the right-hand side vector of the harmonic extension
+        # problem
+        # # TODO Understand solving and apply_lifting
         F = dolfinx.fem.petsc.assemble_vector(f_he_cpp)
         dolfinx.fem.petsc.apply_lifting(F, [a_he_cpp], [bcs_he])
         F.ghostUpdate(addv=petsc4py.PETSc.InsertMode.ADD, mode=petsc4py.PETSc.ScatterMode.REVERSE)
         dolfinx.fem.petsc.set_bc(F, bcs_he)
+
         # Solve the harmonic extension problem
         ksp = petsc4py.PETSc.KSP()
         ksp.create(mesh.comm)
@@ -93,10 +94,13 @@ class ProblemOnDeformedDomain(ProblemBase):
         super().__init__(mesh, subdomains, boundaries)
         # Get trial and test functions
         u, v = self.trial_and_test
+
         # Get measures
         dx, ds = self.measures
+
         # Get symbolic parameters for use in UFL forms
-        mu_symb = self.mu_symb
+        # mu_symb = self.mu_symb
+
         # Define bilinear form of the problem
         a = (ufl.inner(ufl.grad(u), ufl.grad(v)) * dx)
         self._a = a
@@ -128,8 +132,10 @@ class ProblemOnDeformedDomain(ProblemBase):
         bc_5 = dolfinx.fem.dirichletbc(uD_5, dofs_bc_5)
         bcs = [bc_1, bc_2, bc_3, bc_4, bc_5]
         self._bcs = bcs  # TODO Confirm BCs are evaluated on the deformed domain
-        # Store mesh motion object used in the latest solve, to avoid having to solve
-        # the harmonic extension once for computation and once for (optional) visualization.
+
+        # Store mesh motion object used in the latest solve, to avoid
+        # having to solve the harmonic extension once for computation
+        # and once for (optional) visualization.
         self._mesh_motion: typing.Optional[rbnicsx.backends.MeshMotion] = None
 
     @property
@@ -163,28 +169,30 @@ class ProblemOnDeformedDomain(ProblemBase):
 
     def _solve(self) -> dolfinx.fem.Function:
         """Apply shape parametrization to the mesh and solve the linear problem with KSP."""
-        with HarmonicExtension(self._mesh_reference, self._subdomains_reference, self._boundaries_reference, self._mu) as self._mesh_motion:
+        msh = self._mesh_reference
+        sd = self._subdomains_reference
+        with HarmonicExtension(msh, sd, self._boundaries_reference, self._mu) as self._mesh_motion:
             return super()._solve()
 
 
-if __name__ == "__main__":
-    problem = ProblemOnDeformedDomain(mesh, subdomains, boundaries)
-    mu_solve = np.array([1.1, 1.4])
-    solution = problem.solve(mu_solve)
-    print(solution.x.array)
+# if __name__ == "__main__":
+#     problem = ProblemOnDeformedDomain(mesh, subdomains, boundaries)
+#     mu_solve = np.array([1.1, 1.4])
+#     solution = problem.solve(mu_solve)
+#     print(solution.x.array)
 
-    with problem.mesh_motion:
-        with dolfinx.io.XDMFFile(mpi4py.MPI.COMM_WORLD, "mesh_data/solution.xdmf", "w") as solution_file_xdmf:
-            solution.x.scatter_forward()
-            solution_file_xdmf.write_mesh(mesh)
-            solution_file_xdmf.write_function(solution)
+#     with problem.mesh_motion:
+#         with dolfinx.io.XDMFFile(MPI.COMM_WORLD, "mesh_data/solution.xdmf", "w") as solution_file_xdmf:
+#             solution.x.scatter_forward()
+#             solution_file_xdmf.write_mesh(mesh)
+#             solution_file_xdmf.write_function(solution)
 
-    mu_solve = np.array([1., 1.])
-    solution = problem.solve(mu_solve)
-    print(solution.x.array)
+#     mu_solve = np.array([1., 1.])
+#     solution = problem.solve(mu_solve)
+#     print(solution.x.array)
 
-    with problem.mesh_motion:
-        with dolfinx.io.XDMFFile(mpi4py.MPI.COMM_WORLD, "mesh_data/solution_reference.xdmf", "w") as solution_file_xdmf:
-            solution.x.scatter_forward()
-            solution_file_xdmf.write_mesh(mesh)
-            solution_file_xdmf.write_function(solution)
+#     with problem.mesh_motion:
+#         with dolfinx.io.XDMFFile(MPI.COMM_WORLD, "mesh_data/solution_reference.xdmf", "w") as solution_file_xdmf:
+#             solution.x.scatter_forward()
+#             solution_file_xdmf.write_mesh(mesh)
+#             solution_file_xdmf.write_function(solution)
