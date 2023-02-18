@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import abc
 import itertools
 import typing
@@ -6,25 +5,28 @@ import typing
 import dolfinx.fem
 import dolfinx.io
 import gmsh
+import matplotlib.pyplot as plt
 import mpi4py.MPI
 import numpy as np
 import numpy.typing
 import petsc4py.PETSc
 import plotly.graph_objects as go
-import ufl
-
 import rbnicsx.backends
 import rbnicsx.online
 import rbnicsx.test
-
+import ufl
+from problems.problem_parametrized import (HarmonicExtension,
+                                           ProblemOnDeformedDomain)
 from problems.problem_reference import ProblemBase
-from problems.problem_parametrized import HarmonicExtension, ProblemOnDeformedDomain
 
-from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
 from dlrbnicsx.activation_function.activation_function_factory import Tanh
 from dlrbnicsx.dataset.custom_dataset import CustomDataset
 from dlrbnicsx.interface.wrappers import DataLoader
-from dlrbnicsx.train_validate_test.train_validate_test import train_nn, validate_nn, online_nn, error_analysis
+from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
+from dlrbnicsx.train_validate_test.train_validate_test import (error_analysis,
+                                                               online_nn,
+                                                               train_nn,
+                                                               validate_nn)
 
 # Import mesh in dolfinx
 gdim = 2

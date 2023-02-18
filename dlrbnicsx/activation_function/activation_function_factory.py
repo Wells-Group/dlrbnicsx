@@ -8,7 +8,10 @@ class SiLU(torch.nn.Module):
     Applies the Sigmoid Linear Unit (SiLU) activation function
     SiLU(x) = x * sigmoid(x) = x * 1 / ( 1 + exp(-x) )
     Input:
-    return_numpy: bool, If return datatype is expected to be numpy array (during online phase or errro analysis) set the True, default: False, i.e. return datatype is expected to be torch.Tensor (during training and valiation)
+    return_numpy: bool, If return datatype is expected to be numpy array
+    (during online phase or errro analysis) set the True, default:
+    False, i.e. return datatype is expected to be torch.Tensor (during
+    training and valiation)
     (N,) numpy array or torch tensor of dimension N
     Output: (N,) torch tensor of dimension N
     '''
@@ -37,7 +40,10 @@ class GaussianRBF(torch.nn.Module):
     Activation function with non-learnable parameter
     Input:
     alpha = torch.Tensor(scalar), Shape parameter (Learnable)
-    return_numpy: bool, If return datatype is expected to be numpy array (during online phase or errro analysis) set the True, default: False, i.e. return datatype is expected to be torch.Tensor (during training and valiation)
+    return_numpy: bool, If return datatype is expected to be numpy array
+    (during online phase or errro analysis) set the True, default:
+    False, i.e. return datatype is expected to be torch.Tensor (during
+    training and valiation)
     (N,) numpy array or torch tensor of dimension N
     Output: (N,) torch tensor of dimension N
     '''

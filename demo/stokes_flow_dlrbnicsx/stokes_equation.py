@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import abc
 import itertools
 import typing
@@ -6,6 +5,7 @@ import typing
 import dolfinx.fem
 import dolfinx.io
 import gmsh
+import matplotlib.pyplot as plt
 import mpi4py.MPI
 import multiphenicsx.io
 import numpy as np
@@ -753,4 +753,6 @@ with problem.mesh_motion:
         pfile_pvd.write_function(rb_solution_p)
 
 # TODO cuda vs MPI data error
-# TODO for poisson problem "scaling_factors" were scalars but for Stokes problem they should be turned into numpy array as per scaling rule applied
+# TODO for poisson problem "scaling_factors" were scalars but for Stokes
+# problem they should be turned into numpy array as per scaling rule
+# applied
