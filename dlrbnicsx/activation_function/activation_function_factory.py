@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 
+
 class SiLU(torch.nn.Module):
     '''
     Example of  activation function WITHOUT learnable parameter and WITHOUT .backward() method
@@ -11,10 +12,12 @@ class SiLU(torch.nn.Module):
     (N,) numpy array or torch tensor of dimension N
     Output: (N,) torch tensor of dimension N
     '''
+
     def __init__(self, return_numpy=False):
         super().__init__()
         self.return_numpy = return_numpy
-    def forward(self,x):
+
+    def forward(self, x):
         if type(x) == np.ndarray:
             x = torch.from_numpy(x)
         assert type(x) == torch.Tensor, "Only numpy array or torch tensor are supported"
@@ -24,6 +27,7 @@ class SiLU(torch.nn.Module):
             return y.detach().numpy()
         else:
             return y
+
 
 class GaussianRBF(torch.nn.Module):
     '''
@@ -37,7 +41,8 @@ class GaussianRBF(torch.nn.Module):
     (N,) numpy array or torch tensor of dimension N
     Output: (N,) torch tensor of dimension N
     '''
-    def __init__(self,gamma=None,centers=None,return_numpy=False):
+
+    def __init__(self, gamma=None, centers=None, return_numpy=False):
         super().__init__()
         if gamma == None:
             self.gamma = torch.nn.Parameter(torch.Tensor([1.]))
@@ -46,7 +51,7 @@ class GaussianRBF(torch.nn.Module):
             self.gamma = torch.nn.Parameter(torch.Tensor([alpha]))
         self.gamma.requires_grad = True
         self.return_numpy = return_numpy
-        
+
     def forward(self, x):
         if type(x) == np.ndarray:
             x = torch.from_numpy(x)
@@ -63,6 +68,7 @@ class GaussianRBF(torch.nn.Module):
         else:
             return y
 
+
 class Swish(torch.nn.Module):
     '''
     Example of  activation function with learnable parameters but WITHOUT .backward() method
@@ -75,7 +81,8 @@ class Swish(torch.nn.Module):
     (N,) numpy array or torch tensor of dimension N
     Output: (N,) torch tensor of dimension N
     '''
-    def __init__(self,beta=None,return_numpy=False):
+
+    def __init__(self, beta=None, return_numpy=False):
         super().__init__()
         if beta == None:
             self.beta = torch.nn.Parameter(torch.Tensor([0.1]))
@@ -83,7 +90,7 @@ class Swish(torch.nn.Module):
             self.beta = torch.nn.Parameter(torch.Tensor([beta]))
         self.beta.requires_grad = True
         self.return_numpy = return_numpy
-        
+
     def forward(self, x):
         if type(x) == np.ndarray:
             x = torch.from_numpy(x)
@@ -95,11 +102,13 @@ class Swish(torch.nn.Module):
         else:
             return y
 
+
 class Tanh(torch.nn.Module):
-    def __init__(self,return_numpy=False):
+    def __init__(self, return_numpy=False):
         super().__init__()
         self.return_numpy = return_numpy
-    def forward(self,x):
+
+    def forward(self, x):
         if type(x) == np.ndarray:
             x = torch.from_numpy(x)
         assert type(x) == torch.Tensor, "Only numpy array or torch tensor are supported"
@@ -109,11 +118,13 @@ class Tanh(torch.nn.Module):
         else:
             return y
 
+
 class ReLU(torch.nn.Module):
-    def __init__(self,return_numpy=False):
+    def __init__(self, return_numpy=False):
         super().__init__()
         self.return_numpy = return_numpy
-    def forward(self,x):
+
+    def forward(self, x):
         if type(x) == np.ndarray:
             x = torch.from_numpy(x)
         assert type(x) == torch.Tensor, "Only numpy array or torch tensor are supported"
@@ -123,11 +134,13 @@ class ReLU(torch.nn.Module):
         else:
             return y
 
+
 class Sigmoid(torch.nn.Module):
-    def __init__(self,return_numpy=False):
+    def __init__(self, return_numpy=False):
         super().__init__()
         self.return_numpy = return_numpy
-    def forward(self,x):
+
+    def forward(self, x):
         if type(x) == np.ndarray:
             x = torch.from_numpy(x)
         assert type(x) == torch.Tensor, "Only numpy array or torch tensor are supported"
@@ -137,11 +150,13 @@ class Sigmoid(torch.nn.Module):
         else:
             return y
 
+
 class Identity(torch.nn.Module):
-    def __init__(self,return_numpy=False):
+    def __init__(self, return_numpy=False):
         super().__init__()
         self.return_numpy = return_numpy
-    def forward(self,x):
+
+    def forward(self, x):
         if type(x) == np.ndarray:
             x = torch.from_numpy(x)
         assert type(x) == torch.Tensor, "Only numpy array or torch tensor are supported"
@@ -151,7 +166,8 @@ class Identity(torch.nn.Module):
         else:
             return y
 
-#TODO learnable and .backward() activation function
+# TODO learnable and .backward() activation function
+
 
 '''x = torch.Tensor([-1.2,0.,3.5])
 

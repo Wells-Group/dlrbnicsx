@@ -2,33 +2,36 @@ import torch
 import numpy as np
 from dlrbnicsx.activation_function.activation_function_factory import Tanh, Swish, GaussianRBF
 
+
 class HiddenLayersNet(torch.nn.Module):
     '''
     Inputs:
         dim_in: int, Number of input parameters
-        dim_hidden_layers: List with length = number of hidden layers and the number of neurons in each hidden layer
-        dim_out: int, Number of output parameters
+        dim_hidden_layers: List with length = number of hidden layers
+        and the number of neurons in each hidden layer dim_out: int,
+        Number of output parameters
         activation_function: torch.nn.Module, activation function
-        return_numpy: bool, Default False. If True the result will be returned in numpy format, 
+        return_numpy: bool, Default False. If True the result will be returned in numpy format,
         include_bias: bool, Default True. If True bias will be added in the linear layers.
     '''
+
     def __init__(self, dim_in, dim_hidden_layers, dim_out, activation_function, return_numpy=False, include_bias=True):
-        #Initialisation of class
+        # Initialisation of class
         super().__init__()
         linear_layers = torch.nn.ModuleList()
         ann_dims = torch.nn.ModuleList()
         ann_dims = dim_hidden_layers
-        ann_dims.insert(0,dim_in)
-        ann_dims.insert(len(ann_dims),dim_out)
+        ann_dims.insert(0, dim_in)
+        ann_dims.insert(len(ann_dims), dim_out)
         del dim_hidden_layers
         for i in range(len(ann_dims)-1):
-            linear_layers.append(torch.nn.Linear(ann_dims[i],ann_dims[i+1], bias=include_bias))
+            linear_layers.append(torch.nn.Linear(ann_dims[i], ann_dims[i+1], bias=include_bias))
         self.linear_layers = linear_layers
         self.activation_function = activation_function
         self.return_numpy = return_numpy
-    
+
     def forward(self, x):
-        #Return the result of forward pass
+        # Return the result of forward pass
         if type(x) == np.ndarray:
             x = torch.from_numpy(x).to(torch.float32)
         result = x
@@ -41,17 +44,21 @@ class HiddenLayersNet(torch.nn.Module):
         return result
 
 # TODO Implement ConvNet based demos and identify common Initialisation and pattern like for HiddenLayersNet
+
+
 class ConvNet(torch.nn.Module):
     def __init__(self):
         super().__init__()
-        self.conv1 = torch.nn.Conv2d(10,32,3,1) # TODO First argument (index 0) here corresponds to channel size
-        self.conv2 = torch.nn.Conv2d(32,64,3,1)
-        self.dropout1 = torch.nn.Dropout2d(0.25) # TODO inplace argument, NOTE trainign is not set here as in the train_nn and validate_nn and online_nn functions relevant model parameters are set
-        self.dropout2 = torch.nn.Dropout(0.50) # NOTE Dropout instead of Dropout2d for flattened data for compatibility in future relases
+        self.conv1 = torch.nn.Conv2d(10, 32, 3, 1)  # TODO First argument (index 0) here corresponds to channel size
+        self.conv2 = torch.nn.Conv2d(32, 64, 3, 1)
+        # TODO inplace argument, NOTE trainign is not set here as in the train_nn and validate_nn and online_nn functions relevant model parameters are set
+        self.dropout1 = torch.nn.Dropout2d(0.25)
+        # NOTE Dropout instead of Dropout2d for flattened data for compatibility in future relases
+        self.dropout2 = torch.nn.Dropout(0.50)
         self.fc1 = torch.nn.Linear(9216, 128)
-        self.fc2 = torch.nn.Linear(128,10)
+        self.fc2 = torch.nn.Linear(128, 10)
 
-    def forward(self,x):
+    def forward(self, x):
         print(x.shape)
         x = self.conv1(x)
         print(x.shape)
@@ -61,11 +68,11 @@ class ConvNet(torch.nn.Module):
         print(x.shape)
         x = torch.nn.functional.relu(x)
         print(f"Before max pool: {x.shape}")
-        x = torch.nn.functional.max_pool2d(x,2)
+        x = torch.nn.functional.max_pool2d(x, 2)
         print(f"After max pool: {x.shape}")
         x = self.dropout1(x)
         print(x.shape)
-        x = torch.flatten(x,1)
+        x = torch.flatten(x, 1)
         print(x.shape)
         x = self.fc1(x)
         print(x.shape)

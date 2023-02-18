@@ -18,6 +18,8 @@ import rbnicsx.test
 
 # 2. FEM formulation on reference / undeformed domain
 # TODO VVIP : Since FunctionSpace and dx are defined in ProblemBase and not in ProblemOnDeformedDomain, does dx and trial test function solve problem on the deformed domain?
+
+
 class ProblemBase(abc.ABC):
     """Define a linear problem, and solve it with KSP."""
 
@@ -102,7 +104,8 @@ class ProblemBase(abc.ABC):
         """Solve the linear problem with KSP."""
         A = self._assemble_matrix()
         F = self._assemble_vector()
-        solution = (dolfinx.fem.petsc.LinearProblem(self._a, self._f, bcs=self._bcs, petsc_options={"ksp_type": "preonly", "pc_type": "lu"})).solve()
+        solution = (dolfinx.fem.petsc.LinearProblem(self._a, self._f, bcs=self._bcs,
+                    petsc_options={"ksp_type": "preonly", "pc_type": "lu"})).solve()
         '''ksp = petsc4py.PETSc.KSP()
         ksp.create(mesh.comm)
         ksp.setOperators(A)

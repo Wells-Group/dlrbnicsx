@@ -19,6 +19,8 @@ import rbnicsx.test
 from problems.problem_reference import ProblemBase
 
 # 1. Geometric parametrization
+
+
 class HarmonicExtension(rbnicsx.backends.MeshMotion):
     """Extend the shape parametrization from the boundary to the interior with an harmonic extension."""
     # TODO Ask Francesco: 1. Reset reference?? 2. Is mesh from global variable
@@ -52,11 +54,11 @@ class HarmonicExtension(rbnicsx.backends.MeshMotion):
         mD_4.interpolate(lambda x: (mu[0] * x[0], mu[1] * x[1]))
         mD_5 = dolfinx.fem.Function(M)
         mD_5.interpolate(lambda x: (mu[0] * x[0], mu[1] * x[1]))
-        bc_1 = dolfinx.fem.dirichletbc(mD_1,dofs_bc_1)
-        bc_2 = dolfinx.fem.dirichletbc(mD_2,dofs_bc_2)
-        bc_3 = dolfinx.fem.dirichletbc(mD_3,dofs_bc_3)
-        bc_4 = dolfinx.fem.dirichletbc(mD_4,dofs_bc_4)
-        bc_5 = dolfinx.fem.dirichletbc(mD_5,dofs_bc_5)
+        bc_1 = dolfinx.fem.dirichletbc(mD_1, dofs_bc_1)
+        bc_2 = dolfinx.fem.dirichletbc(mD_2, dofs_bc_2)
+        bc_3 = dolfinx.fem.dirichletbc(mD_3, dofs_bc_3)
+        bc_4 = dolfinx.fem.dirichletbc(mD_4, dofs_bc_4)
+        bc_5 = dolfinx.fem.dirichletbc(mD_5, dofs_bc_5)
         bcs_he = [bc_1, bc_2, bc_3, bc_4, bc_5]
         # Assemble the left-hand side matrix of the harmonic extension problem
         A = dolfinx.fem.petsc.assemble_matrix(a_he_cpp, bcs=bcs_he)
@@ -82,10 +84,12 @@ class HarmonicExtension(rbnicsx.backends.MeshMotion):
         super().__init__(mesh, shape_parametrization)
 
 # 3. FEM formulation on deformed domain
+
+
 class ProblemOnDeformedDomain(ProblemBase):
     """Solve the problem on the deformed domain obtained by harmonic extension."""
 
-    def __init__(self,mesh, subdomains, boundaries) -> None:
+    def __init__(self, mesh, subdomains, boundaries) -> None:
         super().__init__(mesh, subdomains, boundaries)
         # Get trial and test functions
         u, v = self.trial_and_test
@@ -98,8 +102,8 @@ class ProblemOnDeformedDomain(ProblemBase):
         self._a = a
         self._a_cpp = dolfinx.fem.form(a)
         # Define linear form of the problem
-        f_term = petsc4py.PETSc.ScalarType(-6.) # TODO check it is taking correct mesh
-        f = (ufl.inner(f_term,v) * dx)
+        f_term = petsc4py.PETSc.ScalarType(-6.)  # TODO check it is taking correct mesh
+        f = (ufl.inner(f_term, v) * dx)
         self._f = f
         self._f_cpp = dolfinx.fem.form(f)
         dofs_bc_1 = dolfinx.fem.locate_dofs_topological(self.function_space, 1, boundaries.find(1))
@@ -117,13 +121,13 @@ class ProblemOnDeformedDomain(ProblemBase):
         uD_4.interpolate(lambda x: 1 + x[0]**2 + 2*x[1]**2)
         uD_5 = dolfinx.fem.Function(self.function_space)
         uD_5.interpolate(lambda x: 1 + x[0]**2 + 2*x[1]**2)
-        bc_1 = dolfinx.fem.dirichletbc(uD_1,dofs_bc_1)
-        bc_2 = dolfinx.fem.dirichletbc(uD_2,dofs_bc_2)
-        bc_3 = dolfinx.fem.dirichletbc(uD_3,dofs_bc_3)
-        bc_4 = dolfinx.fem.dirichletbc(uD_4,dofs_bc_4)
-        bc_5 = dolfinx.fem.dirichletbc(uD_5,dofs_bc_5)
+        bc_1 = dolfinx.fem.dirichletbc(uD_1, dofs_bc_1)
+        bc_2 = dolfinx.fem.dirichletbc(uD_2, dofs_bc_2)
+        bc_3 = dolfinx.fem.dirichletbc(uD_3, dofs_bc_3)
+        bc_4 = dolfinx.fem.dirichletbc(uD_4, dofs_bc_4)
+        bc_5 = dolfinx.fem.dirichletbc(uD_5, dofs_bc_5)
         bcs = [bc_1, bc_2, bc_3, bc_4, bc_5]
-        self._bcs = bcs # TODO Confirm BCs are evaluated on the deformed domain
+        self._bcs = bcs  # TODO Confirm BCs are evaluated on the deformed domain
         # Store mesh motion object used in the latest solve, to avoid having to solve
         # the harmonic extension once for computation and once for (optional) visualization.
         self._mesh_motion: typing.Optional[rbnicsx.backends.MeshMotion] = None
@@ -162,9 +166,10 @@ class ProblemOnDeformedDomain(ProblemBase):
         with HarmonicExtension(self._mesh_reference, self._subdomains_reference, self._boundaries_reference, self._mu) as self._mesh_motion:
             return super()._solve()
 
+
 if __name__ == "__main__":
     problem = ProblemOnDeformedDomain(mesh, subdomains, boundaries)
-    mu_solve = np.array([1.1,1.4])
+    mu_solve = np.array([1.1, 1.4])
     solution = problem.solve(mu_solve)
     print(solution.x.array)
 
@@ -174,7 +179,7 @@ if __name__ == "__main__":
             solution_file_xdmf.write_mesh(mesh)
             solution_file_xdmf.write_function(solution)
 
-    mu_solve = np.array([1.,1.])
+    mu_solve = np.array([1., 1.])
     solution = problem.solve(mu_solve)
     print(solution.x.array)
 

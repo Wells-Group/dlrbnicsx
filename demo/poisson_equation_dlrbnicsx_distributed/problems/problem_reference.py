@@ -18,6 +18,8 @@ import rbnicsx.test
 
 # 2. FEM formulation on reference / undeformed domain
 # TODO VVIP : Since FunctionSpace and dx are defined in ProblemBase and not in ProblemOnDeformedDomain, does dx and trial test function solve problem on the deformed domain?
+
+
 class ProblemBase(abc.ABC):
     """Define a linear problem, and solve it with KSP."""
 
@@ -102,7 +104,8 @@ class ProblemBase(abc.ABC):
         """Solve the linear problem with KSP."""
         A = self._assemble_matrix()
         F = self._assemble_vector()
-        solution = (dolfinx.fem.petsc.LinearProblem(self._a, self._f, bcs=self._bcs, petsc_options={"ksp_type": "preonly", "pc_type": "lu"})).solve()
+        solution = (dolfinx.fem.petsc.LinearProblem(self._a, self._f, bcs=self._bcs,
+                    petsc_options={"ksp_type": "preonly", "pc_type": "lu"})).solve()
         '''
         ksp = petsc4py.PETSc.KSP()
         mesh = self._mesh_reference
@@ -118,12 +121,13 @@ class ProblemBase(abc.ABC):
         solution.vector.ghostUpdate(addv=petsc4py.PETSc.InsertMode.INSERT, mode=petsc4py.PETSc.ScatterMode.FORWARD)
         return solution
 
+
 if __name__ == "__main__":
 
     class ProblemBaseInherited(ProblemBase):
         """Solve the problem on the deformed domain obtained by harmonic extension."""
 
-        def __init__(self,mesh, subdomains, boundaries) -> None:
+        def __init__(self, mesh, subdomains, boundaries) -> None:
             super().__init__(mesh, subdomains, boundaries)
             # Get trial and test functions
             u, v = self.trial_and_test
@@ -136,8 +140,8 @@ if __name__ == "__main__":
             self._a = a
             self._a_cpp = dolfinx.fem.form(a)
             # Define linear form of the problem
-            f_term = petsc4py.PETSc.ScalarType(-6.) # TODO check it is taking correct mesh
-            f = (ufl.inner(f_term,v) * dx)
+            f_term = petsc4py.PETSc.ScalarType(-6.)  # TODO check it is taking correct mesh
+            f = (ufl.inner(f_term, v) * dx)
             self._f = f
             self._f_cpp = dolfinx.fem.form(f)
             dofs_bc_1 = dolfinx.fem.locate_dofs_topological(self.function_space, 1, boundaries.find(1))
@@ -155,13 +159,13 @@ if __name__ == "__main__":
             uD_4.interpolate(lambda x: 1 + x[0]**2 + 2*x[1]**2)
             uD_5 = dolfinx.fem.Function(self.function_space)
             uD_5.interpolate(lambda x: 1 + x[0]**2 + 2*x[1]**2)
-            bc_1 = dolfinx.fem.dirichletbc(uD_1,dofs_bc_1)
-            bc_2 = dolfinx.fem.dirichletbc(uD_2,dofs_bc_2)
-            bc_3 = dolfinx.fem.dirichletbc(uD_3,dofs_bc_3)
-            bc_4 = dolfinx.fem.dirichletbc(uD_4,dofs_bc_4)
-            bc_5 = dolfinx.fem.dirichletbc(uD_5,dofs_bc_5)
+            bc_1 = dolfinx.fem.dirichletbc(uD_1, dofs_bc_1)
+            bc_2 = dolfinx.fem.dirichletbc(uD_2, dofs_bc_2)
+            bc_3 = dolfinx.fem.dirichletbc(uD_3, dofs_bc_3)
+            bc_4 = dolfinx.fem.dirichletbc(uD_4, dofs_bc_4)
+            bc_5 = dolfinx.fem.dirichletbc(uD_5, dofs_bc_5)
             bcs = [bc_1, bc_2, bc_3, bc_4, bc_5]
-            self._bcs = bcs # TODO Confirm BCs are evaluated on the deformed domain
+            self._bcs = bcs  # TODO Confirm BCs are evaluated on the deformed domain
             # Store mesh motion object used in the latest solve, to avoid having to solve
             # the harmonic extension once for computation and once for (optional) visualization.
             self._mesh_motion: typing.Optional[rbnicsx.backends.MeshMotion] = None
@@ -203,10 +207,11 @@ if __name__ == "__main__":
     rank = comm.Get_rank()
     size = comm.Get_size()
     gdim = 2
-    mesh, subdomains, boundaries = dolfinx.io.gmshio.read_from_msh("../mesh_data/domain_poisson.msh", mpi4py.MPI.COMM_SELF, 0, gdim=gdim)
-    
+    mesh, subdomains, boundaries = dolfinx.io.gmshio.read_from_msh(
+        "../mesh_data/domain_poisson.msh", mpi4py.MPI.COMM_SELF, 0, gdim=gdim)
+
     problem = ProblemBaseInherited(mesh, subdomains, boundaries)
-    mu_solve = np.array([1.,1.])
+    mu_solve = np.array([1., 1.])
     solution = problem.solve(mu_solve)
     print(solution.x.array)
 
