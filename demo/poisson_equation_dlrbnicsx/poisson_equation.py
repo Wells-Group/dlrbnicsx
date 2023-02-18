@@ -1,35 +1,33 @@
-import matplotlib.pyplot as plt
 import abc
 import itertools
 import typing
 
 import dolfinx.fem
 import dolfinx.io
-import gmsh
-import mpi4py.MPI
+import matplotlib.pyplot as plt
 import numpy as np
-import numpy.typing
 import petsc4py.PETSc
-import plotly.graph_objects as go
-import ufl
-
 import rbnicsx.backends
 import rbnicsx.online
 import rbnicsx.test
-
+import ufl
+from mpi4py import MPI
+from problems.problem_parametrized import ProblemOnDeformedDomain
 from problems.problem_reference import ProblemBase
-from problems.problem_parametrized import HarmonicExtension, ProblemOnDeformedDomain
 
-from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
 from dlrbnicsx.activation_function.activation_function_factory import Tanh
 from dlrbnicsx.dataset.custom_dataset import CustomDataset
 from dlrbnicsx.interface.wrappers import DataLoader
-from dlrbnicsx.train_validate_test.train_validate_test import train_nn, validate_nn, online_nn, error_analysis
+from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
+from dlrbnicsx.train_validate_test.train_validate_test import (error_analysis,
+                                                               online_nn,
+                                                               train_nn,
+                                                               validate_nn)
 
 # Import mesh in dolfinx
 gdim = 2
 mesh, subdomains, boundaries = dolfinx.io.gmshio.read_from_msh(
-    "mesh_data/domain_poisson.msh", mpi4py.MPI.COMM_WORLD, 0, gdim=gdim)
+    "mesh_data/domain_poisson.msh", MPI.COMM_WORLD, 0, gdim=gdim)
 
 # 4. Proper Orthogonal Decomposition
 
@@ -76,10 +74,11 @@ class PODANNReducedProblem(abc.ABC):
     @property
     def inner_product_action(self) -> typing.Callable[  # type: ignore[no-any-unimported]
             [dolfinx.fem.Function], typing.Callable[[dolfinx.fem.Function], petsc4py.PETSc.RealType]]:
-        """
-        Return the action of the bilinear form that defines the inner product associated to this reduced problem.
+        """Return the action of the bilinear form that defines the inner
+        product associated to this reduced problem.
 
-        This inner product is used to define the notion of orthogonality employed during the offline stage.
+        This inner product is used to define the notion of orthogonality
+        employed during the offline stage.
         """
         return self._inner_product_action
 
@@ -140,7 +139,7 @@ def generate_ann_output_set(problem, reduced_problem, N, input_file_path, output
     input_set = np.load(input_file_path)
     output_set = np.empty([input_set.shape[0], N])
     for i in range(input_set.shape[0]):
-        if mode == None:
+        if mode is None:
             print(f"Parameter number {i+1} of {input_set.shape[0]}: {input_set[i,:]}")
         else:
             print(f"{mode} parameter number {i+1} of {input_set.shape[0]}: {input_set[i,:]}")
@@ -218,13 +217,15 @@ input_error_analysis_set_filepath = "ann_data/input_error_analysis_data.npy"
 generate_ann_input_set(input_training_set_filepath, samples=[10, 10])
 generate_ann_output_set(problem, reduced_problem, Nmax, input_training_set_filepath,
                         output_training_set_filepath, mode="Training")
-customDataset = CustomDataset(problem, reduced_problem, Nmax, input_training_set_filepath, output_training_set_filepath)
+customDataset = CustomDataset(problem, reduced_problem, Nmax, input_training_set_filepath,
+                              output_training_set_filepath)
 train_dataloader = DataLoader(customDataset, batch_size=20, shuffle=True)
 
 print("\n")
 
-reduced_problem.output_range[0], reduced_problem.output_range[1] = np.min(np.load(output_training_set_filepath)), np.max(
-    np.load(output_training_set_filepath))  # NOTE Updating output_range based on the computed values instead of user guess.
+# NOTE Updating output_range based on the computed values instead of user guess.
+reduced_problem.output_range[0] = np.min(np.load(output_training_set_filepath))
+reduced_problem.output_range[1] = np.max(np.load(output_training_set_filepath))
 
 print("\n")
 
@@ -243,14 +244,15 @@ training_loss = list()
 validation_loss = list()
 
 max_epochs = 20000
+min_validation_loss = None
 for epochs in range(max_epochs):
     print(f"Epoch: {epochs+1}/{max_epochs}")
     current_training_loss = train_nn(reduced_problem, train_dataloader, model)
     training_loss.append(current_training_loss)
-    current_validation_loss = validate_nn(reduced_problem, valid_dataloader, model)
-    validation_loss.append(current_validation_loss)
+    vloss = validate_nn(reduced_problem, valid_dataloader, model)
+    validation_loss.append(vloss)
     # 1% safety margin against min_validation_loss before invoking eraly stopping criteria
-    if epochs > 0 and current_validation_loss > 1.01 * min_validation_loss and reduced_problem.regularisation == "EarlyStopping":
+    if epochs > 0 and vloss > 1.01 * min_validation_loss and reduced_problem.regularisation == "EarlyStopping":
         print(f"Early stopping criteria invoked at epoch: {epochs+1}")
         break
     min_validation_loss = min(validation_loss)
@@ -275,13 +277,13 @@ rb_solution = reduced_problem.reconstruct_solution(
     online_nn(reduced_problem, problem, online_mu, model, Nmax, device=None))
 
 with problem.mesh_motion:
-    with dolfinx.io.XDMFFile(mpi4py.MPI.COMM_WORLD, "solution_poisson/fem_solution_online_mu.xdmf", "w") as fem_solution_file_xdmf:
+    with dolfinx.io.XDMFFile(MPI.COMM_WORLD, "solution/fem_online_mu.xdmf", "w") as file:
         fem_solution.x.scatter_forward()
-        fem_solution_file_xdmf.write_mesh(mesh)
-        fem_solution_file_xdmf.write_function(fem_solution)
+        file.write_mesh(mesh)
+        file.write_function(fem_solution)
 
 with problem.mesh_motion:
-    with dolfinx.io.XDMFFile(mpi4py.MPI.COMM_WORLD, "solution_poisson/rb_solution_online_mu.xdmf", "w") as rb_solution_file_xdmf:
+    with dolfinx.io.XDMFFile(MPI.COMM_WORLD, "solution/rb_online_mu.xdmf", "w") as file:
         rb_solution.x.scatter_forward()
-        rb_solution_file_xdmf.write_mesh(mesh)
-        rb_solution_file_xdmf.write_function(rb_solution)
+        file.write_mesh(mesh)
+        file.write_function(rb_solution)
