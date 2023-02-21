@@ -11,11 +11,9 @@ class CustomDataset(Dataset):
                  output_scaling_range=None, input_range=None,
                  output_range=None):
         '''
-        problem: FEM problem with attibutes:
-            solve: method to compute full order model solution
+        problem: FEM problem
 
         reduced_problem: reduced problem with attributes:
-            project_snapshot: Project FEM solution on the reduced basis space
             input_scaling_range: (2,num_para) np.ndarray, row 0 are the
                 SCALED INPUT min_values and row 1 are the SCALED INPUT
                 max_values
@@ -214,3 +212,5 @@ if __name__ == "__main__":
         print(f"Testing set requires grad: {y.requires_grad}")
         # print(f"y: {y}")
         break
+
+# TODO Are problem and N arguments necessary to customdataset?

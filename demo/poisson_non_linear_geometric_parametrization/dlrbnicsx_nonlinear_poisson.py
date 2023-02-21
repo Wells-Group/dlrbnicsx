@@ -210,6 +210,7 @@ problem_parametric = ProblemOnDeformedDomain(mesh, cell_tags,
 solution_mu = problem_parametric.solve(mu)
 
 computed_file = "dlrbnicsx_solution_nonlinear_poisson/solution_computed.xdmf"
+
 with CustomMeshDeformation(mesh, facet_tags,
                            problem_parametric._boundary_markers,
                            problem_parametric._bcs_geometric, mu,
