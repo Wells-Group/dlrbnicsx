@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from dlrbnicsx.activation_function.activation_function_factory import Tanh, Swish, GaussianRBF
+from dlrbnicsx.activation_function.activation_function_factory import Tanh
 
 
 class HiddenLayersNet(torch.nn.Module):
@@ -15,7 +15,8 @@ class HiddenLayersNet(torch.nn.Module):
         include_bias: bool, Default True. If True bias will be added in the linear layers.
     '''
 
-    def __init__(self, dim_in, dim_hidden_layers, dim_out, activation_function, return_numpy=False, include_bias=True):
+    def __init__(self, dim_in, dim_hidden_layers, dim_out,
+                 activation_function, return_numpy=False, include_bias=True):
         # Initialisation of class
         super().__init__()
         linear_layers = torch.nn.ModuleList()
@@ -25,7 +26,9 @@ class HiddenLayersNet(torch.nn.Module):
         ann_dims.insert(len(ann_dims), dim_out)
         del dim_hidden_layers
         for i in range(len(ann_dims)-1):
-            linear_layers.append(torch.nn.Linear(ann_dims[i], ann_dims[i+1], bias=include_bias))
+            linear_layers.append(torch.nn.Linear
+                                 (ann_dims[i], ann_dims[i+1],
+                                  bias=include_bias))
         self.linear_layers = linear_layers
         self.activation_function = activation_function
         self.return_numpy = return_numpy
@@ -39,7 +42,7 @@ class HiddenLayersNet(torch.nn.Module):
         for i in range(len(linear_layers)-1):
             result = self.activation_function(self.linear_layers[i](result))
         result = self.linear_layers[len(linear_layers)-1](result)
-        if self.return_numpy == True:
+        if self.return_numpy is True:
             result = result.detach().numpy()
         return result
 
@@ -49,11 +52,15 @@ class HiddenLayersNet(torch.nn.Module):
 class ConvNet(torch.nn.Module):
     def __init__(self):
         super().__init__()
-        self.conv1 = torch.nn.Conv2d(10, 32, 3, 1)  # TODO First argument (index 0) here corresponds to channel size
+        self.conv1 = torch.nn.Conv2d(10, 32, 3, 1)
+        # TODO First argument (index 0) above corresponds to channel size
         self.conv2 = torch.nn.Conv2d(32, 64, 3, 1)
-        # TODO inplace argument, NOTE trainign is not set here as in the train_nn and validate_nn and online_nn functions relevant model parameters are set
+        # TODO inplace argument,
+        # NOTE training is not set here as in the train_nn and validate_nn
+        # and online_nn functions relevant model parameters are set
         self.dropout1 = torch.nn.Dropout2d(0.25)
-        # NOTE Dropout instead of Dropout2d for flattened data for compatibility in future relases
+        # NOTE Dropout instead of Dropout2d for flattened data for
+        # compatibility in future relases
         self.dropout2 = torch.nn.Dropout(0.50)
         self.fc1 = torch.nn.Linear(9216, 128)
         self.fc2 = torch.nn.Linear(128, 10)
@@ -87,22 +94,26 @@ class ConvNet(torch.nn.Module):
         return output
 
 
-'''
-input_parameter_set = np.ones([16,7]).astype("f")
+if __name__ == "__main__":
 
-model = HiddenLayersNet(input_parameter_set.shape[1], [4,22,8,90], 10, Tanh())
-model(input_parameter_set)
-print(type(model(input_parameter_set)))
+    input_parameter_set = np.ones([16, 7]).astype("f")
 
-model = HiddenLayersNet(input_parameter_set.shape[1], [4,22,8,90], 10, Tanh(), return_numpy=True)
-print(type(model(input_parameter_set)))
+    model = HiddenLayersNet(input_parameter_set.shape[1], [4, 22, 8, 90],
+                            10, Tanh())
+    model(input_parameter_set)
+    print(type(model(input_parameter_set)))
 
-for param in model.parameters():
-    print(param.data.dtype)
-print(input_parameter_set.dtype)
+    model = HiddenLayersNet(input_parameter_set.shape[1], [4, 22, 8, 90],
+                            10, Tanh(), return_numpy=True)
+    print(type(model(input_parameter_set)))
 
-NOTE for CNN:
-model = ConvNet()
-model.forward(torch.randn(3,10,28,28)) # NOTE input should be in the form (batchsize, channels, height, width), second argument (index 1) here corresponds to channel size and it should match in_channel in ConvNet class initilisation
-'''
-# NOTE np.float64 or torch.float32 datatype error. See above: astype("f")
+    for param in model.parameters():
+        print(param.data.dtype)
+    print(input_parameter_set.dtype)
+
+    # NOTE for CNN:
+    model = ConvNet()
+    model.forward(torch.randn(3, 10, 28, 28))
+    # NOTE input should be in the form (batchsize, channels, height, width),
+    # second argument (index 1) here corresponds to channel size and it should
+    # match in_channel in ConvNet class initilisation

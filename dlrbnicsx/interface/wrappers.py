@@ -1,6 +1,6 @@
 import torch
-import torch.distributed as dist
-import torch.multiprocessing as mp
+import torch.distributed as dist  # noqa: F401
+import torch.multiprocessing as mp  # noqa: F401
 
 
 class DataLoader(torch.utils.data.DataLoader):
