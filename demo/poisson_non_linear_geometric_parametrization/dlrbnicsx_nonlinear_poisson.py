@@ -368,9 +368,11 @@ customDataset = CustomDataset(problem_parametric, reduced_problem,
                               output_validation_set_filepath)
 valid_dataloader = DataLoader(customDataset, shuffle=False)
 
+# ANN model
 model = HiddenLayersNet(training_set.shape[1], [30, 30, 30, 30, 30, 30],
                         len(reduced_problem._basis_functions), Tanh())
 
+# Training of ANN
 training_loss = list()
 validation_loss = list()
 
@@ -409,6 +411,7 @@ for i in range(error_analysis_set.shape[0]):
                                     online_nn, device=None)
     print(f"Error: {error_numpy[i]}")
 
+# Online phase at parameter online_mu
 online_mu = np.array([0.25, -0.3, 2.5])
 fem_solution = problem_parametric.solve(online_mu)
 rb_solution = \
