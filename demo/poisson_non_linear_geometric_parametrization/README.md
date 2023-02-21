@@ -17,7 +17,7 @@ The reference domain considered in this problem is the unit square with boundari
 * **Mesh and boundary markers**: 1: Bottom boundary, 2: Right boundary, 3: Top boundary, 4: Left boundary
 ![alt text](https://github.com/Wells-Group/dlrbnicsx/blob/main/demo/poisson_non_linear_geometric_parametrization/mesh_data/mesh_boundaries.png)
 
-The domain $\Omega$ is parametrized by 3 geometric parameters $\mu = \lbrace \mu_0, \mu_1, \mu_2 \rbrace$. These parameters are used ot deform the domain. The parameters $\mu_0$ and $\mu_1$ are used to deform the bottom and top boundaries. Specifically, the deformations applied are:
+The domain $\Omega$ is parametrized by 3 geometric parameters $\mu = \lbrace \mu_0, \mu_1, \mu_2 \rbrace$. These parameters are used to deform the domain. The parameters $\mu_0$ and $\mu_1$ are used to deform the bottom and top boundaries. Specifically, the deformations applied are:
 $$\text{On } \Gamma_1:  \left(0, \mu_0 sin(x \pi) \right)$$
 $$\text{On } \Gamma_3:  \left(0, -\mu_1 sin(x \pi) \right)$$
 
