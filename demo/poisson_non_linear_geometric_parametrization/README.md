@@ -30,13 +30,16 @@ $$\text{On } \Omega: \left( (\mu_2 - 1)x, 0 \right)$$
 ### 2. Implementation
 
 * **Mesh deformation**
+
 For the mesh deformation, first, the boundary deformation are applied on the boundaries $\Gamma_1$ and $\Gamma_3$. The harmonic extension is used to compute the shape parametrization corressponding to the deformation on the boundaries $\Gamma_1$ and $\Gamma_3$. The domain is then stretched along x-direction by factor $\mu_2$. The computed shape parametrization is then applied to the stretched domain. The mesh deformation is performed using [MDFEniCSx](https://github.com/niravshah241/mdfenicsx).
 
 * **Finite element**
+
 Finite element implementation is performed using dolfinx (dolfinx_nonlinear_poisson.py). It demonstrates the computation of single finite element solution at given parameter $\mu$.
 
 * **POD-ANN implementation**
-We use rbnicsx for POD and dlrbnicsx for ANN. First, ```CustomMeshDeformation``` class is created based on MDFEniCSx. Next, the ```ProblemOnDeformedDomain``` class, with ```solve``` method, is created to compute the finite element solution at given parameter $\mu$. The ```PODANNReducedProblem``` class, with ```project_snapshot``` method, is used to project the computed finite element solution at parameter $\mu$, on the reduced basis space. ```PODANNReducedProblem``` class also contains attributes ```input_scaling_range```, ```output_scaling_range```, ```input_range``` and ```output_range``` which are used for scaling of the training set. ```PODANNReducedProblem``` also contains attributes ```optimizer```, ```learning_rate```, ```loss_fn``` and ```regularisation``` which are used during training and validation.
+
+We use rbnicsx for POD and dlrbnicsx for ANN. First, ```CustomMeshDeformation``` class is created based on MDFEniCSx. Next, the ```ProblemOnDeformedDomain``` class, with ```solve``` method, is created to compute the finite element solution at given parameter $\mu$. The ```PODANNReducedProblem``` class, with ```project_snapshot``` method, is used to project the computed finite element solution at parameter $\mu$, on the reduced basis space. ```PODANNReducedProblem``` class also contains attributes ```input_scaling_range```, ```output_scaling_range```, ```input_range``` and ```output_range``` which are used for scaling of the training set. ```PODANNReducedProblem``` also contains attributes ```optimizer```, ```learning_rate```, ```loss_fn``` and ```regularisation``` which are used during training and validation of ANN.
 
 After initialisation of the classes, POD is performed on the snapshot matrix. The snapshot matrix is constructed by computing finite element solution at each of the parameters given by ```generate_training_set```. Next, input training and validation dataset is created by sampling input parameters from the parameter set using ```generate_ann_input_set```. The output training and validation dataset is created using ```generate_ann_output_set``` which primarily used the ```solve``` method from ```ProblemOnDeformedDomain``` class and ```project_snapshot``` method from ```PODANNReducedProblem``` class.
 
