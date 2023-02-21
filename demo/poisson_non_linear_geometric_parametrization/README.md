@@ -3,6 +3,7 @@
 We consider **Geometrically parametrized Nonlinear Poisson equation**:
 
 $$ - \nabla \cdot \left( exp(u (\mu))  \nabla (u(\mu))\right) = s \ \text{in} \ \Omega \ ,$$
+
 $$u_D = u \ \text{on} \ \partial \Omega \ .$$
 
 The source term $s$ is adjusted to reproduce the **actual solution** $u$:
