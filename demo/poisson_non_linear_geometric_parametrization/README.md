@@ -25,4 +25,4 @@ $$\text{On } \Gamma_3:  \left(0, -\mu_1 sin(x \pi) \right)$$
 The parameter $\mu_2$ is used to stretch the domain along x directions. Specifically, the deformation applied is:
 $$\text{On } \Omega: \left( (\mu_2 - 1)x, 0 \right)$$
 
-For the mesh deformation, first, the boundary deformation are applied on the boundaries $\Gamma_1$ and $\Gamma_3$. The harmonic extension is used to compute the shape parametrization corressponding to the deformation on the boundaries $\Gamma_1$ and $\Gamma_3$. The domain is then stretched along x-direction by factor $\mu_2$. The computed shape parametrization is then applied to the stretched domain.
+For the mesh deformation, first, the boundary deformation are applied on the boundaries $\Gamma_1$ and $\Gamma_3$. The harmonic extension is used to compute the shape parametrization corressponding to the deformation on the boundaries $\Gamma_1$ and $\Gamma_3$. The domain is then stretched along x-direction by factor $\mu_2$. The computed shape parametrization is then applied to the stretched domain. The mesh deformation is performed using [MDFEniCSx](https://github.com/niravshah241/mdfenicsx).
