@@ -101,19 +101,21 @@ if __name__ == "__main__":
     model = HiddenLayersNet(input_parameter_set.shape[1], [4, 22, 8, 90],
                             10, Tanh())
     model(input_parameter_set)
-    print(type(model(input_parameter_set)))
+    print(f"Input data type: {type(model(input_parameter_set))}")
 
     model = HiddenLayersNet(input_parameter_set.shape[1], [4, 22, 8, 90],
                             10, Tanh(), return_numpy=True)
-    print(type(model(input_parameter_set)))
+    ann_pred = model(input_parameter_set)
+    print(f"Neural network prediction shape: {ann_pred.shape}")
+    print(f"Neural network prediction type: {type(ann_pred)}")
 
     for param in model.parameters():
-        print(param.data.dtype)
-    print(input_parameter_set.dtype)
+        print(f"Shape of hyperparameter {param.data.shape} " +
+              f"and dtype {param.data.dtype}")
 
     # NOTE for CNN:
-    model = ConvNet()
-    model.forward(torch.randn(3, 10, 28, 28))
+    # model = ConvNet()
+    # model.forward(torch.randn(3, 10, 28, 28))
     # NOTE input should be in the form (batchsize, channels, height, width),
     # second argument (index 1) here corresponds to channel size and it should
     # match in_channel in ConvNet class initilisation
