@@ -108,10 +108,10 @@ def validate_nn(reduced_problem, dataloader, model, device=None,
     Inputs:
         reduced_problem: Reduced problem with attributes:
             loss_fn: loss function name (str)
-        dataloder: dataloder of input dataset
+        dataloader: dataloader of input dataset
             (dlrbnicsx.dataset.custom_dataset.DataLoader)
         model: Neural network
-        (dlrbnicsx.neural_network.neural_network.HiddenLayersNet)
+            (dlrbnicsx.neural_network.neural_network.HiddenLayersNet)
         device: cuda or cpu
     Output:
         loss: float, loss measured with loss_fn using given optimizer
@@ -138,7 +138,7 @@ def validate_nn(reduced_problem, dataloader, model, device=None,
                                 "is not implemented")
     # num_batches = len(dataloader)
     model.eval()  # NOTE
-    valid_loss = 0
+    valid_loss = torch.tensor([0.])
     with torch.no_grad():
         for X, y in dataloader:
             # X,y = X.to(device), y.to(device) # TODO
@@ -331,7 +331,7 @@ if __name__ == "__main__":
     reduced_problem = ReducedProblem()
 
     input_training_data = np.random.default_rng().uniform(0., 1.,
-                                                          (10, 4)).astype("f")
+                                                          (30, 4)).astype("f")
     output_training_data = \
         np.random.default_rng().uniform(0., 1.,
                                         (input_training_data.shape[0],
@@ -383,7 +383,7 @@ if __name__ == "__main__":
                                  output_validation_data)
     valid_dataloader = \
         torch.utils.data.DataLoader(custom_partitioned_dataset,
-                                    batch_size=100, shuffle=False)
+                                    shuffle=False)
 
     dim_in = input_training_data.shape[1]
     dim_out = output_training_data.shape[1]
@@ -400,7 +400,6 @@ if __name__ == "__main__":
         dist.all_reduce(param.data, op=dist.ReduceOp.SUM)
         print(f"Rank: {dist.get_rank()}, " +
               f"Params after all_reduce: {param.data}")
-    exit()
 
     max_epochs = 5  # 20000
 
@@ -410,9 +409,9 @@ if __name__ == "__main__":
         train_loss = train_nn(reduced_problem, train_dataloader, model)
         valid_loss = validate_nn(reduced_problem, valid_dataloader, model)
 
-    online_mu = np.random.default_rng().uniform(0., 1.,
-                                                input_training_data.shape[1])
-    online_nn(reduced_problem, problem, online_mu, model, dim_out)
+    online_mu = \
+        np.random.default_rng().uniform(0., 1., input_training_data.shape[1])
+    _ = online_nn(reduced_problem, problem, online_mu, model, dim_out)
 
     '''
     error_analysis_mu = \

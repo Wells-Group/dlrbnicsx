@@ -192,3 +192,11 @@ class Identity(torch.nn.Module):
             return y.detach().numpy()
         else:
             return y
+
+if __name__ == "__main__":
+    
+    x = np.array([2.2, 3.1, 4.3, 5.2])
+    
+    print(f"Predicted value: {SiLU()(x)}")
+    print(f"Torch value:  {torch.from_numpy(x) * torch.sigmoid(torch.from_numpy(x))}")
+    print(f"Actual value: {x * 1 / ( 1 + np.exp(-x))}")

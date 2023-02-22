@@ -147,7 +147,7 @@ if __name__ == "__main__":
             super().__init__()
 
     input_data = np.random.uniform(0., 1., [100, 17])
-    output_data = np.random.uniform(0., 1., [100, 7])
+    output_data = np.random.uniform(0., 1., [input_data.shape[0], 7])
 
     problem = Problem()
     reduced_problem = ReducedProblem(input_data.shape[1])

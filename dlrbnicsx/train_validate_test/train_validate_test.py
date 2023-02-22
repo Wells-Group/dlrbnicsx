@@ -1,9 +1,14 @@
 import torch
 import numpy as np
-import rbnicsx
+import rbnicsx.online
+
+from dlrbnicsx.dataset.custom_partitioned_dataset import CustomDataset
+from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
+from dlrbnicsx.activation_function.activation_function_factory import Tanh
 
 
-def train_nn(reduced_problem, dataloader, model, device=None, learning_rate=None, loss_func=None, optimizer=None):
+def train_nn(reduced_problem, dataloader, model, device=None,
+             learning_rate=None, loss_func=None, optimizer=None):
     '''
     Training of the Artificial Neural Network
     Inputs:
@@ -24,7 +29,8 @@ def train_nn(reduced_problem, dataloader, model, device=None, learning_rate=None
     # TODO add more loss functions including PINN
     if loss_func is None:
         if reduced_problem.loss_fn == "MSE":
-            loss_fn = torch.nn.MSELoss()  # TODO also add reduction argument
+            loss_fn = torch.nn.MSELoss()
+            # TODO also add reduction argument
         else:
             NotImplementedError(f"Loss function {reduced_problem.loss_fn}" +
                                 "is not implemented")
@@ -48,15 +54,19 @@ def train_nn(reduced_problem, dataloader, model, device=None, learning_rate=None
         if reduced_problem.optimizer == "Adam":
             optimizer = torch.optim.Adam(model.parameters(), lr=lr)
         elif reduced_problem.optimizer == "SGD":
-            optimizer = torch.optim.SGD(model.parameters(), lr=lr)  # TODO also add momentum argument
+            optimizer = torch.optim.SGD(model.parameters(), lr=lr)
+            # TODO also add momentum argument
         else:
-            NotImplementedError(f"Optimizer {reduced_problem.optimizer} is not implemented")
+            NotImplementedError(f"Optimizer {reduced_problem.optimizer} " +
+                                "is not implemented")
     else:
-        print(f"Using optimizer = {optimizer}, ignoring optimizer specified in {reduced_problem.__class__.__name__}")
+        print(f"Using optimizer = {optimizer}, ignoring optimizer " +
+              f"specified in {reduced_problem.__class__.__name__}")
         if optimizer == "Adam":
             optimizer = torch.optim.Adam(model.parameters(), lr=lr)
         elif optimizer == "SGD":
-            optimizer = torch.optim.SGD(model.parameters(), lr=lr)  # TODO also add momentum argument
+            optimizer = torch.optim.SGD(model.parameters(), lr=lr)
+            # TODO also add momentum argument
         else:
             NotImplementedError(f"Optimizer {optimizer} is not implemented")
     # TODO add L1/L2 and more rgularisations WITHOUT weight decay
@@ -73,18 +83,22 @@ def train_nn(reduced_problem, dataloader, model, device=None, learning_rate=None
 
         if batch % 1 == 0:
             current = (batch+1) * len(X)
-            print(f"Training loss: {loss.item(): >7f} [{current:>5d}]/[{dataset_size:>5d}]")
+            print(f"Training loss: {loss.item(): >7f} " +
+                  f"[{current:>5d}]/[{dataset_size:>5d}]")
     return loss.item()
 
 
-def validate_nn(reduced_problem, dataloader, model, device=None, loss_func=None):
+def validate_nn(reduced_problem, dataloader, model,
+                device=None, loss_func=None):
     '''
     Validation of the Artificial Neural Network
     Inputs:
         reduced_problem: Reduced problem with attributes:
             loss_fn: loss function name (str)
-        dataloder: dataloder of input dataset (dlrbnicsx.dataset.custom_dataset.DataLoader)
-        model: Neural network (dlrbnicsx.neural_network.neural_network.HiddenLayersNet)
+        dataloder: dataloder of input dataset
+            (dlrbnicsx.dataset.custom_dataset.DataLoader)
+        model: Neural network
+            (dlrbnicsx.neural_network.neural_network.HiddenLayersNet)
         device: cuda or cpu
     Output:
         loss: float, loss measured with loss_fn using given optimizer
@@ -96,23 +110,28 @@ def validate_nn(reduced_problem, dataloader, model, device=None, loss_func=None)
         if reduced_problem.loss_fn == "MSE":
             loss_fn = torch.nn.MSELoss()  # TODO also add reduction argument
         else:
-            NotImplementedError(f"Loss function {reduced_problem.loss_fn} is not implemented")
+            NotImplementedError(f"Loss function {reduced_problem.loss_fn} " +
+                                "is not implemented")
     else:
         print(f"Using validation loss function = {loss_func}," +
-              "ignoring loss function specified in {reduced_problem.__class__.__name__}")
+              "ignoring loss function specified in "
+              "{reduced_problem.__class__.__name__}")
         if loss_func == "MSE":
             loss_fn = torch.nn.MSELoss()  # TODO also add reduction argument
         else:
-            NotImplementedError(f"Loss function {loss_func} is not implemented")
+            NotImplementedError(f"Loss function {loss_func} " +
+                                "is not implemented")
     # num_batches = len(dataloader)
     model.eval()  # NOTE
-    valid_loss = 0
+    valid_loss = torch.tensor([0.])
     with torch.no_grad():
         for X, y in dataloader:
             # X,y = X.to(device), y.to(device) # TODO
             pred = model(X)
-            valid_loss += loss_fn(pred, y).item()/loss_fn(torch.zeros_like(y), y).item()
-    print(f"Validation loss: {valid_loss: >7f}")
+            valid_loss += \
+                loss_fn(pred, y).item() / \
+                loss_fn(torch.zeros_like(y), y).item()
+    print(f"Validation loss: {valid_loss.item(): >7f}")
     return valid_loss
 
 
@@ -182,9 +201,14 @@ def online_nn(reduced_problem, problem, online_mu, model, N, device=None,
               "ignoring output range specified in" +
               f"{reduced_problem.__class__.__name__}")
 
-    online_mu_scaled = (input_scaling_range[1] - input_scaling_range[0]) * (online_mu - input_range[0, :]) / (
-        input_range[1, :] - input_range[0, :]) + input_scaling_range[0]  # TODO Use transform from dataloader
-    online_mu_scaled_torch = torch.from_numpy(online_mu_scaled).to(torch.float32)
+    online_mu_scaled = \
+        (input_scaling_range[1] - input_scaling_range[0]) * \
+        (online_mu - input_range[0, :]) / (input_range[1, :] -
+                                           input_range[0, :]) + \
+        input_scaling_range[0]
+    # TODO Use transform from dataloader
+    online_mu_scaled_torch = \
+        torch.from_numpy(online_mu_scaled).to(torch.float32)
     with torch.no_grad():
         X = online_mu_scaled_torch
         # X = X.to(device) # TODO
@@ -242,10 +266,11 @@ def error_analysis(reduced_problem, problem, error_analysis_mu, model, N,
                                output_scaling_range, input_range,
                                output_range)
     if reconstruct_solution is None:
-        ann_reconstructed_solution = reduced_problem.reconstruct_solution(ann_prediction)
+        ann_reconstructed_solution = \
+            reduced_problem.reconstruct_solution(ann_prediction)
     else:
         print(f"Using {reconstruct_solution.__name__}," +
-              "ignoring RB to FEM solution construction specified in" +
+              "ignoring RB to FEM solution construction specified in " +
               f"{reduced_problem.__class__.__name__}")
         ann_reconstructed_solution = reconstruct_solution(ann_prediction)
     fem_solution = problem.solve(error_analysis_mu)
@@ -253,8 +278,94 @@ def error_analysis(reduced_problem, problem, error_analysis_mu, model, N,
         assert index is not None
         fem_solution = fem_solution[index]
     if norm_error is None:
-        error = reduced_problem.norm_error(fem_solution, ann_reconstructed_solution)
+        error = reduced_problem.norm_error(fem_solution,
+                                           ann_reconstructed_solution)
     else:
-        print(f"Using {norm_error.__name__}, ignoring error norm specified in {reduced_problem.__class__.__name__}")
+        print(f"Using {norm_error.__name__}, ignoring error norm " +
+              f"specified in {reduced_problem.__class__.__name__}")
         error = norm_error(fem_solution, ann_reconstructed_solution)
     return error
+
+
+if __name__ == "__main__":
+
+    class Problem(object):
+        def __init__(self):
+            super().__init__()
+
+    class ReducedProblem(object):
+        def __init__(self):
+            super().__init__()
+            self.input_range = np.vstack((0.5*np.ones([1, 4]),
+                                          np.ones([1, 4])))
+            self.output_range = [0., 1.]
+            self.input_scaling_range = [-1., 1.]
+            self.output_scaling_range = [-1., 1.]
+            self.learning_rate = 1e-4
+            self.optimizer = "Adam"
+            self.loss_fn = "MSE"
+
+    problem = Problem()
+    reduced_problem = ReducedProblem()
+
+    input_training_data = np.random.default_rng().uniform(0., 1.,
+                                                          (10, 4)).astype("f")
+    output_training_data = \
+        np.random.default_rng().uniform(0., 1.,
+                                        (input_training_data.shape[0],
+                                         6)).astype("f")
+
+    # NOTE Updating output_range based on the computed values
+    reduced_problem.output_range[0] = np.min(output_training_data)
+    reduced_problem.output_range[1] = np.max(output_training_data)
+
+    customDataset = CustomDataset(problem, reduced_problem, 10,
+                                  input_training_data, output_training_data)
+
+    train_dataloader = torch.utils.data.DataLoader(customDataset,
+                                                   batch_size=5,
+                                                   shuffle=True)
+
+    input_validation_data = \
+        np.random.default_rng().uniform(0., 1.,
+                                        (3, input_training_data.shape[1])
+                                        ).astype("f")
+    output_validation_data = \
+        np.random.default_rng().uniform(0., 1.,
+                                        (input_validation_data.shape[0],
+                                         output_training_data.shape[1])
+                                        ).astype("f")
+
+    customDataset = CustomDataset(problem, reduced_problem, 10,
+                                  input_validation_data,
+                                  output_validation_data)
+    valid_dataloader = torch.utils.data.DataLoader(customDataset,
+                                                   batch_size=100,
+                                                   shuffle=False)
+
+    dim_in = input_training_data.shape[1]
+    dim_out = output_training_data.shape[1]
+
+    model = HiddenLayersNet(dim_in, [4], dim_out, Tanh())
+
+    max_epochs = 5  # 20000
+
+    for epoch in range(max_epochs):
+        print(f"Epoch {epoch+1} of Maximum epochs {max_epochs}")
+        train_loss = train_nn(reduced_problem, train_dataloader, model)
+        valid_loss = validate_nn(reduced_problem, valid_dataloader, model)
+
+    online_mu = np.random.default_rng().uniform(0., 1.,
+                                                input_training_data.shape[1])
+    _ = online_nn(reduced_problem, problem, online_mu, model, dim_out).array
+
+    '''
+    error_analysis_mu = \
+        np.random.default_rng().uniform(0., 1.,
+                                        (30, input_training_data.shape[1]))
+    for i in range(error_analysis_mu.shape[0]):
+        error = error_analysis(reduced_problem, problem,
+                               error_analysis_mu[i,:], model,
+                               dim_out, online_nn)
+    '''
+    # TODO Dummy problem for error analysis
