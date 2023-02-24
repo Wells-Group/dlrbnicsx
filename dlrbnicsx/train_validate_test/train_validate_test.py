@@ -200,7 +200,6 @@ def online_nn(reduced_problem, problem, online_mu, model, N, device=None,
         print(f"Using output range = {output_range}," +
               "ignoring output range specified in" +
               f"{reduced_problem.__class__.__name__}")
-
     online_mu_scaled = \
         (input_scaling_range[1] - input_scaling_range[0]) * \
         (online_mu - input_range[0, :]) / (input_range[1, :] -
@@ -216,10 +215,9 @@ def online_nn(reduced_problem, problem, online_mu, model, N, device=None,
         pred_scaled_numpy = pred_scaled.detach().numpy()
         pred = (pred_scaled_numpy - output_scaling_range[0]) * \
             (output_range[1] - output_range[0]) / (output_scaling_range[1] -
-                                                   output_scaling_range[0])
-        + output_range[0]
+                                                   output_scaling_range[0]) \
+            + output_range[0]
         # TODO Use reverse_target_transform from dataloader
-        # NOTE If error occurs after flake8 corrections, check this line
         solution_reduced = rbnicsx.online.create_vector(N)
         solution_reduced.array = pred
     return solution_reduced

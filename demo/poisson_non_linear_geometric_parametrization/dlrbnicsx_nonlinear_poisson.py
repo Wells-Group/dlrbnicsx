@@ -335,7 +335,7 @@ output_validation_set_filepath = "ann_data/output_validation_data.npy"
 input_error_analysis_set_filepath = "ann_data/input_error_analysis_data.npy"
 
 # Training dataset
-generate_ann_input_set(input_training_set_filepath, samples=[5, 5, 5])
+generate_ann_input_set(input_training_set_filepath, samples=[6, 6, 6])
 generate_ann_output_set(problem_parametric, reduced_problem,
                         len(reduced_problem._basis_functions),
                         input_training_set_filepath,
@@ -357,7 +357,7 @@ customDataset = CustomDataset(problem_parametric, reduced_problem,
 train_dataloader = DataLoader(customDataset, batch_size=50, shuffle=True)
 
 # Validation dataset
-generate_ann_input_set(input_validation_set_filepath, samples=[3, 3, 3])
+generate_ann_input_set(input_validation_set_filepath, samples=[4, 4, 4])
 generate_ann_output_set(problem_parametric, reduced_problem,
                         len(reduced_problem._basis_functions),
                         input_validation_set_filepath,
@@ -370,7 +370,7 @@ customDataset = CustomDataset(problem_parametric, reduced_problem,
 valid_dataloader = DataLoader(customDataset, shuffle=False)
 
 # ANN model
-model = HiddenLayersNet(training_set.shape[1], [30, 30, 30, 30, 30, 30],
+model = HiddenLayersNet(training_set.shape[1], [30, 30, 30],
                         len(reduced_problem._basis_functions), Tanh())
 
 # Training of ANN
@@ -399,7 +399,7 @@ for epochs in range(max_epochs):
 print("\n")
 print("Generating error analysis (only input/parameters) dataset")
 print("\n")
-generate_ann_input_set(input_error_analysis_set_filepath, samples=[3, 2, 4])
+generate_ann_input_set(input_error_analysis_set_filepath, samples=[2, 2, 2])
 error_analysis_set = np.load(input_error_analysis_set_filepath)
 error_numpy = np.zeros(error_analysis_set.shape[0])
 
@@ -445,4 +445,28 @@ with CustomMeshDeformation(mesh, facet_tags,
         solution_file.write_mesh(mesh)
         solution_file.write_function(rb_solution)
 
-print(reduced_problem.output_range)
+error_function = dolfinx.fem.Function(problem_parametric._V)
+error_function.x.array[:] = \
+    fem_solution.x.array - rb_solution.x.array
+fem_rb_error_file \
+    = "dlrbnicsx_solution_nonlinear_poisson/fem_rb_error_computed.xdmf"
+with CustomMeshDeformation(mesh, facet_tags,
+                           problem_parametric._boundary_markers,
+                           problem_parametric._bcs_geometric,
+                           online_mu, reset_reference=True,
+                           is_deformation=True) as mesh_class:
+    with dolfinx.io.XDMFFile(mesh.comm, fem_rb_error_file,
+                             "w") as solution_file:
+        solution_file.write_mesh(mesh)
+        solution_file.write_function(error_function)
+
+with CustomMeshDeformation(mesh, facet_tags,
+                           problem_parametric._boundary_markers,
+                           problem_parametric._bcs_geometric,
+                           online_mu, reset_reference=True,
+                           is_deformation=True) as mesh_class:
+    print(reduced_problem.norm_error(fem_solution, rb_solution))
+    print(reduced_problem.compute_norm(error_function))
+
+print(reduced_problem.norm_error(fem_solution, rb_solution))
+print(reduced_problem.compute_norm(error_function))
