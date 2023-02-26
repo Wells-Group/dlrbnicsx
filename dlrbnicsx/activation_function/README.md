@@ -2,7 +2,7 @@
 
 This module implements different activation functions with learnable parameters. Currently, following activation functions are supported:
 
-* SiLU (Sigmoid Linear Unit)
+* SiLU (Sigmoid Linear Unit): $x * 1 / ( 1 + exp(-x))$
 * GaussianRBF (Gaussian Radial Basis Function)
 * Swish (Swish function)
 * Tanh (Hyperbolic tangent)
