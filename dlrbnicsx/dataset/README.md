@@ -13,6 +13,6 @@ This module implements abstract class ```CustomDataset```, which stores the samp
 ```
 customDataset = CustomDataset(problem, reduced_problem, N,
                                 input_data, output_data)
-train_dataloader = DataLoader(customDataset, batch_size=3, shuffle=True)
-test_dataloader = DataLoader(customDataset, batch_size=2)
+train_dataloader = DataLoader(customDataset, batch_size=training_batch_size, shuffle=bool)
+test_dataloader = DataLoader(customDataset, batch_size=testing_batch_size)
 ```
