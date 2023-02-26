@@ -1,6 +1,6 @@
 # DLRBniCSx - Dataset - Custom Dataset - Custom Dataset (Distributed)
 
-This module implements abstract class ```CustomDataset```, which stores the samples and their corresponding labels. ```CustomDataset``` contains methods:
+This module implements class ```CustomDataset```, which stores the samples and their corresponding labels. ```CustomDataset``` contains methods:
 
 * ```__len__```: Returns size of the dataset
 * ```__getitem__```: Gives $i^{th}$ SCALED sample from the dataset
@@ -13,5 +13,16 @@ This module implements abstract class ```CustomDataset```, which stores the samp
 ```
 customDataset = CustomDataset(problem, reduced_problem, N, input_data, output_data)
 train_dataloader = DataLoader(customDataset, batch_size=training_batch_size, shuffle=True)
-test_dataloader = DataLoader(customDataset, batch_size=testing_batch_size)
+test_dataloader = DataLoader(customDataset)
+```
+
+The ```CustomPartitionedDataset``` is used to distribute the dataset across different processes for distributed training. ```CustomPartitionedDataset``` is inherited from ```CustomDataset``` class, with overwritten methods:
+
+* ```__len__```: Returns size of the dataset within given process
+* ```__getitem__```: Returns $i^{th}$ SCALED sample from the dataset within given process
+
+```
+custom_partitioned_dataset = CustomPartitionedDataset(problem, reduced_problem, N, input_data, output_data)
+train_dataloader = DataLoader(custom_partitioned_dataset, batch_size=training_batch_size, shuffle=True)
+test_dataloader = DataLoader(custom_partitioned_dataset)
 ```
