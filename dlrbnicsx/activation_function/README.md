@@ -1,14 +1,14 @@
 # DLRBniCSx - Activation Function - Activation Function Factory
 
-This module implements different activation functions with learnable parameters. Currently, following activation functions are supported:
+This module implements different activation functions with learnable parameters. Currently, following activation functions are supported for given torch tensor or numpy array $x$:
 
 * SiLU (Sigmoid Linear Unit): $x * 1 / ( 1 + exp(-x))$
 * GaussianRBF (Gaussian Radial Basis Function): $exp(-\gamma * |x-x_c|**2)$
 * Swish (Swish function): $x / (1 + exp(-\beta * x))$
-* Tanh (Hyperbolic tangent)
-* ReLU (Rectified Linear Unit)
-* Sigmoid (Sigmoid function)
-* Identity (Identity function)
+* Tanh (Hyperbolic tangent): $(exp(x) - exp(-x)) / (exp(x) + exp(-x))$
+* ReLU (Rectified Linear Unit): $max(0, x)$
+* Sigmoid (Sigmoid function): $1 / ( 1 + exp(-x))$
+* Identity (Identity function): $x$
 
 The activation function is applied to a given torch tensor or numpy array, which can be used in neural network module. Consider below function for applying SiLU activation function:
 ```
