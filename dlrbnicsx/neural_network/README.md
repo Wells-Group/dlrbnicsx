@@ -1,17 +1,8 @@
 # DLRBniCSx - Dataset - Neural Network - Neural Network
 
-This module implements abstract class ```CustomDataset```, which stores the samples and their corresponding labels. ```CustomDataset``` contains methods:
+This module implements ```HiddenLayersNet``` with ```forward``` method for initializing a fully-connected Network. The activation function can be imported from ```activation_function_factory``` module. A four hidden layers network with 4, 22, 8, 90 hidden layers can be initialised as:
 
-* ```__len__```: Returns size of the dataset
-* ```__getitem__```: Gives $i^{th}$ SCALED sample from the dataset
-* ```transform```: Scaling of given INPUT data within given range
-* ```reverse_transform```: Reverse scaling of SCALED INPUT data to the original data range
-* ```transform```: Scaling of given OUTPUT data within given range
-* ```reverse_transform```: Reverse scaling of SCALED OUTPUT data to the original data range
-
-```DataLoader``` can be used to wrap an iterable around the ```CustomDataset``` to enable easy access to the samples during training and validation. Typical application of the ```CustomDataset``` is as follows:
 ```
-customDataset = CustomDataset(problem, reduced_problem, N, input_data, output_data)
-train_dataloader = DataLoader(customDataset, batch_size=training_batch_size, shuffle=True)
-test_dataloader = DataLoader(customDataset)
+input_parameter_set = np.ones([16, 7]).astype("f")
+model = HiddenLayersNet(input_parameter_set.shape[1], [4, 22, 8, 90], 10, Tanh())
 ```

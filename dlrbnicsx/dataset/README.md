@@ -10,6 +10,7 @@ This module implements class ```CustomDataset```, which stores the samples and t
 * ```reverse_transform```: Reverse scaling of SCALED OUTPUT data to the original data range
 
 ```DataLoader``` can be used to wrap an iterable around the ```CustomDataset``` to enable easy access to the samples during training and validation. Typical application of the ```CustomDataset``` is as follows:
+
 ```
 customDataset = CustomDataset(problem, reduced_problem, N, input_data, output_data)
 train_dataloader = DataLoader(customDataset, batch_size=training_batch_size, shuffle=True)
@@ -20,6 +21,8 @@ The ```CustomPartitionedDataset``` is used to distribute the dataset across diff
 
 * ```__len__```: Returns size of the dataset within given process
 * ```__getitem__```: Returns $i^{th}$ SCALED sample from the dataset within given process
+
+```DataLoader``` can be used to wrap an iterable around the ```CustomPartitionedDataset``` to enable easy access to the samples during training and validation. Typical application of the ```CustomPartitionedDataset``` is as follows:
 
 ```
 custom_partitioned_dataset = CustomPartitionedDataset(problem, reduced_problem, N, input_data, output_data)
