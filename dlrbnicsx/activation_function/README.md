@@ -1,6 +1,6 @@
 # DLRBniCSx - Activation Function - Activation Function Factory
 
-This module implements different activation functions with learnable parameters. Currently, following activation functions are supported for given torch tensor or numpy array $x$:
+This module implements different activation functions with learnable parameters ($\gamma$, $\beta$). Currently, following activation functions are supported for given torch tensor or numpy array $x$:
 
 * SiLU (Sigmoid Linear Unit): $x * 1 / ( 1 + exp(-x))$
 * GaussianRBF (Gaussian Radial Basis Function): $exp(-\gamma * |x-x_c|**2)$
