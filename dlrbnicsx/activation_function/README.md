@@ -13,5 +13,6 @@ This module implements different activation functions with learnable parameters.
 The activation function is applied to a given torch tensor or numpy array, which can be used in neural network module. Consider below function for applying SiLU activation function:
 ```
 x = np.array([2.2, 3.1, 4.3, 5.2])
-print(f"Output value: {SiLU()(x)}")
+print(f"Predicted value: {SiLU()(x)}")
+Predicted value: tensor([1.9805, 2.9664, 4.2424, 5.1715], dtype=torch.float64)
 ```
