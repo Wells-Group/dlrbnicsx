@@ -91,7 +91,7 @@ class Swish(torch.nn.Module):
     LEARNABLE shape parameter gamma and centers x_c activation function
     with non-learnable parameter
 
-    Swish(x) = 1 / (1 + exp(-beta * x))
+    Swish(x) = x / (1 + exp(-beta * x))
 
     Input:
         beta = torch.Tensor(scalar), Shape parameter (Learnable)
