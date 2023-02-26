@@ -1,6 +1,6 @@
-# DLRBniCSx - Traing Validate Test - Train Validate Test
+# DLRBniCSx - Train Validate Test - Train Validate Test (Distributed)
 
-This module implements methods for training and validation of neural network as well as online phase and error analysis of the reduced basis method.
+```train_validate_test``` implements methods for training and validation of neural network as well as online phase and error analysis of the reduced basis method.
 
 ```train_nn```: It is a method for training of the neural network.
 
@@ -20,4 +20,8 @@ This module implements methods for training and validation of neural network as 
 ```error_analysis```: It is a method for performing for measuring error between full order model solution and reduced basis solution.
 * ```error_analysis(reduced_problem, problem, error_analysis_mu, model, N, online_nn, device=None, norm_error=None, reconstruct_solution=None, input_scaling_range=None,               output_scaling_range=None, input_range=None, output_range=None, index=None)```
 
-```reduced_problem``` requires method for ```norm_error```, ```reconstruct_solution```,  ```input_scaling_range=None```, ```output_scaling_range=None```, ```input_range=None```, ```output_range=None```. If specified separately, the values specified in ```reduced_problem``` are ignored. The ```index``` argument specifies the solution on which to perform error analysis. ```problem``` require method for ```solve```. For example, in the case of Stokes's problem, if the return fields are arranged as ```(velocity, pressure)``` from ```solve``` method of the ```problem```, the ```index=0``` performs error measurement on ```velocity``` field and ```index=1``` performs error measurement on ```pressure``` field
+```reduced_problem``` requires method for ```norm_error```, ```reconstruct_solution```,  ```input_scaling_range=None```, ```output_scaling_range=None```, ```input_range=None```, ```output_range=None```. If specified separately, the values specified in ```reduced_problem``` are ignored. The ```index``` argument specifies the solution on which to perform error analysis. ```problem``` require method for ```solve```. For example, in the case of Stokes's problem, if the return fields are arranged as ```(velocity, pressure)``` from ```solve``` method of the ```problem```, the ```index=0``` performs error measurement on ```velocity``` field and ```index=1``` performs error measurement on ```pressure``` field.
+
+```train_validate_test_distributed``` implements the above methods with gradient synchronisation during ```train_nn``` and loss synchronisation during ```train_nn``` and ```validate_nn```.
+
+The ```model``` is created using ```neural_network``` while ```dataloader``` is created by iterable over ```CustomDataset``` for ```train_validate_test``` and ```CustomPartitionedDataset``` for ```train_validate_test_distributed```.
