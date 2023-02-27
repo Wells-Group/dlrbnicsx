@@ -4,15 +4,19 @@
 
 We consider **Geometrically parametrized Poisson equation**:
 
-$$ - \nabla \cdot \left( \nabla (u(\mu))\right) = s \ \text{in} \ \Omega \ ,$$
+$$ - \nabla \cdot \left( \nabla (u(\mu))\right) = s \ \text{in} \ \Omega(\mu) \ ,$$
 
-$$u_D = u \ \text{on} \ \partial \Omega \ .$$
+$$u_D = u \ \text{on} \ \partial \Omega (\mu) \ .$$
 
 The source term $s$ is adjusted to reproduce the **actual solution** $u$:
 
-$$u(\mu) = 1 + x^2 + 2 y^2 \ , \ x,y \in \Omega \ .$$
+$$u(\mu) = 1 + x^2 + 2 y^2 \ , \ x,y \in \Omega (\mu) \ .$$
 
-The reference domain $\hat{\Omega}$ considered in this problem is shown in the figure below. First a square with vertices (0, 0) -- (0, 10) -- (10, 10) -- (10, 0) is constructed. Next, bottom right quarter of the circle with center at (0, 10) and radius of 5 is cut from the square.
+First a reference domain $\hat{\Omega}$, whose configuration is known entirely, is selected. The parametric domain $\Omega$ is obtained by deforming the reference domain $\hat{\Omega}$ at given parameter $\mu$.
+
+$$\hat{\Omega} \times \mu \to \Omega \ .$$
+
+The reference domain $\hat{\Omega}$ considered in this problem is shown in the figure below. First a square with vertices (0, 0) -- (0, 10) -- (10, 10) -- (10, 0) is constructed. Next, bottom right quarter of the circle with center at (0, 10) and radius of 5 is cut from the square. The mesh is constructed on the reference domain $\hat{\Omega}$. At a given parameter $\mu$, the mesh is deformed to obtain mesh of the parametric domain $\Omega$.
 
 * **Reference domain**:
 
@@ -26,7 +30,7 @@ The domain $\Omega$ is parametrized by 2 geometric parameters $\mu = \lbrace \mu
 
 $$\text{On } \partial \hat{\Omega}: (x, y) \to (\mu_0 x, \mu_1 y) \ .$$
 
-This boundary deformation is then propagated througth the entire domain using Harmonic mesh deformation.
+This boundary deformation is then propagated inside the entire domain using Harmonic mesh deformation.
 
 ### 2. Implementation
 
