@@ -14,10 +14,12 @@ $$u(\mu) = 1 + x^2 + 2 y^2 \ , \ x,y \in \Omega \ .$$
 
 The reference domain $\hat{\Omega}$ considered in this problem is shown in the figure below. First a square with vertices (0, 0) -- (0, 10) -- (10, 10) -- (10, 0) is constructed. Next, bottom right quarter of the circle with center at (0, 10) and radius of 5 is cut from the square.
 
-* **Reference domain**: 
+* **Reference domain**:
+
 ![alt text](https://github.com/Wells-Group/dlrbnicsx/blob/main/demo/poisson/mesh_data/domain.png)
 
 * **Mesh and boundary markers**: 1: Bottom boundary, 2: Right boundary, 3: Top boundary, 4: Curved boundary, 5: Left boundary
+
 ![alt text](https://github.com/Wells-Group/dlrbnicsx/blob/main/demo/poisson/mesh_data/boundaries.png)
 
 The domain $\Omega$ is parametrized by 2 geometric parameters $\mu = \lbrace \mu_0, \mu_1 \rbrace$. These parameters are used to deform the domain. The domain boundaries are deformed as:
@@ -29,7 +31,7 @@ This boundary deformation is then propagated througth the entire domain using Ha
 
 * **Mesh deformation**
 
-The mesh harmonic deformation is performed using [MDFEniCSx](https://github.com/niravshah241/mdfenicsx).
+The harmonic mesh deformation is performed using [MDFEniCSx](https://github.com/niravshah241/mdfenicsx).
 
 * **Finite element**
 
