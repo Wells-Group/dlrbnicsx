@@ -191,6 +191,7 @@ solution_mu = problem_parametric.solve(mu)
 
 
 def generate_training_set(samples=[8, 8]):
+    # Select input samples for POD
     training_set_0 = np.linspace(0.5, 1.5, samples[0])
     training_set_1 = np.linspace(0.5, 1.5, samples[1])
     training_set = np.array(list(itertools.product(training_set_0,
@@ -198,6 +199,7 @@ def generate_training_set(samples=[8, 8]):
     return training_set
 
 
+# POD samples
 training_set = rbnicsx.io.on_rank_zero(mesh.comm, generate_training_set)
 
 Nmax = 30
@@ -205,7 +207,7 @@ Nmax = 30
 print(rbnicsx.io.TextBox("POD offline phase begins", fill="="))
 print("")
 
-print("set up snapshots matrix")
+print("Set up snapshots matrix")
 snapshots_matrix = rbnicsx.backends.FunctionsList(problem_parametric._V)
 
 print("set up reduced problem")
@@ -217,16 +219,16 @@ for (mu_index, mu) in enumerate(training_set):
     print(rbnicsx.io.TextLine(str(mu_index+1), fill="#"))
 
     print("Parameter number ", (mu_index+1), "of", training_set.shape[0])
-    print("high fidelity solve for mu =", mu)
+    print("High fidelity solve for mu =", mu)
     snapshot = problem_parametric.solve(mu)
     print(f"Solution array: {snapshot.x.array}")
 
-    print("update snapshots matrix")
+    print("Update snapshots matrix")
     snapshots_matrix.append(snapshot)
 
     print("")
 
-print(rbnicsx.io.TextLine("perform POD", fill="#"))
+print(rbnicsx.io.TextLine("Perform POD", fill="#"))
 eigenvalues, modes, _ = \
     rbnicsx.backends.\
     proper_orthogonal_decomposition(snapshots_matrix,
@@ -264,7 +266,7 @@ plt.savefig("eigenvalue_decay")
 
 
 def generate_ann_input_set(samples=[4, 4]):
-    """Generate an equispaced training set using numpy."""
+    # Select samples from the parameter space for POD
     training_set_0 = np.linspace(0.5, 1.5, samples[0])
     training_set_1 = np.linspace(0.5, 1.5, samples[1])
     training_set = np.array(list(itertools.product(training_set_0,
@@ -275,6 +277,8 @@ def generate_ann_input_set(samples=[4, 4]):
 
 def generate_ann_output_set(problem, reduced_problem, N,
                             input_set, mode=None):
+    # Solve the FE problem at given input_sets and
+    # project on the RB space
     output_set = np.zeros([input_set.shape[0], N])
     for i in range(input_set.shape[0]):
         if mode is None:
