@@ -36,7 +36,7 @@ The harmonic mesh deformation is performed using [MDFEniCSx](https://github.com/
 
 * **Finite element**
 
-Finite element implementation is performed using [FEniCSx](https://fenicsproject.org/). It demonstrates the computation of single finite element solution at given parameter set $\mu$.
+Finite element implementation is performed using [FEniCSx](https://fenicsproject.org/) (dolfinx_linear_poisson.py). It demonstrates the computation of single finite element solution at given parameter set $\mu$.
 
 * **POD-ANN implementation**
 
