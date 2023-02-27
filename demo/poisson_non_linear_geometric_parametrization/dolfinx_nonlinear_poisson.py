@@ -41,7 +41,7 @@ mesh, cell_tags, facet_tags = \
 # Mesh deformation parameters
 mu = np.array([0.3, -0.413, 4.])
 
-# Boundary conditions for harmonic mesh deformation (not for problem)
+# Boundary conditions for custom mesh deformation (not for problem)
 
 
 def u_bc_bottom(x): return (0.*x[1], mu[0]*np.sin(x[0]*np.pi))
