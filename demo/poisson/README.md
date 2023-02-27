@@ -12,7 +12,7 @@ The source term $s$ is adjusted to reproduce the **actual solution** $u$:
 
 $$u(\mu) = 1 + x^2 + 2 y^2 \ , \ x,y \in \Omega (\mu) \ .$$
 
-First a reference domain $\hat{\Omega}$, whose configuration is known entirely, is selected. The parametric domain $\Omega$ is obtained by deforming the reference domain $\hat{\Omega}$ at given parameter $\mu$.
+First a **reference domain** $\hat{\Omega}$, whose configuration is known entirely, is selected. The **parametric domain** $\Omega$ is obtained by deforming the reference domain $\hat{\Omega}$ at given parameter $\mu$.
 
 $$\hat{\Omega} \times \mu \to \Omega \ .$$
 
