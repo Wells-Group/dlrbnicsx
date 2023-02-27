@@ -42,6 +42,7 @@ class ProblemOnDeformedDomain(abc.ABC):
         self._inner_product_action = \
             rbnicsx.backends.bilinear_form_action(self._inner_product,
                                                   part="real")
+        # Define Dirichlet BC function
         self._dirichletFunc = dolfinx.fem.Function(self._V)
 
     @property
@@ -114,7 +115,7 @@ class ProblemOnDeformedDomain(abc.ABC):
 
 
 class PODANNReducedProblem(abc.ABC):
-    # Define Reduced problem on the reference problem
+    # Define Reduced problem class
     def __init__(self, problem) -> None:
         self._basis_functions = rbnicsx.backends.FunctionsList(problem._V)
         u, v = ufl.TrialFunction(problem._V), ufl.TestFunction(problem._V)
@@ -144,6 +145,7 @@ class PODANNReducedProblem(abc.ABC):
         return np.sqrt(self._inner_product_action(function)(function))
 
     def project_snapshot(self, solution, N):
+        # Project FEM solution on RB space
         return self._project_snapshot(solution, N)
 
     def _project_snapshot(self, solution, N):
@@ -164,10 +166,11 @@ class PODANNReducedProblem(abc.ABC):
         return projected_snapshot
 
     def norm_error(self, u, v):
+        # Relative error norm
         return self.compute_norm(u-v)/self.compute_norm(u)
 
 
-# Read unit square mesh with Triangular elements
+# Read mesh
 mesh_comm = MPI.COMM_WORLD
 gdim = 2
 gmsh_model_rank = 0
@@ -360,11 +363,15 @@ for i in range(error_analysis_set.shape[0]):
 # Online phase at parameter online_mu
 online_mu = np.array([0.7, 1.])
 fem_solution = problem_parametric.solve(online_mu)
+# First compute the RB solution using online_nn.
+# Next this solution is reconstructed on FE space
 rb_solution = \
     reduced_problem.reconstruct_solution(
         online_nn(reduced_problem, problem_parametric, online_mu, model,
                   len(reduced_problem._basis_functions), device=None))
 
+
+# Post processing
 fem_online_file \
     = "dlrbnicsx_solution_linear_poisson/fem_online_mu_computed.xdmf"
 with HarmonicMeshMotion(mesh, facet_tags,
