@@ -24,7 +24,7 @@ The reference domain $\hat{\Omega}$ considered in this problem is shown in the f
 
 The domain $\Omega$ is parametrized by 2 geometric parameters $\mu = \lbrace \mu_0, \mu_1 \rbrace$. These parameters are used to deform the domain. The domain boundaries are deformed as:
 
-$\text{On } \partial \hat{\Omega}: (\mu_0 x, \mu_1 y)$.
+$$\text{On } \partial \hat{\Omega}: (\mu_0 x, \mu_1 y)$$.
 
 This boundary deformation is then propagated througth the entire domain using Harmonic mesh deformation.
 
