@@ -42,7 +42,7 @@ Finite element implementation is performed using [FEniCSx](https://fenicsproject
 
 We use [RBniCSx](https://github.com/RBniCS/RBniCSx) for Proper Orthogonal Decomposition (POD) and [DLRBniCSx](https://github.com/niravshah241/dlrbnicsx) for Artificial Neural Network (ANN). MDFEniCSx is used to perform ```HarmonicMeshMotion```.
 
-    Parametric formulation ```ProblemOnDeformedDomain```
+** Parametric formulation ```ProblemOnDeformedDomain```
 
 First, the ```ProblemOnDeformedDomain``` class, with ```solve``` method, is created to compute the finite element solution at a given parameter $\mu$. This class resembles to dolfinx implementation (dolfinx_linear_poisson.py).
 
