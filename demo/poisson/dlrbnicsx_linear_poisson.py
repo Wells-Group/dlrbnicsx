@@ -22,6 +22,7 @@ from dlrbnicsx.interface.wrappers import DataLoader
 from dlrbnicsx.train_validate_test.train_validate_test import \
     train_nn, validate_nn, online_nn, error_analysis
 
+
 class ProblemOnDeformedDomain(abc.ABC):
     # Define FEM problem on the reference problem
     def __init__(self, mesh, subdomains, boundaries, HarmonicMeshMotion):
@@ -48,13 +49,13 @@ class ProblemOnDeformedDomain(abc.ABC):
         x = ufl.SpatialCoordinate(self._mesh)
         u_ufl = 1 + x[0]**2 + 2*x[1]**2
         return -ufl.div(ufl.grad(u_ufl))
-    
+
     @property
     def bilinear_form(self):
         u = self._trial
         v = self._test
         return dolfinx.fem.form(ufl.inner(ufl.grad(u), ufl.grad(v)) * ufl.dx)
-    
+
     @property
     def linear_form(self):
         f = self.source_term
@@ -77,8 +78,8 @@ class ProblemOnDeformedDomain(abc.ABC):
             bcs = list()
             for i in self._boundary_markers:
                 dofs = \
-                    dolfinx.fem.locate_dofs_topological\
-                    (self._V, self.gdim-1, self._boundaries.find(i))
+                    dolfinx.fem.locate_dofs_topological(self._V, self.gdim-1,
+                                                        self._boundaries.find(i))
                 self._dirichletFunc.interpolate(lambda x: 1 +
                                                 x[0]**2 + 2*x[1]**2)
                 bc = dolfinx.fem.dirichletbc(self._dirichletFunc, dofs)
@@ -165,6 +166,7 @@ class PODANNReducedProblem(abc.ABC):
     def norm_error(self, u, v):
         return self.compute_norm(u-v)/self.compute_norm(u)
 
+
 # Read unit square mesh with Triangular elements
 mesh_comm = MPI.COMM_WORLD
 gdim = 2
@@ -183,6 +185,7 @@ problem_parametric = ProblemOnDeformedDomain(mesh, cell_tags,
 solution_mu = problem_parametric.solve(mu)
 
 # POD Starts ###
+
 
 def generate_training_set(samples=[8, 8]):
     training_set_0 = np.linspace(0.5, 1.5, samples[0])
@@ -282,6 +285,7 @@ def generate_ann_output_set(problem, reduced_problem, N,
                                              N).array.astype("f")
     return output_set
 
+
 # Training dataset
 input_training_set = generate_ann_input_set(samples=[8, 8])
 output_training_set = \
@@ -331,7 +335,7 @@ for epochs in range(max_epochs):
     current_validation_loss = validate_nn(reduced_problem, valid_dataloader,
                                           model)
     validation_loss.append(current_validation_loss)
-    if epochs > 0 and current_validation_loss >  min_validation_loss \
+    if epochs > 0 and current_validation_loss > min_validation_loss \
        and reduced_problem.regularisation == "EarlyStopping":
         print(f"Early stopping criteria invoked at epoch: {epochs+1}")
         break
