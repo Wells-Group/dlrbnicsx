@@ -31,12 +31,12 @@ PyTorch-RBniCSx-FEniCSx based open source library for deep learning based reduce
 
 The finite element calculations are performed using dolfinx. We use RBniCSx for Proper Orthogonal Decomposition (POD) and construction of reduced basis dataset. Once the dataset has been constructed, typical workflow in DLRBniCSx is as follow: 
 
-- Create training dataset and validation using ```CustomDataset```
-- Wrap dataset in ```DataLoader``` as train_loader and valid_loader
+- Create training dataset and validation dataset using ```CustomDataset```
+- Use datasets ```DataLoader``` as train_loader and valid_loader for easy access to samples
 - Initialise neural network model using ```HiddenLayersNet```
-- Use train_loader and valid_loader for ```train_nn``` for training of neural network and ```validate_nn``` validation of neural network respectively
-- Perform error analysis using ```error_analysis```
-- Compute reduced basis solution at a given online parameter using ```online_nn```
+- Use train_loader for training of the neural network using ```train_nn``` function and valid_loader for validation of the neural network using ```validate_nn``` function
+- Perform error analysis using ```error_analysis``` function
+- Compute reduced basis solution at a given online parameter using ```online_nn``` function
 
 ## Disclaimer
 
