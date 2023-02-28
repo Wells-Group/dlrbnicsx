@@ -13,6 +13,7 @@ PyTorch-RBniCSx-FEniCSx based open source library for deep learning based reduce
   ```
   pip install git+https://github.com/RBniCS/ufl4rom.git
   ```
+- [MDFEniCSx](https://github.com/niravshah241/MDFEniCSx)
 - [DLRBniCSx](https://github.com/Wells-Group/dlrbnicsx)
   ```
   pip install git+https://github.com/Wells-Group/dlrbnicsx.git
