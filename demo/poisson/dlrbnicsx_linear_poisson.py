@@ -202,6 +202,7 @@ def generate_training_set(samples=[8, 8]):
 # POD samples
 training_set = rbnicsx.io.on_rank_zero(mesh.comm, generate_training_set)
 
+# Maximum RB size
 Nmax = 30
 
 print(rbnicsx.io.TextBox("POD offline phase begins", fill="="))
@@ -210,7 +211,7 @@ print("")
 print("Set up snapshots matrix")
 snapshots_matrix = rbnicsx.backends.FunctionsList(problem_parametric._V)
 
-print("set up reduced problem")
+print("Set up reduced problem")
 reduced_problem = PODANNReducedProblem(problem_parametric)
 
 print("")
