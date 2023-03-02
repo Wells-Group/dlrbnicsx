@@ -410,7 +410,7 @@ for epochs in range(max_epochs):
     training_loss.append(current_training_loss)
     current_validation_loss = validate_nn(reduced_problem, valid_dataloader, model)
     validation_loss.append(current_validation_loss)
-    # 1% safety margin against min_validation_loss before invoking 
+    # 1% safety margin against min_validation_loss before invoking
     # early stopping criteria
     if epochs > 0 and current_validation_loss > 1.01 * min_validation_loss \
        and reduced_problem.regularisation == "EarlyStopping":
