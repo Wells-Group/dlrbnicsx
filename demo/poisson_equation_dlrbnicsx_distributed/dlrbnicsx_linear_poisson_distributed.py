@@ -410,8 +410,10 @@ for epochs in range(max_epochs):
     training_loss.append(current_training_loss)
     current_validation_loss = validate_nn(reduced_problem, valid_dataloader, model)
     validation_loss.append(current_validation_loss)
-    # 1% safety margin against min_validation_loss before invoking eraly stopping criteria
-    if epochs > 0 and current_validation_loss > 1.01 * min_validation_loss and reduced_problem.regularisation == "EarlyStopping":
+    # 1% safety margin against min_validation_loss before invoking 
+    # early stopping criteria
+    if epochs > 0 and current_validation_loss > 1.01 * min_validation_loss \
+       and reduced_problem.regularisation == "EarlyStopping":
         print(f"Early stopping criteria invoked at epoch: {epochs+1}")
         break
     min_validation_loss = min(validation_loss)
@@ -456,7 +458,6 @@ if rank == 0:
             online_nn(reduced_problem, problem_parametric, online_mu, model,
                       reduced_size, device=None))
 
-
     # Post processing
     fem_online_file \
         = "dlrbnicsx_solution_linear_poisson/fem_online_mu_computed.xdmf"
@@ -465,7 +466,7 @@ if rank == 0:
                             problem_parametric._bcs_geometric,
                             reset_reference=True) as mesh_class:
         with dolfinx.io.XDMFFile(mesh.comm, fem_online_file,
-                                "w") as solution_file:
+                                 "w") as solution_file:
             solution_file.write_mesh(mesh)
             solution_file.write_function(fem_solution)
 
@@ -476,7 +477,7 @@ if rank == 0:
                             problem_parametric._bcs_geometric,
                             reset_reference=True) as mesh_class:
         with dolfinx.io.XDMFFile(mesh.comm, rb_online_file,
-                                "w") as solution_file:
+                                 "w") as solution_file:
             # NOTE scatter_forward not considered for online solution
             solution_file.write_mesh(mesh)
             solution_file.write_function(rb_solution)
@@ -491,6 +492,6 @@ if rank == 0:
                             problem_parametric._bcs_geometric,
                             reset_reference=True) as mesh_class:
         with dolfinx.io.XDMFFile(mesh.comm, fem_rb_error_file,
-                                "w") as solution_file:
+                                 "w") as solution_file:
             solution_file.write_mesh(mesh)
             solution_file.write_function(error_function)
