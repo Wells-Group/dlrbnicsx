@@ -43,7 +43,7 @@ def free_boundary_p(x):
 
 
 # Online parameter
-mu = np.array([1., 1.])
+mu = np.array([0.93, 1.03])
 
 
 def airfoil_bc(x): return (mu[0] * x[0], mu[1] * x[1])

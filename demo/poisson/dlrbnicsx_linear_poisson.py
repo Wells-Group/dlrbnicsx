@@ -267,7 +267,7 @@ plt.savefig("eigenvalue_decay")
 
 
 def generate_ann_input_set(samples=[4, 4]):
-    # Select samples from the parameter space for POD
+    # Select samples from the parameter space for ANN
     training_set_0 = np.linspace(0.5, 1.5, samples[0])
     training_set_1 = np.linspace(0.5, 1.5, samples[1])
     training_set = np.array(list(itertools.product(training_set_0,
