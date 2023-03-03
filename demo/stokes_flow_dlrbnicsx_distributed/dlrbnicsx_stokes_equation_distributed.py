@@ -16,11 +16,14 @@ import abc
 import matplotlib.pyplot as plt
 
 from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
-from dlrbnicsx.activation_function.activation_function_factory import Tanh
-from dlrbnicsx.dataset.custom_dataset import CustomDataset
+from dlrbnicsx.activation_function.activation_function_factory \
+    import Tanh
+from dlrbnicsx.dataset.custom_partitioned_dataset \
+    import CustomPartitionedDataset
 from dlrbnicsx.interface.wrappers import DataLoader
-from dlrbnicsx.train_validate_test.train_validate_test import \
-    train_nn, validate_nn, online_nn, error_analysis
+from dlrbnicsx.train_validate_test.train_validate_test_distributed \
+    import train_nn, validate_nn, online_nn, error_analysis
+import torch.distributed as dist  # TODO
 
 
 class ProblemOnDeformedDomain(abc.ABC):
@@ -278,13 +281,18 @@ class PODANNReducedProblem(abc.ABC):
         return self.compute_norm_p(p-q)/self.compute_norm_p(p)
 
 
+# MPI communicator variables
+world_comm = MPI.COMM_WORLD
+rank = world_comm.Get_rank()
+size = world_comm.Get_size()
+
 # Read mesh
-comm = MPI.COMM_WORLD
+mesh_comm = MPI.COMM_SELF  # NOTE
 gdim = 2
 gmsh_model_rank = 0
 mesh, cell_tags, facet_tags = \
-    dolfinx.io.gmshio.read_from_msh("mesh_data/domain_geometry.msh", comm,
-                                    gmsh_model_rank, gdim=gdim)
+    dolfinx.io.gmshio.read_from_msh("mesh_data/domain_geometry.msh",
+                                    mesh_comm, gmsh_model_rank, gdim=gdim)
 
 # Mesh deformation parameters
 mu = np.array([0.93, 1.03])
@@ -294,6 +302,10 @@ problem_parametric = ProblemOnDeformedDomain(mesh, cell_tags, facet_tags,
                                              HarmonicMeshMotion)
 solution_vel_mu, solution_pre_mu = problem_parametric.solve(mu)
 
+print(f"Rank {rank}")
+print(f"Velocity: {solution_vel_mu.x.array}")
+print(f"Pressure: {solution_pre_mu.x.array}")
+
 # POD Starts ###
 
 
@@ -301,15 +313,46 @@ def generate_training_set(samples=[6, 6]):
     # Select input samples for POD
     training_set_0 = np.linspace(0.5, 1., samples[0])
     training_set_1 = np.linspace(0.5, 1., samples[1])
-    training_set = np.array(list(itertools.product(training_set_0,
-                                                   training_set_1)))
+    training_set = \
+        np.array(list(itertools.product(training_set_0, training_set_1)))
     return training_set
 
+# Generate samples on rank 0 and Bcast to other processes
 
-# POD samples
-training_set = rbnicsx.io.on_rank_zero(mesh.comm, generate_training_set)
 
-# Maximum RB size
+if rank == 0:
+    training_set = generate_training_set()
+else:
+    training_set = np.zeros_like(generate_training_set())
+
+world_comm.Bcast(training_set, root=0)
+
+training_set_indices = np.arange(rank, training_set.shape[0], size)
+
+training_set_solutions_u = \
+    np.zeros([training_set.shape[0], solution_vel_mu.x.array.shape[0]])
+
+training_set_solutions_p = \
+    np.zeros([training_set.shape[0], solution_pre_mu.x.array.shape[0]])
+
+for mu_index in training_set_indices:
+    print(rbnicsx.io.TextLine(str(mu_index+1) + f"/{training_set.shape[0]}",
+                              fill="#"))
+    print(f"High fidelity solve for mu = {training_set[mu_index,:]}")
+    solution_vel_mu, solution_pre_mu = \
+        problem_parametric.solve(training_set[mu_index, :])
+    training_set_solutions_u[mu_index, :] = solution_vel_mu.x.array
+    training_set_solutions_p[mu_index, :] = solution_pre_mu.x.array
+
+
+training_set_solutions_recv_u = np.zeros_like(training_set_solutions_u)
+training_set_solutions_recv_p = np.zeros_like(training_set_solutions_p)
+world_comm.Barrier()
+world_comm.Allreduce(training_set_solutions_u, training_set_solutions_recv_u,
+                     op=MPI.SUM)
+world_comm.Allreduce(training_set_solutions_p, training_set_solutions_recv_p,
+                     op=MPI.SUM)
+
 Nmax = 30
 
 print(rbnicsx.io.TextBox("POD offline phase begins", fill="="))
@@ -326,14 +369,14 @@ reduced_problem = PODANNReducedProblem(problem_parametric)
 
 print("")
 
-for (mu_index, mu) in enumerate(training_set):
-    print(rbnicsx.io.TextLine(str(mu_index+1), fill="#"))
-
-    print("Parameter number ", (mu_index+1), "of", training_set.shape[0])
-    print("High fidelity solve for mu =", mu)
-    (snapshot_u, snapshot_p) = problem_parametric.solve(mu)
-    print(f"Velocity solution array: {snapshot_u.x.array}")
-    print(f"Pressure solution array: {snapshot_p.x.array}")
+for mu_index in range(training_set.shape[0]):
+    print(rbnicsx.io.TextLine
+          (f"{mu_index+1} / {training_set.shape[0]}",
+           fill="#"))
+    snapshot_u = dolfinx.fem.Function(V)
+    snapshot_u.x.array[:] = training_set_solutions_recv_u[mu_index, :]
+    snapshot_p = dolfinx.fem.Function(Q)
+    snapshot_p.x.array[:] = training_set_solutions_recv_p[mu_index, :]
 
     print("Update snapshots matrix")
     snapshots_matrix_u.append(snapshot_u)
@@ -360,44 +403,48 @@ print(rbnicsx.io.TextBox("POD-Galerkin offline phase ends", fill="="))
 positive_eigenvalues_u = np.where(eigenvalues_u > 0., eigenvalues_u, np.nan)
 singular_values_u = np.sqrt(positive_eigenvalues_u)
 
-plt.figure(figsize=[8, 10])
-xint = list()
-yval = list()
+positive_eigenvalues_p = np.where(eigenvalues_p > 0., eigenvalues_p, np.nan)
+singular_values_p = np.sqrt(positive_eigenvalues_p)
 
-for x, y in enumerate(eigenvalues_u[:len(reduced_problem._basis_functions_u)]):
-    yval.append(y)
-    xint.append(x+1)
+if rank == 0:
+    plt.figure(figsize=[8, 10])
+    xint = list()
+    yval = list()
 
-plt.plot(xint, yval, "*-", color="orange")
-plt.xlabel("Eigenvalue number", fontsize=18)
-plt.ylabel("Eigenvalue", fontsize=18)
-plt.xticks(xint)
-plt.yscale("log")
-plt.title("Eigenvalue decay", fontsize=24)
-plt.tight_layout()
-plt.savefig("eigenvalue_decay_u")
+    for x, y in enumerate(eigenvalues_u[:len(reduced_problem._basis_functions_u)]):
+        yval.append(y)
+        xint.append(x+1)
 
-plt.figure(figsize=[8, 10])
-xint = list()
-yval = list()
+    plt.plot(xint, yval, "*-", color="orange")
+    plt.xlabel("Eigenvalue number", fontsize=18)
+    plt.ylabel("Eigenvalue", fontsize=18)
+    plt.xticks(xint)
+    plt.yscale("log")
+    plt.title("Eigenvalue decay", fontsize=24)
+    plt.tight_layout()
+    plt.savefig("eigenvalue_decay_u")
 
-for x, y in enumerate(eigenvalues_p[:len(reduced_problem._basis_functions_p)]):
-    yval.append(y)
-    xint.append(x+1)
+    plt.figure(figsize=[8, 10])
+    xint = list()
+    yval = list()
 
-plt.plot(xint, yval, "*-", color="orange")
-plt.xlabel("Eigenvalue number", fontsize=18)
-plt.ylabel("Eigenvalue", fontsize=18)
-plt.xticks(xint)
-plt.yscale("log")
-plt.title("Eigenvalue decay", fontsize=24)
-plt.tight_layout()
-plt.savefig("eigenvalue_decay_p")
+    for x, y in enumerate(eigenvalues_p[:len(reduced_problem._basis_functions_p)]):
+        yval.append(y)
+        xint.append(x+1)
+
+    plt.plot(xint, yval, "*-", color="orange")
+    plt.xlabel("Eigenvalue number", fontsize=18)
+    plt.ylabel("Eigenvalue", fontsize=18)
+    plt.xticks(xint)
+    plt.yscale("log")
+    plt.title("Eigenvalue decay", fontsize=24)
+    plt.tight_layout()
+    plt.savefig("eigenvalue_decay_p")
 
 print(f"Velocity reduced basis size: {len(reduced_problem._basis_functions_u)}")
 print(f"Pressure reduced basis size: {len(reduced_problem._basis_functions_p)}")
 
-# POD Ends ###
+# ### POD Ends ###
 
 # Creating dataset
 
@@ -410,35 +457,64 @@ def generate_ann_input_set(samples=[6, 6]):
     return training_set
 
 
-def generate_ann_output_set(problem, reduced_problem, input_set, mode=None):
+def generate_ann_output_set(problem, reduced_problem, input_set,
+                            indices, mode=None):
     # Compuet output set for ANN based on input set
-    output_set_u = np.empty([input_set.shape[0], len(reduced_problem._basis_functions_u)])
-    output_set_p = np.empty([input_set.shape[0], len(reduced_problem._basis_functions_p)])
+    output_set_u = np.zeros([input_set.shape[0],
+                             len(reduced_problem._basis_functions_u)])
+    output_set_p = np.zeros([input_set.shape[0],
+                             len(reduced_problem._basis_functions_p)])
     rb_size_u = len(reduced_problem._basis_functions_u)
     rb_size_p = len(reduced_problem._basis_functions_p)
-    for i in range(input_set.shape[0]):
+    for i in indices:
         if mode is None:
-            print(f"Parameter number {i+1} of {input_set.shape[0]}: {input_set[i,:]}")
+            print(f"Parameter number {i+1} of ")
+            print(f"{input_set.shape[0]}: {input_set[i, :]}")
         else:
-            print(f"{mode} parameter number {i+1} of {input_set.shape[0]}: {input_set[i,:]}")
+            print(f"{mode} parameter number {i+1} of ")
+            print(f"{input_set.shape[0]}: {input_set[i, :]}")
+        print(input_set[i, :])
         (solution_u, solution_p) = problem.solve(input_set[i, :])
-        output_set_u[i, :] = reduced_problem.project_snapshot_u(solution_u, rb_size_u).array  # .astype("f")
-        output_set_p[i, :] = reduced_problem.project_snapshot_p(solution_p, rb_size_p).array  # .astype("f")
+        print(solution_u.x.array)
+        print(solution_p.x.array)
+        output_set_u[i, :] = \
+            reduced_problem.project_snapshot_u(solution_u, rb_size_u).array
+        output_set_p[i, :] = \
+            reduced_problem.project_snapshot_p(solution_p, rb_size_p).array
     return output_set_u, output_set_p
 
 
-ann_input_set = generate_ann_input_set(samples=[8, 8])
-np.random.shuffle(ann_input_set)
+# Generate ANN input TRAINING samples on the rank 0 and Bcast to other processes
+if rank == 0:
+    ann_input_set = generate_ann_input_set(samples=[8, 8])
+    np.random.shuffle(ann_input_set)
+else:
+    ann_input_set = np.zeros_like(generate_ann_input_set(samples=[8, 8]))
+
+world_comm.Bcast(ann_input_set, root=0)
+
+indices = np.arange(rank, ann_input_set.shape[0], size)
+
+# Generate ANN output samples
+
+# ### The input data is available in all processes but output data uses
+# only a chunk of the data as specified in the indices ###
 ann_output_set_u, ann_output_set_p = \
     generate_ann_output_set(problem_parametric, reduced_problem,
-                            ann_input_set, mode="Training")
+                            ann_input_set, indices, mode="Training")
+
+ann_output_set_recv_u = np.zeros_like(ann_output_set_u)
+ann_output_set_recv_p = np.zeros_like(ann_output_set_p)
+world_comm.Barrier()
+world_comm.Allreduce(ann_output_set_u, ann_output_set_recv_u, op=MPI.SUM)
+world_comm.Allreduce(ann_output_set_p, ann_output_set_recv_p, op=MPI.SUM)
 
 num_training_samples = int(0.7 * ann_input_set.shape[0])
 num_validation_samples = ann_input_set.shape[0] - num_training_samples
 
 input_training_set = ann_input_set[:num_training_samples, :]
-output_training_set_u = ann_output_set_u[:num_training_samples, :]
-output_training_set_p = ann_output_set_p[:num_training_samples, :]
+output_training_set_u = ann_output_set_recv_u[:num_training_samples, :]
+output_training_set_p = ann_output_set_recv_p[:num_training_samples, :]
 
 input_validation_set = ann_input_set[num_training_samples:, :]
 output_validation_set_u = ann_output_set_u[num_training_samples:, :]
@@ -446,55 +522,70 @@ output_validation_set_p = ann_output_set_p[num_training_samples:, :]
 
 print("\n")
 
-reduced_problem.output_range_u[0] = np.min(ann_output_set_u)
-reduced_problem.output_range_u[1] = np.max(ann_output_set_u)
-reduced_problem.output_range_p[0] = np.min(ann_output_set_p)
-reduced_problem.output_range_p[1] = np.max(ann_output_set_p)
+reduced_problem.output_range_u[0] = np.min(ann_output_set_recv_u)
+reduced_problem.output_range_u[1] = np.max(ann_output_set_recv_u)
+reduced_problem.output_range_p[0] = np.min(ann_output_set_recv_p)
+reduced_problem.output_range_p[1] = np.max(ann_output_set_recv_p)
 # NOTE Output_range based on the computed values instead of user guess.
 
 print("\n")
 
-customDataset = CustomDataset(problem_parametric, reduced_problem,
-                              len(reduced_problem._basis_functions_u),
-                              input_training_set, output_training_set_u,
-                              input_scaling_range=reduced_problem.input_scaling_range_u,
-                              output_scaling_range=reduced_problem.output_scaling_range_u,
-                              input_range=reduced_problem.input_range_u,
-                              output_range=reduced_problem.output_range_u)
+customDataset = CustomPartitionedDataset(problem_parametric, reduced_problem,
+                                         len(reduced_problem._basis_functions_u),
+                                         input_training_set, output_training_set_u,
+                                         input_scaling_range=reduced_problem.input_scaling_range_u,
+                                         output_scaling_range=reduced_problem.output_scaling_range_u,
+                                         input_range=reduced_problem.input_range_u,
+                                         output_range=reduced_problem.output_range_u)
 train_dataloader_u = DataLoader(customDataset, batch_size=10, shuffle=True)
 
-customDataset = CustomDataset(problem_parametric, reduced_problem,
-                              len(reduced_problem._basis_functions_p),
-                              input_validation_set, output_validation_set_p,
-                              input_scaling_range=reduced_problem.input_scaling_range_p,
-                              output_scaling_range=reduced_problem.output_scaling_range_p,
-                              input_range=reduced_problem.input_range_p,
-                              output_range=reduced_problem.output_range_p)
+customDataset = CustomPartitionedDataset(problem_parametric, reduced_problem,
+                                         len(reduced_problem._basis_functions_p),
+                                         input_training_set, output_training_set_p,
+                                         input_scaling_range=reduced_problem.input_scaling_range_p,
+                                         output_scaling_range=reduced_problem.output_scaling_range_p,
+                                         input_range=reduced_problem.input_range_p,
+                                         output_range=reduced_problem.output_range_p)
 train_dataloader_p = DataLoader(customDataset, batch_size=10, shuffle=True)
 
-customDataset = CustomDataset(problem_parametric, reduced_problem,
-                              len(reduced_problem._basis_functions_u),
-                              input_validation_set, output_validation_set_u,
-                              input_scaling_range=reduced_problem.input_scaling_range_u,
-                              output_scaling_range=reduced_problem.output_scaling_range_u,
-                              input_range=reduced_problem.input_range_u,
-                              output_range=reduced_problem.output_range_u)
+customDataset = CustomPartitionedDataset(problem_parametric, reduced_problem,
+                                         len(reduced_problem._basis_functions_u),
+                                         input_validation_set, output_validation_set_u,
+                                         input_scaling_range=reduced_problem.input_scaling_range_u,
+                                         output_scaling_range=reduced_problem.output_scaling_range_u,
+                                         input_range=reduced_problem.input_range_u,
+                                         output_range=reduced_problem.output_range_u)
 valid_dataloader_u = DataLoader(customDataset, shuffle=False)
 
-customDataset = CustomDataset(problem_parametric, reduced_problem,
-                              len(reduced_problem._basis_functions_p),
-                              input_validation_set, output_validation_set_p,
-                              input_scaling_range=reduced_problem.input_scaling_range_p,
-                              output_scaling_range=reduced_problem.output_scaling_range_p,
-                              input_range=reduced_problem.input_range_p,
-                              output_range=reduced_problem.output_range_p)
+customDataset = CustomPartitionedDataset(problem_parametric, reduced_problem,
+                                         len(reduced_problem._basis_functions_p),
+                                         input_validation_set, output_validation_set_p,
+                                         input_scaling_range=reduced_problem.input_scaling_range_p,
+                                         output_scaling_range=reduced_problem.output_scaling_range_p,
+                                         input_range=reduced_problem.input_range_p,
+                                         output_range=reduced_problem.output_range_p)
 valid_dataloader_p = DataLoader(customDataset, shuffle=False)
 
 # ANN model
 model_u = HiddenLayersNet(input_training_set.shape[1], [30, 30],
                           len(reduced_problem._basis_functions_u), Tanh())
+
+for param in model_u.parameters():
+    print(f"Rank {rank} \n Params before all_reduce: {param.data}")
+    # NOTE This ensures that models in all processes start with same weights and biases
+    dist.all_reduce(param.data, op=dist.ReduceOp.SUM)
+    param.data /= dist.get_world_size()
+    print(f"Rank {rank} \n Params after all_reduce: {param.data}")
+
 model_p = HiddenLayersNet(input_training_set.shape[1], [15, 15],
                           len(reduced_problem._basis_functions_p), Tanh())
+
+for param in model_p.parameters():
+    print(f"Rank {rank} \n Params before all_reduce: {param.data}")
+    # NOTE This ensures that models in all processes start with same weights and biases
+    dist.all_reduce(param.data, op=dist.ReduceOp.SUM)
+    param.data /= dist.get_world_size()
+    print(f"Rank {rank} \n Params after all_reduce: {param.data}")
 
 # Start of training (Velocity)
 training_loss_u = list()
@@ -549,16 +640,26 @@ for epochs in range(max_epochs_p):
         break
     min_validation_loss_p = min(validation_loss_p)
 
+
 # Error analysis dataset
 print("\n")
 print("Generating error analysis (only input/parameters) dataset")
 print("\n")
-error_analysis_set_u = generate_ann_input_set(samples=[3, 3])
-error_numpy_u = np.zeros(error_analysis_set_u.shape[0])
+if rank == 0:
+    error_analysis_set_u = generate_ann_input_set(samples=[3, 3])
+else:
+    error_analysis_set_u = np.zeros_like(generate_ann_input_set(samples=[3, 3]))
 
-for i in range(error_analysis_set_u.shape[0]):
+world_comm.Bcast(error_analysis_set_u, root=0)
+
+world_comm.Barrier()
+error_numpy_u = np.zeros(error_analysis_set_u.shape[0])
+error_numpy_recv_u = np.zeros(error_analysis_set_u.shape[0])
+indices = np.arange(rank, error_analysis_set_u.shape[0], size)
+
+for i in indices:
     print(f"Error analysis parameter number {i+1} of ")
-    print(f"{error_analysis_set_u.shape[0]}: {error_analysis_set_u[i,:]}")
+    print(f"{error_analysis_set_u.shape[0]}: {error_analysis_set_u[i, :]}")
     error_numpy_u[i] = error_analysis(reduced_problem, problem_parametric,
                                       error_analysis_set_u[i, :], model_u,
                                       len(reduced_problem._basis_functions_u),
@@ -572,14 +673,26 @@ for i in range(error_analysis_set_u.shape[0]):
                                       index=0)
     print(f"Error: {error_numpy_u[i]}")
 
+world_comm.Barrier()
+world_comm.Allreduce(error_numpy_u, error_numpy_recv_u, op=MPI.SUM)
+
 # Error analysis dataset
 print("\n")
 print("Generating error analysis (only input/parameters) dataset")
 print("\n")
-error_analysis_set_p = generate_ann_input_set(samples=[3, 3])
-error_numpy_p = np.zeros(error_analysis_set_p.shape[0])
+if rank == 0:
+    error_analysis_set_p = generate_ann_input_set(samples=[3, 3])
+else:
+    error_analysis_set_p = np.zeros_like(generate_ann_input_set(samples=[3, 3]))
 
-for i in range(error_analysis_set_p.shape[0]):
+world_comm.Bcast(error_analysis_set_p, root=0)
+
+world_comm.Barrier()
+error_numpy_p = np.zeros(error_analysis_set_p.shape[0])
+error_numpy_recv_p = np.zeros(error_analysis_set_p.shape[0])
+indices = np.arange(rank, error_analysis_set_p.shape[0], size)
+
+for i in indices:
     print(f"Error analysis parameter number {i+1} of ")
     print(f"{error_analysis_set_p.shape[0]}: {error_analysis_set_p[i,:]}")
     error_numpy_p[i] = error_analysis(reduced_problem, problem_parametric,
@@ -595,84 +708,86 @@ for i in range(error_analysis_set_p.shape[0]):
                                       index=1)
     print(f"Error: {error_numpy_p[i]}")
 
-print(f"Velocity error: {error_numpy_u}")
-print(f"Pressure error: {error_numpy_p}")
+world_comm.Barrier()
+world_comm.Allreduce(error_numpy_p, error_numpy_recv_p, op=MPI.SUM)
 
 # Online phase
-# Define a parameter
-online_mu = np.array([0.8, 0.9])
 
-# Compute FEM solution
-(solution_u, solution_p) = problem_parametric.solve(online_mu)
+if rank == 0:
+    # Define a parameter
+    online_mu = np.array([0.8, 0.9])
 
-# Compute RB solution
-rb_solution_u = \
-    reduced_problem.reconstruct_solution_u(online_nn(reduced_problem,
-                                                     problem_parametric,
-                                                     online_mu, model_u,
-                                                     len(reduced_problem._basis_functions_u),
-                                                     device=None,
-                                                     input_scaling_range=reduced_problem.input_scaling_range_u,
-                                                     output_scaling_range=reduced_problem.output_scaling_range_u,
-                                                     input_range=reduced_problem.input_range_u,
-                                                     output_range=reduced_problem.output_range_u))
-rb_solution_p = \
-    reduced_problem.reconstruct_solution_p(online_nn(reduced_problem,
-                                                     problem_parametric,
-                                                     online_mu, model_p,
-                                                     len(reduced_problem._basis_functions_p),
-                                                     device=None,
-                                                     input_scaling_range=reduced_problem.input_scaling_range_p,
-                                                     output_scaling_range=reduced_problem.output_scaling_range_p,
-                                                     input_range=reduced_problem.input_range_p,
-                                                     output_range=reduced_problem.output_range_p))
+    # Compute FEM solution
+    (solution_u, solution_p) = problem_parametric.solve(online_mu)
 
-# Post processing of FEM and RB solution
-# BCs for mesh deformation
-bcs_geometric = [lambda x: (x[0], x[1]),
-                 lambda x: (x[0], x[1]),
-                 lambda x: (x[0], x[1]),
-                 lambda x: (x[0], x[1]),
-                 lambda x: (online_mu[0] * x[0], online_mu[1] * x[1]),
-                 lambda x: (online_mu[0] * x[0], online_mu[1] * x[1])]
+    # Compute RB solution
+    rb_solution_u = \
+        reduced_problem.reconstruct_solution_u(online_nn(reduced_problem,
+                                                         problem_parametric,
+                                                         online_mu, model_u,
+                                                         len(reduced_problem._basis_functions_u),
+                                                         device=None,
+                                                         input_scaling_range=reduced_problem.input_scaling_range_u,
+                                                         output_scaling_range=reduced_problem.output_scaling_range_u,
+                                                         input_range=reduced_problem.input_range_u,
+                                                         output_range=reduced_problem.output_range_u))
+    rb_solution_p = \
+        reduced_problem.reconstruct_solution_p(online_nn(reduced_problem,
+                                                         problem_parametric,
+                                                         online_mu, model_p,
+                                                         len(reduced_problem._basis_functions_p),
+                                                         device=None,
+                                                         input_scaling_range=reduced_problem.input_scaling_range_p,
+                                                         output_scaling_range=reduced_problem.output_scaling_range_p,
+                                                         input_range=reduced_problem.input_range_p,
+                                                         output_range=reduced_problem.output_range_p))
 
-solution_velocity_error = dolfinx.fem.Function(V)
-solution_pressure_error = dolfinx.fem.Function(Q)
+    # Post processing of FEM and RB solution
+    # BCs for mesh deformation
+    bcs_geometric = [lambda x: (x[0], x[1]),
+                     lambda x: (x[0], x[1]),
+                     lambda x: (x[0], x[1]),
+                     lambda x: (x[0], x[1]),
+                     lambda x: (online_mu[0] * x[0], online_mu[1] * x[1]),
+                     lambda x: (online_mu[0] * x[0], online_mu[1] * x[1])]
 
-solution_velocity_error.x.array[:] = abs(solution_u.x.array - rb_solution_u.x.array)
+    solution_velocity_error = dolfinx.fem.Function(V)
+    solution_pressure_error = dolfinx.fem.Function(Q)
 
-solution_pressure_error.x.array[:] = abs(solution_p.x.array - rb_solution_p.x.array)
+    solution_velocity_error.x.array[:] = abs(solution_u.x.array - rb_solution_u.x.array)
 
-with HarmonicMeshMotion(problem_parametric._mesh, problem_parametric._boundaries,
-                        problem_parametric._boundary_markers, bcs_geometric,
-                        reset_reference=True, is_deformation=False):
+    solution_pressure_error.x.array[:] = abs(solution_p.x.array - rb_solution_p.x.array)
 
-    with dolfinx.io.XDMFFile(mesh.comm, "dlrbnicsx_solution/fem_velocity_online_mu.xdmf",
-                             "w") as solution_file:
-        solution_file.write_mesh(mesh)
-        solution_file.write_function(solution_u)
+    with HarmonicMeshMotion(problem_parametric._mesh, problem_parametric._boundaries,
+                            problem_parametric._boundary_markers, bcs_geometric,
+                            reset_reference=True, is_deformation=False):
 
-    with dolfinx.io.XDMFFile(mesh.comm, "dlrbnicsx_solution/fem_pressure_online_mu.xdmf",
-                             "w") as solution_file:
-        solution_file.write_mesh(mesh)
-        solution_file.write_function(solution_p)
+        with dolfinx.io.XDMFFile(mesh.comm, "dlrbnicsx_solution/fem_velocity_online_mu.xdmf",
+                                 "w") as solution_file:
+            solution_file.write_mesh(mesh)
+            solution_file.write_function(solution_u)
 
-    with dolfinx.io.XDMFFile(mesh.comm, "dlrbnicsx_solution/rb_velocity_online_mu.xdmf",
-                             "w") as solution_file:
-        solution_file.write_mesh(mesh)
-        solution_file.write_function(rb_solution_u)
+        with dolfinx.io.XDMFFile(mesh.comm, "dlrbnicsx_solution/fem_pressure_online_mu.xdmf",
+                                 "w") as solution_file:
+            solution_file.write_mesh(mesh)
+            solution_file.write_function(solution_p)
 
-    with dolfinx.io.XDMFFile(mesh.comm, "dlrbnicsx_solution/rb_pressure_online_mu.xdmf",
-                             "w") as solution_file:
-        solution_file.write_mesh(mesh)
-        solution_file.write_function(rb_solution_p)
+        with dolfinx.io.XDMFFile(mesh.comm, "dlrbnicsx_solution/rb_velocity_online_mu.xdmf",
+                                 "w") as solution_file:
+            solution_file.write_mesh(mesh)
+            solution_file.write_function(rb_solution_u)
 
-    with dolfinx.io.XDMFFile(mesh.comm, "dlrbnicsx_solution/error_velocity_online_mu.xdmf",
-                             "w") as solution_file:
-        solution_file.write_mesh(mesh)
-        solution_file.write_function(solution_velocity_error)
+        with dolfinx.io.XDMFFile(mesh.comm, "dlrbnicsx_solution/rb_pressure_online_mu.xdmf",
+                                 "w") as solution_file:
+            solution_file.write_mesh(mesh)
+            solution_file.write_function(rb_solution_p)
 
-    with dolfinx.io.XDMFFile(mesh.comm, "dlrbnicsx_solution/error_pressure_online_mu.xdmf",
-                             "w") as solution_file:
-        solution_file.write_mesh(mesh)
-        solution_file.write_function(solution_pressure_error)
+        with dolfinx.io.XDMFFile(mesh.comm, "dlrbnicsx_solution/error_velocity_online_mu.xdmf",
+                                 "w") as solution_file:
+            solution_file.write_mesh(mesh)
+            solution_file.write_function(solution_velocity_error)
+
+        with dolfinx.io.XDMFFile(mesh.comm, "dlrbnicsx_solution/error_pressure_online_mu.xdmf",
+                                 "w") as solution_file:
+            solution_file.write_mesh(mesh)
+            solution_file.write_function(solution_pressure_error)

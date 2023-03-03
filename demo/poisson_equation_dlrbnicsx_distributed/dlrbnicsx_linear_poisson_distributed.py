@@ -197,7 +197,7 @@ solution_mu = problem_parametric.solve(mu)
 # ### POD starts ###
 
 
-def generate_training_set(samples=[8, 8]) -> np.typing.NDArray[np.float64]:
+def generate_training_set(samples=[8, 8]):
     # Select input samples for POD
     training_set_0 = np.linspace(0.5, 1., samples[0])
     training_set_1 = np.linspace(0.5, 1., samples[1])
@@ -245,6 +245,7 @@ reduced_problem = PODANNReducedProblem(problem_parametric)
 
 print("")
 
+# TODO why training_set_solutions_recv? use training set. 
 for (mu_index, mu) in enumerate(training_set_solutions_recv):
     print(rbnicsx.io.TextLine
           (f"{mu_index+1} / {training_set_solutions_recv.shape[0]}",
