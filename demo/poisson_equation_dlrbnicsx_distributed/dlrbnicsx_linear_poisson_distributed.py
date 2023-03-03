@@ -245,7 +245,7 @@ reduced_problem = PODANNReducedProblem(problem_parametric)
 
 print("")
 
-# TODO why training_set_solutions_recv? use training set. 
+# TODO why training_set_solutions_recv? use training set.
 for (mu_index, mu) in enumerate(training_set_solutions_recv):
     print(rbnicsx.io.TextLine
           (f"{mu_index+1} / {training_set_solutions_recv.shape[0]}",
