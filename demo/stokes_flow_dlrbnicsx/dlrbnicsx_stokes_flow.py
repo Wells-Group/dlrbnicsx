@@ -461,7 +461,7 @@ customDataset = CustomDataset(problem_parametric, reduced_problem,
                               output_scaling_range=reduced_problem.output_scaling_range_u,
                               input_range=reduced_problem.input_range_u,
                               output_range=reduced_problem.output_range_u)
-train_dataloader_u = DataLoader(customDataset, batch_size=10, shuffle=True)
+train_dataloader_u = DataLoader(customDataset, batch_size=7, shuffle=True)
 
 customDataset = CustomDataset(problem_parametric, reduced_problem,
                               len(reduced_problem._basis_functions_p),
@@ -470,7 +470,7 @@ customDataset = CustomDataset(problem_parametric, reduced_problem,
                               output_scaling_range=reduced_problem.output_scaling_range_p,
                               input_range=reduced_problem.input_range_p,
                               output_range=reduced_problem.output_range_p)
-train_dataloader_p = DataLoader(customDataset, batch_size=10, shuffle=True)
+train_dataloader_p = DataLoader(customDataset, batch_size=7, shuffle=True)
 
 customDataset = CustomDataset(problem_parametric, reduced_problem,
                               len(reduced_problem._basis_functions_u),

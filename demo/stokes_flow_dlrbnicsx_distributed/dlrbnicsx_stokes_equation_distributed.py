@@ -459,7 +459,7 @@ def generate_ann_input_set(samples=[6, 6]):
 
 def generate_ann_output_set(problem, reduced_problem, input_set,
                             indices, mode=None):
-    # Compuet output set for ANN based on input set
+    # Compute output set for ANN based on input set
     output_set_u = np.zeros([input_set.shape[0],
                              len(reduced_problem._basis_functions_u)])
     output_set_p = np.zeros([input_set.shape[0],
@@ -517,8 +517,8 @@ output_training_set_u = ann_output_set_recv_u[:num_training_samples, :]
 output_training_set_p = ann_output_set_recv_p[:num_training_samples, :]
 
 input_validation_set = ann_input_set[num_training_samples:, :]
-output_validation_set_u = ann_output_set_u[num_training_samples:, :]
-output_validation_set_p = ann_output_set_p[num_training_samples:, :]
+output_validation_set_u = ann_output_set_recv_u[num_training_samples:, :]
+output_validation_set_p = ann_output_set_recv_p[num_training_samples:, :]
 
 print("\n")
 
@@ -537,7 +537,7 @@ customDataset = CustomPartitionedDataset(problem_parametric, reduced_problem,
                                          output_scaling_range=reduced_problem.output_scaling_range_u,
                                          input_range=reduced_problem.input_range_u,
                                          output_range=reduced_problem.output_range_u)
-train_dataloader_u = DataLoader(customDataset, batch_size=10, shuffle=True)
+train_dataloader_u = DataLoader(customDataset, batch_size=100, shuffle=True)
 
 customDataset = CustomPartitionedDataset(problem_parametric, reduced_problem,
                                          len(reduced_problem._basis_functions_p),
@@ -546,7 +546,7 @@ customDataset = CustomPartitionedDataset(problem_parametric, reduced_problem,
                                          output_scaling_range=reduced_problem.output_scaling_range_p,
                                          input_range=reduced_problem.input_range_p,
                                          output_range=reduced_problem.output_range_p)
-train_dataloader_p = DataLoader(customDataset, batch_size=10, shuffle=True)
+train_dataloader_p = DataLoader(customDataset, batch_size=100, shuffle=True)
 
 customDataset = CustomPartitionedDataset(problem_parametric, reduced_problem,
                                          len(reduced_problem._basis_functions_u),
@@ -639,7 +639,6 @@ for epochs in range(max_epochs_p):
         print(f"Early stopping criteria invoked at epoch: {epochs+1}")
         break
     min_validation_loss_p = min(validation_loss_p)
-
 
 # Error analysis dataset
 print("\n")

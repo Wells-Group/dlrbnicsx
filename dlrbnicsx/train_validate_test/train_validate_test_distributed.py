@@ -32,7 +32,7 @@ def train_nn(reduced_problem, dataloader, model, device=None,
     # TODO add more loss functions including PINN
     if loss_func is None:
         if reduced_problem.loss_fn == "MSE":
-            loss_fn = torch.nn.MSELoss()  # TODO also add reduction argument
+            loss_fn = torch.nn.MSELoss(reduction="sum")
         else:
             NotImplementedError(f"Loss function {reduced_problem.loss_fn}" +
                                 "is not implemented")
@@ -41,7 +41,7 @@ def train_nn(reduced_problem, dataloader, model, device=None,
               "ignoring loss function specified in " +
               f"{reduced_problem.__class__.__name__}")
         if loss_func == "MSE":
-            loss_fn = torch.nn.MSELoss()  # TODO also add reduction argument
+            loss_fn = torch.nn.MSELoss(reduction="sum")
         else:
             NotImplementedError(f"Loss function {loss_fn} " +
                                 "is not implemented")
@@ -80,7 +80,7 @@ def train_nn(reduced_problem, dataloader, model, device=None,
     for batch, (X, y) in enumerate(dataloader):
         # X,y = X.to(device), y.to(device) # TODO
         pred = model(X)
-        loss = loss_fn(pred, y)/loss_fn(torch.zeros_like(y), y)
+        loss = loss_fn(pred, y)
 
         optimizer.zero_grad()
         loss.backward()
@@ -90,8 +90,7 @@ def train_nn(reduced_problem, dataloader, model, device=None,
             dist.all_reduce(param.grad.data, op=dist.ReduceOp.SUM)
             # print(f"param after all_reduce: {param.grad.data}")
         optimizer.step()
-        # TODO If loss reduction argument="SUM".
-        # TODO If "MEAN", change divide the loss by dist.get_world_size()
+        dist.barrier()
         dist.all_reduce(loss, op=dist.ReduceOp.SUM)
 
         if batch % 1 == 0:
@@ -121,18 +120,16 @@ def validate_nn(reduced_problem, dataloader, model, device=None,
     # TODO add more loss functions including PINN
     if loss_func is None:
         if reduced_problem.loss_fn == "MSE":
-            loss_fn = torch.nn.MSELoss()
-            # TODO also add reduction argument
+            loss_fn = torch.nn.MSELoss(reduction="sum")
         else:
             NotImplementedError(f"Loss function {reduced_problem.loss_fn} " +
                                 "is not implemented")
     else:
         print(f"Using validation loss function = {loss_func}," +
-              "ignoring loss function specified in "
+              "ignoring loss function specified in " +
               f"{reduced_problem.__class__.__name__}")
         if loss_func == "MSE":
-            loss_fn = torch.nn.MSELoss()
-            # TODO also add reduction argument
+            loss_fn = torch.nn.MSELoss(reduction="sum")
         else:
             NotImplementedError(f"Loss function {loss_func} " +
                                 "is not implemented")
@@ -143,7 +140,7 @@ def validate_nn(reduced_problem, dataloader, model, device=None,
         for X, y in dataloader:
             # X,y = X.to(device), y.to(device) # TODO
             pred = model(X)
-            valid_loss += loss_fn(pred, y)/loss_fn(torch.zeros_like(y), y)
+            valid_loss += loss_fn(pred, y)
     # print(f"Validation loss before all_reduce: {valid_loss: >7f}")
     dist.all_reduce(valid_loss, op=dist.ReduceOp.SUM)
     # print(f"Validation loss after all_reduce: {valid_loss: >7f}")
