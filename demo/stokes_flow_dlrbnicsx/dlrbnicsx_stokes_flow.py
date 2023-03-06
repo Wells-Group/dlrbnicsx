@@ -444,15 +444,11 @@ input_validation_set = ann_input_set[num_training_samples:, :]
 output_validation_set_u = ann_output_set_u[num_training_samples:, :]
 output_validation_set_p = ann_output_set_p[num_training_samples:, :]
 
-print("\n")
-
 reduced_problem.output_range_u[0] = np.min(ann_output_set_u)
 reduced_problem.output_range_u[1] = np.max(ann_output_set_u)
 reduced_problem.output_range_p[0] = np.min(ann_output_set_p)
 reduced_problem.output_range_p[1] = np.max(ann_output_set_p)
 # NOTE Output_range based on the computed values instead of user guess.
-
-print("\n")
 
 customDataset = CustomDataset(problem_parametric, reduced_problem,
                               len(reduced_problem._basis_functions_u),

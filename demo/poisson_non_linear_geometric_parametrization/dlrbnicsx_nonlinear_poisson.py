@@ -120,7 +120,7 @@ class ProblemOnDeformedDomain(abc.ABC):
             solver.report = True
             ksp = solver.krylov_solver
             ksp.setFromOptions()
-            dolfinx.log.set_log_level(dolfinx.log.LogLevel.INFO)
+            # dolfinx.log.set_log_level(dolfinx.log.LogLevel.INFO)
 
             self._dirichletFunc.interpolate(lambda x:
                                             x[1] * np.sin(x[0] * np.pi)
@@ -155,7 +155,7 @@ class PODANNReducedProblem(abc.ABC):
             np.array([[0.2, -0.2, 1.], [0.3, -0.4, 4.]])
         self.output_range = [-6., 3.]
         self.loss_fn = "MSE"
-        self.learning_rate = 1e-4
+        self.learning_rate = 1e-5
         self.optimizer = "Adam"
         self.regularisation = "EarlyStopping"
 
@@ -299,7 +299,7 @@ plt.tight_layout()
 # 5. ANN implementation
 
 
-def generate_ann_input_set(filepath, samples=[4, 4, 4]):
+def generate_ann_input_set(samples=[4, 4, 4]):
     """Generate an equispaced training set using numpy."""
     training_set_0 = np.linspace(0.2, 0.3, samples[0])
     training_set_1 = np.linspace(-0.2, -0.4, samples[1])
@@ -308,12 +308,11 @@ def generate_ann_input_set(filepath, samples=[4, 4, 4]):
                                                    training_set_1,
                                                    training_set_2)))
     training_set = training_set.astype("f")
-    np.save(filepath, training_set)
+    return training_set
 
 
 def generate_ann_output_set(problem, reduced_problem, N,
-                            input_file_path, output_file_path, mode=None):
-    input_set = np.load(input_file_path)
+                            input_set, mode=None):
     output_set = np.zeros([input_set.shape[0], N])
     for i in range(input_set.shape[0]):
         if mode is None:
@@ -325,52 +324,41 @@ def generate_ann_output_set(problem, reduced_problem, N,
         output_set[i, :] = \
             reduced_problem.project_snapshot(problem.solve(input_set[i, :]),
                                              N).array.astype("f")
-    np.save(output_file_path, output_set)
+    return output_set
 
-
-input_training_set_filepath = "ann_data/input_training_data.npy"
-input_validation_set_filepath = "ann_data/input_validation_data.npy"
-output_training_set_filepath = "ann_data/output_training_data.npy"
-output_validation_set_filepath = "ann_data/output_validation_data.npy"
-input_error_analysis_set_filepath = "ann_data/input_error_analysis_data.npy"
 
 # Training dataset
-generate_ann_input_set(input_training_set_filepath, samples=[6, 6, 6])
-generate_ann_output_set(problem_parametric, reduced_problem,
-                        len(reduced_problem._basis_functions),
-                        input_training_set_filepath,
-                        output_training_set_filepath,
-                        mode="Training")
+ann_input_set = generate_ann_input_set(samples=[6, 6, 7])
+np.random.shuffle(ann_input_set)
+ann_output_set = generate_ann_output_set(problem_parametric, reduced_problem,
+                                         len(reduced_problem._basis_functions),
+                                         ann_input_set, mode="Training")
 
-print("\n")
+num_training_samples = int(0.7 * ann_input_set.shape[0])
+num_validation_samples = ann_input_set.shape[0] - num_training_samples
 
-reduced_problem.output_range[0] = np.min(np.load(output_training_set_filepath))
-reduced_problem.output_range[1] = np.max(np.load(output_training_set_filepath))
+reduced_problem.output_range[0] = np.min(ann_output_set)
+reduced_problem.output_range[1] = np.max(ann_output_set)
 # NOTE Output_range based on the computed values instead of user guess.
 
-print("\n")
+input_training_set = ann_input_set[:num_training_samples, :]
+output_training_set = ann_output_set[:num_training_samples, :]
+
+input_validation_set = ann_input_set[num_training_samples:, :]
+output_validation_set = ann_output_set[num_training_samples:, :]
 
 customDataset = CustomDataset(problem_parametric, reduced_problem,
                               len(reduced_problem._basis_functions),
-                              input_training_set_filepath,
-                              output_training_set_filepath)
+                              input_training_set, output_training_set)
 train_dataloader = DataLoader(customDataset, batch_size=50, shuffle=True)
 
-# Validation dataset
-generate_ann_input_set(input_validation_set_filepath, samples=[4, 4, 4])
-generate_ann_output_set(problem_parametric, reduced_problem,
-                        len(reduced_problem._basis_functions),
-                        input_validation_set_filepath,
-                        output_validation_set_filepath,
-                        mode="Validation")
 customDataset = CustomDataset(problem_parametric, reduced_problem,
                               len(reduced_problem._basis_functions),
-                              input_validation_set_filepath,
-                              output_validation_set_filepath)
+                              input_validation_set, output_validation_set)
 valid_dataloader = DataLoader(customDataset, shuffle=False)
 
 # ANN model
-model = HiddenLayersNet(training_set.shape[1], [30, 30, 30],
+model = HiddenLayersNet(training_set.shape[1], [30, 30],
                         len(reduced_problem._basis_functions), Tanh())
 
 # Training of ANN
@@ -399,8 +387,7 @@ for epochs in range(max_epochs):
 print("\n")
 print("Generating error analysis (only input/parameters) dataset")
 print("\n")
-generate_ann_input_set(input_error_analysis_set_filepath, samples=[2, 2, 2])
-error_analysis_set = np.load(input_error_analysis_set_filepath)
+error_analysis_set = generate_ann_input_set(samples=[3, 3, 3])
 error_numpy = np.zeros(error_analysis_set.shape[0])
 
 for i in range(error_analysis_set.shape[0]):
