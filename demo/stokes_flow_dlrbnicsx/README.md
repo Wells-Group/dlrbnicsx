@@ -22,7 +22,9 @@ $$ u_D = u_{n} = (0, 0) \ \text{on} \ \Gamma_5 \cup \Gamma_6 \ \text{No slip bou
 
 2. We consider no gravity force in our analysis. 
 
-First a **reference domain** $\hat{\Omega}$, whose configuration is known entirely, is selected. The **parametric domain** $\Omega$ is obtained by spcifying the boudnary location the reference domain $\hat{\Omega}$ at given parameter $\mu$.
+3. The pressure gradient is scaled with density.
+
+First a **reference domain** $\hat{\Omega}$, whose configuration is known entirely, is selected. The **parametric domain** $\Omega$ is obtained by specifying the boundary location the reference domain $\hat{\Omega}$ at given parameter $\mu$.
 
 $$\hat{\Omega} \times \mu \to \Omega \ .$$
 
