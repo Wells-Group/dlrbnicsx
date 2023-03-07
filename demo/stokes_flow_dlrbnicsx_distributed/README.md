@@ -8,7 +8,8 @@ We solve the problem reported in **POD-ANN for the Stokes equation with geometri
 
 Below are the notable differences:
 
-- We now use the distributed module
+- We now use the distributed modules
+
 ```
 from dlrbnicsx.dataset.custom_partitioned_dataset \
     import CustomPartitionedDataset
@@ -17,9 +18,14 @@ from dlrbnicsx.train_validate_test.train_validate_test_distributed \
     import train_nn, validate_nn, online_nn, error_analysis
 ```
 
-- MPI communicator for mesh: We create separate mesh on each process by ```mesh_comm = MPI.COMM_SELF``` to ```dolfinx.io.gmshio.read_from_msh```.
+- MPI communicator for mesh:
 
-- POD training set: We now generate samples for POD on process with rank 0 and Bcast the sample to other processes.
+We create separate mesh on each process by ```mesh_comm = MPI.COMM_SELF``` to ```dolfinx.io.gmshio.read_from_msh```.
+
+- POD training set:
+
+We now generate samples for POD on process with rank 0 and Bcast the sample to other processes.
+
 ```
 world_comm = MPI.COMM_WORLD
 
@@ -124,10 +130,12 @@ world_comm.Allreduce(ann_output_set_u, ann_output_set_recv_u, op=MPI.SUM)
 world_comm.Allreduce(ann_output_set_p, ann_output_set_recv_p, op=MPI.SUM)
 ```
 
-- Dataset distribution across different processes
+- Dataset distribution across different processes:
+
 We now use ```CustomPartitionedDataset``` instead of ```CustomDataset```. This will distribute the input data across different processes. Neural network will perform data parallel training of neural network using chunk of available data with gradient synchronisation at the end of each iteration.
 
-- Neural network model initialisation
+- Neural network model initialisation:
+
 Since, the neural network is initialised on each process using random neural network parameters (weights and biases), it is important to synchronise these random parameters before start of the training for example, by averaging these parameters.
 
 ```
@@ -139,7 +147,9 @@ for param in model_u.parameters():
     print(f"Rank {rank} \n Params after all_reduce: {param.data}")
 ```
 
-- The samples for error analysis are generated on process with rank 0 and Bcast to other processes. Each process computes error for part of the error analysis set as specified in ```indices```.
+- Error analysis:
+
+The samples for error analysis are generated on process with rank 0 and Bcast to other processes. Each process computes error for part of the error analysis set as specified in ```indices```.
 
 ```
 if rank == 0:
