@@ -205,9 +205,8 @@ def generate_training_set(samples=[8, 8]):
         np.array(list(itertools.product(training_set_0, training_set_1)))
     return training_set
 
+
 # Generate samples on rank 0 and Bcast to other processes
-
-
 if rank == 0:
     training_set = generate_training_set()
 else:
@@ -226,6 +225,7 @@ for mu_index in training_set_indices:
     print(f"High fidelity solve for mu = {training_set[mu_index,:]}")
     training_set_solutions[mu_index, :] = \
         problem_parametric.solve(training_set[mu_index, :]).x.array
+
 
 training_set_solutions_recv = np.zeros_like(training_set_solutions)
 world_comm.Barrier()
@@ -430,6 +430,7 @@ if rank == 0:
     error_analysis_set = generate_ann_input_set(samples=[5, 5])
 else:
     error_analysis_set = np.zeros_like(generate_ann_input_set(samples=[5, 5]))
+
 world_comm.Bcast(error_analysis_set, root=0)
 
 world_comm.Barrier()

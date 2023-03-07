@@ -503,7 +503,7 @@ ann_output_set_u, ann_output_set_p = \
     generate_ann_output_set(problem_parametric, reduced_problem,
                             ann_input_set, indices, mode="Training")
 
-# Start zero matrix for MPI all reduce and collect output set using MPI.SUM
+# Initialise zero matrix for MPI all reduce and collect output set using MPI.SUM
 ann_output_set_recv_u = np.zeros_like(ann_output_set_u)
 ann_output_set_recv_p = np.zeros_like(ann_output_set_p)
 world_comm.Barrier()

@@ -1,8 +1,8 @@
-## POD-ANN for the Stokes equation with geometric parametrization (Distributed) ##
+## POD-ANN for the Poisson equation with geometric parametrization (Distributed) ##
 
 ### 1. Problem statement
 
-We solve the problem reported in **POD-ANN for the Stokes equation with geometric parametrization**. However, we now compute one snapshot on one process for the POD and use data parallel training of the neural network using **MPI**.
+We solve the problem reported in **POD-ANN for the Poisson equation with geometric parametrization**. However, we now compute one snapshot on one process for the POD and use data parallel training of the neural network using **MPI**.
 
 ### 2. Implementation
 
@@ -20,7 +20,7 @@ from dlrbnicsx.train_validate_test.train_validate_test_distributed \
 
 - MPI communicator for mesh:
 
-We create separate mesh on each process by ```mesh_comm = MPI.COMM_SELF``` to ```dolfinx.io.gmshio.read_from_msh```.
+We create separate mesh on each process by providing ```mesh_comm = MPI.COMM_SELF``` to ```dolfinx.io.gmshio.read_from_msh```.
 
 ```
 # Read mesh
@@ -28,7 +28,7 @@ mesh_comm = MPI.COMM_SELF  # NOTE
 gdim = 2
 gmsh_model_rank = 0
 mesh, cell_tags, facet_tags = \
-    dolfinx.io.gmshio.read_from_msh("mesh_data/domain_geometry.msh",
+    dolfinx.io.gmshio.read_from_msh("mesh_data/mesh.msh",
                                     mesh_comm, gmsh_model_rank, gdim=gdim)
 ```
 
@@ -44,6 +44,8 @@ world_comm = MPI.COMM_WORLD
 .
 
 # Generate samples on rank 0 and Bcast to other processes
+
+
 if rank == 0:
     training_set = generate_training_set()
 else:
@@ -65,18 +67,14 @@ for mu_index in training_set_indices:
     print(rbnicsx.io.TextLine(str(mu_index+1) + f"/{training_set.shape[0]}",
                               fill="#"))
     print(f"High fidelity solve for mu = {training_set[mu_index,:]}")
-    solution_vel_mu, solution_pre_mu = \
-        problem_parametric.solve(training_set[mu_index, :])
-    training_set_solutions_u[mu_index, :] = solution_vel_mu.x.array
-    training_set_solutions_p[mu_index, :] = solution_pre_mu.x.array
+    training_set_solutions[mu_index, :] = \
+        problem_parametric.solve(training_set[mu_index, :]).x.array
 
 .
 .
 .
 
-world_comm.Allreduce(training_set_solutions_u, training_set_solutions_recv_u,
-                     op=MPI.SUM)
-world_comm.Allreduce(training_set_solutions_p, training_set_solutions_recv_p,
+world_comm.Allreduce(training_set_solutions, training_set_solutions_recv,
                      op=MPI.SUM)
 ```
 
@@ -89,59 +87,48 @@ The samples for ANN input training set are generated on process with rank 0 and 
 ```
 # Generate ANN input TRAINING samples on the rank 0 and Bcast to other processes
 if rank == 0:
-    ann_input_set = generate_ann_input_set(samples=[8, 8])
-    np.random.shuffle(ann_input_set)
+    input_training_set = generate_ann_input_set(samples=[8, 8])
 else:
-    ann_input_set = np.zeros_like(generate_ann_input_set(samples=[8, 8]))
+    input_training_set = \
+        np.zeros_like(generate_ann_input_set(samples=[8, 8]))
 
-world_comm.Bcast(ann_input_set, root=0)
+world_comm.Bcast(input_training_set, root=0)
 ```
 
 Similar to POD, each process computes part of the output training set according to ```indices```.
 
 ```
-def generate_ann_output_set(problem, reduced_problem, input_set,
-                            indices, mode=None):
-    # Compute output set for ANN based on input set
-    output_set_u = np.zeros([input_set.shape[0],
-                             len(reduced_problem._basis_functions_u)])
-    output_set_p = np.zeros([input_set.shape[0],
-                             len(reduced_problem._basis_functions_p)])
-    rb_size_u = len(reduced_problem._basis_functions_u)
-    rb_size_p = len(reduced_problem._basis_functions_p)
+def generate_ann_output_set(problem, reduced_problem, N,
+                            input_set, indices, mode=None):
+    # Solve the FE problem at given input_sets and
+    # project on the RB space
+    output_set = np.zeros([input_set.shape[0], N])
     for i in indices:
         if mode is None:
-            print(f"Parameter number {i+1} of ")
-            print(f"{input_set.shape[0]}: {input_set[i, :]}")
+            print(f"Parameter number {i+1} of {input_set.shape[0]}")
+            print(f"Parameter: {input_set[i,:]}")
         else:
-            print(f"{mode} parameter number {i+1} of ")
-            print(f"{input_set.shape[0]}: {input_set[i, :]}")
-        print(input_set[i, :])
-        (solution_u, solution_p) = problem.solve(input_set[i, :])
-        print(solution_u.x.array)
-        print(solution_p.x.array)
-        output_set_u[i, :] = \
-            reduced_problem.project_snapshot_u(solution_u, rb_size_u).array
-        output_set_p[i, :] = \
-            reduced_problem.project_snapshot_p(solution_p, rb_size_p).array
-    return output_set_u, output_set_p
+            print(f"{mode} parameter number {i+1} of {input_set.shape[0]}")
+            print(f"Parameter: {input_set[i,:]}")
+        output_set[i, :] = \
+            reduced_problem.project_snapshot(problem.solve(input_set[i, :]),
+                                             N).array.astype("f")
+    return output_set
 
 .
 .
 .
 
-indices = np.arange(rank, ann_input_set.shape[0], size)
+indices = np.arange(rank, input_training_set.shape[0], size)
 ```
 
 The output training set is collected using MPI.
 
 ```
-# Start zero matrix for MPI all reduce and collect output set using MPI.SUM
-ann_output_set_recv_u = np.zeros_like(ann_output_set_u)
-ann_output_set_recv_p = np.zeros_like(ann_output_set_p)
+# Initialise zero matrix for MPI all reduce and collect output set using MPI.SUM
+output_training_set_recv = np.zeros_like(output_training_set)
 world_comm.Barrier()
-world_comm.Allreduce(ann_output_set_u, ann_output_set_recv_u, op=MPI.SUM)
-world_comm.Allreduce(ann_output_set_p, ann_output_set_recv_p, op=MPI.SUM)
+world_comm.Allreduce(output_training_set, output_training_set_recv, op=MPI.SUM)
 ```
 
 - Dataset distribution across different processes:
@@ -153,7 +140,7 @@ We now use ```CustomPartitionedDataset``` instead of ```CustomDataset```. This w
 Since, the neural network is initialised on each process using random neural network parameters (weights and biases), it is important to synchronise these random parameters before start of the training for example, by averaging these parameters.
 
 ```
-for param in model_u.parameters():
+for param in model.parameters():
     print(f"Rank {rank} \n Params before all_reduce: {param.data}")
     # NOTE This ensures that models in all processes start with same weights and biases
     dist.all_reduce(param.data, op=dist.ReduceOp.SUM)
@@ -167,17 +154,17 @@ The samples for error analysis are generated on process with rank 0 and Bcast to
 
 ```
 if rank == 0:
-    error_analysis_set_u = generate_ann_input_set(samples=[3, 3])
+    error_analysis_set = generate_ann_input_set(samples=[5, 5])
 else:
-    error_analysis_set_u = np.zeros_like(generate_ann_input_set(samples=[3, 3]))
+    error_analysis_set = np.zeros_like(generate_ann_input_set(samples=[5, 5]))
 
-world_comm.Bcast(error_analysis_set_u, root=0)
+world_comm.Bcast(error_analysis_set, root=0)
 
 .
 .
 .
 
-indices = np.arange(rank, error_analysis_set_u.shape[0], size)
+indices = np.arange(rank, error_analysis_set.shape[0], size)
 ```
 
 - Online phase: 
@@ -185,7 +172,7 @@ indices = np.arange(rank, error_analysis_set_u.shape[0], size)
 It is performed on only one process (for example, rank 0).
 
 ```
-# Online phase
+# ### Online phase ###
 
 if rank == 0:
 
