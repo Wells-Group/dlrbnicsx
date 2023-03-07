@@ -317,9 +317,8 @@ def generate_training_set(samples=[6, 6]):
         np.array(list(itertools.product(training_set_0, training_set_1)))
     return training_set
 
+
 # Generate samples on rank 0 and Bcast to other processes
-
-
 if rank == 0:
     training_set = generate_training_set()
 else:
@@ -493,6 +492,7 @@ else:
 
 world_comm.Bcast(ann_input_set, root=0)
 
+# Indices for ANN dataset distribution
 indices = np.arange(rank, ann_input_set.shape[0], size)
 
 # Generate ANN output samples
@@ -503,6 +503,7 @@ ann_output_set_u, ann_output_set_p = \
     generate_ann_output_set(problem_parametric, reduced_problem,
                             ann_input_set, indices, mode="Training")
 
+# Start zero matrix for MPI all reduce and collect output set using MPI.SUM
 ann_output_set_recv_u = np.zeros_like(ann_output_set_u)
 ann_output_set_recv_p = np.zeros_like(ann_output_set_p)
 world_comm.Barrier()
