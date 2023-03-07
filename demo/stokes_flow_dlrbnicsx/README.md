@@ -28,7 +28,7 @@ First a **reference domain** $\hat{\Omega}$, whose configuration is known entire
 
 $$\hat{\Omega} \times \mu \to \Omega \ .$$
 
-The reference domain $\hat{\Omega}$ considered in this problem is shown in the figure below. First a square with vertices (0, 0) -- (0, 10) -- (10, 10) -- (10, 0) is constructed. Next, bottom right quarter of the circle with center at (0, 10) and radius of 5 is cut from the square. The mesh is constructed on the reference domain $\hat{\Omega}$. At a given parameter $\mu$, the mesh is deformed to obtain mesh of the parametric domain $\Omega$.
+The reference domain $\hat{\Omega}$ considered in this problem is shown in the figure below. The mesh is constructed on the reference domain $\hat{\Omega}$. At a given parameter $\mu$, the mesh is deformed to obtain mesh of the parametric domain $\Omega$.
 
 * **Reference domain**:
 
