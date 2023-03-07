@@ -68,7 +68,7 @@ We use [RBniCSx](https://github.com/RBniCS/RBniCSx) for Proper Orthogonal Decomp
 
    - Parametric formulation ```ProblemOnDeformedDomain```
 
-First, the ```ProblemOnDeformedDomain``` class, with ```solve``` method, is created to compute the finite element solution at a given parameter $\mu$. This class resembles to dolfinx implementation (dolfinx_linear_poisson.py).
+First, the ```ProblemOnDeformedDomain``` class, with ```solve``` method, is created to compute the finite element solution at a given parameter $\mu$. This class resembles to dolfinx implementation (dlrbnicsx_stokes_flow.py).
 
    - Reduced problem ```PODANNReducedProblem```
 
