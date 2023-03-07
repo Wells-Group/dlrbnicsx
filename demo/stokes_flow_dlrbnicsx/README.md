@@ -30,11 +30,11 @@ The reference domain $\hat{\Omega}$ considered in this problem is shown in the f
 
 * **Reference domain**:
 
-![alt text](https://github.com/Wells-Group/dlrbnicsx/blob/main/demo/poisson/mesh_data/domain.png)
+![alt text](https://github.com/Wells-Group/dlrbnicsx/blob/main/demo/stokes_flow_dlrbnicsx/mesh_data/domain.png)
 
-* **Mesh and boundary markers**: 1: Bottom boundary, 2: Right boundary, 3: Top boundary, 4: Curved boundary, 5: Left boundary
+* **Mesh and boundary markers**: 1: Bottom boundary, 2: Left boundary, 3: Right boundary, 4: Top boundary, 5: Airfoil upper boundary, 6: Airfoil lower boundary
 
-![alt text](https://github.com/Wells-Group/dlrbnicsx/blob/main/demo/poisson/mesh_data/boundaries.png)
+![alt text](https://github.com/Wells-Group/dlrbnicsx/blob/main/demo/stokes_flow_dlrbnicsx/mesh_data/boundaries.png)
 
 The domain $\Omega$ is parametrized by 2 geometric parameters $\mu = \lbrace \mu_0, \mu_1 \rbrace$. These parameters are used to deform the domain. We apply 
 
