@@ -66,7 +66,7 @@ world_comm.Allreduce(training_set_solutions_p, training_set_solutions_recv_p,
                      op=MPI.SUM)
 ```
 
-**NOTE***: Eigenvectors and Eigenvalues for POD are computed on each of the processes.
+**NOTE**: Eigenvectors and Eigenvalues for POD are computed on each of the processes.
 
 - Neural network training set:
 
@@ -164,4 +164,19 @@ world_comm.Bcast(error_analysis_set_u, root=0)
 .
 
 indices = np.arange(rank, error_analysis_set_u.shape[0], size)
+```
+
+- Online phase: 
+
+It is performed on on only one process (for example, rank 0).
+
+```
+# Online phase
+
+if rank == 0:
+
+.
+.
+.
+
 ```
