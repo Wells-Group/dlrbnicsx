@@ -4,7 +4,7 @@
 
 We consider **Geometrically parametrized Stokes equation** as applied to flow over airfoil. We consider in our analysis naca0012 airfoil.
 
-$$ \nu \nabla^2 u + \nabla p = f \ \text{in} \ \Omega(\mu) \ ,$$
+$$ \nu \nabla^2 u + \nabla p = 0 \ \text{in} \ \Omega(\mu) \ ,$$
 
 $$ \nabla \cdot u = 0 \ \text{in} \ \Omega(\mu) \ .$$
 
@@ -18,7 +18,7 @@ $$ u_D = u_{n} = (0, 0) \ \text{on} \ \Gamma_5 \cup \Gamma_6 \ \text{No slip bou
 
 **NOTE**: 
 
-1. We have replaced negative of pressure in the equation for symmetric systems of equations. Also, we have not considered density in the pressure term.
+1. We have replaced negative sign of pressure in the equation for symmetric systems of equations.
 
 2. We consider zero gravity force in our analysis. 
 
@@ -79,6 +79,6 @@ After initialisation of the classes, POD is performed on the separate snapshot m
 ```CustomDataset``` scales the computed data. The ```DataLoader``` wraps an iterable around ```CustomDataset```.
 
 **NOTE**: 
-It should be noted that additional keyword arguments are provided for ```CustomDataset``` , ```error_analysis``` and ```online_nn``` : ```input_scaling_range```, ```output_scaling_range```, ```input_range``` and ```output_range```. This allows user to use different scaling range and different input-output data range for pressure and velocity. Similarly, for ```error_analysis```, we use additional keyword arguments ```norm_error``` and ```reconstruct_solution``` for different error norms and reduced basis to finite element solution reconstruction respectively. This allows user to specify different error nroms for pressure and velocity as well as reduced basis to finite element solution reconstruction.
+It should be noted that additional keyword arguments are provided for ```CustomDataset``` , ```error_analysis``` and ```online_nn``` : ```input_scaling_range```, ```output_scaling_range```, ```input_range``` and ```output_range```. This allows user to use different scaling range and different input-output data range for pressure and velocity. Similarly, for ```error_analysis```, we use additional keyword arguments ```norm_error``` and ```reconstruct_solution``` for different error norms and reduced basis to finite element solution reconstruction respectively. This allows user to specify different error norms for pressure and velocity as well as reduced basis to finite element solution reconstruction.
 
 During training, the data is loaded in batches and shuffled to improve learning of the ANN. During validation, the data is not divided into batches and is not shuffled, as no backpropagation is performed during validation. ANN model is constructed using ```HiddenLayersNet```. The training and validation of neural network is performed using methods ```train_nn``` and ```validate_nn``` respectively, for maximum number of epochs ```max_epochs``` or until the early stopping criteria is invoked. Finally, error analysis is performed using ```error_analysis```. ```error_analysis``` uses ```reconstruct_solution``` and ```norm_error``` methods from ```PODANNReducedProblem```. ```error_analysis``` also uses ```solve``` method from ```ProblemOnDeformedDomain```. ```online_nn``` is used to perform feed-forward of the ANN at parameter ```online_mu``` during the **online phase**.
