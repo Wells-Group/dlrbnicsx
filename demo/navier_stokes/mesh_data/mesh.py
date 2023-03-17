@@ -46,7 +46,8 @@ gmsh.model.mesh.field.setAsBackgroundMesh(2)
 gmsh.option.setNumber("Mesh.Algorithm", 1)
 # 2=simple full-quad (See section 7.4,  https://gmsh.info/doc/texinfo/gmsh.html#Mesh-options)
 gmsh.option.setNumber("Mesh.RecombinationAlgorithm", 1)
-# gmsh.option.setNumber("Mesh.RecombineAll", 1) # Apply recombination algorithm to all surfaces, ignoring per-surface spec
+# gmsh.option.setNumber("Mesh.RecombineAll", 1)
+# Apply recombination algorithm to all surfaces, ignoring per-surface spec
 # Mesh subdivision algorithm (0: none, 1: all quadrangles, 2: all hexahedra, 3: barycentric)
 gmsh.option.setNumber("Mesh.SubdivisionAlgorithm", 0)
 # gmsh.option.setNumber("Mesh.MeshSizeMin", 0.1) # Minimum characteristic element size
@@ -64,7 +65,8 @@ for i in range(1, len(surfaces)+1):
 for i in range(1, len(edges)+1):
     gmsh.model.addPhysicalGroup(gdim-1, [edges[i-1][1]], edges[i-1][1])
 
-# NOTE Remove gmsh markers as dolfinx.io.gmshio extract_geometry and extract_topology_and_markers expects gmsh to provide model with only physical markers and not point/edge markers.
+# NOTE Remove gmsh markers as dolfinx.io.gmshio extract_geometry and extract_topology_and_markers expects gmsh to
+# provide model with only physical markers and not point/edge markers.
 # gmsh.model.occ.remove(gmsh.model.getEntities(dim=gdim-1))
 # gmsh.model.occ.remove(gmsh.model.getEntities(dim=gdim))
 
