@@ -14,7 +14,7 @@ gmsh_model_rank = 0
 mesh_comm = MPI.COMM_WORLD
 mesh, subdomains, boundaries = \
     dolfinx.io.gmshio.read_from_msh("mesh_data/mesh.msh",
-                                    mesh_comm, gmsh_model_rank, gdim=gdim)
+                                    mesh_comm, gmsh_model_rank, gdim=gdim) # deugfurgfueygfugu54ug5tgi5iguyg
 
 # Mesh deformation parameters
 mu = np.array([0.8, 1.1])
