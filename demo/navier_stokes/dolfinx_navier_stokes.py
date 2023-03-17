@@ -35,6 +35,7 @@ jacobian_cpp = dolfinx.fem.form(jacobian)
 u_top = dolfinx.fem.Function(V)
 u_noSlip = dolfinx.fem.Function(V)
 
+
 def top(x):
     return np.stack((np.ones(x.shape[1]), np.zeros(x.shape[1])))
 
@@ -58,11 +59,12 @@ bc_bottom = dolfinx.fem.dirichletbc(u_noSlip, dofs_4)
 
 bcs = [bc_left, bc_top, bc_right, bc_bottom]
 
+
 def assemble_residual(snes, x, residual_vec):
     x.ghostUpdate(addv=PETSc.InsertMode.INSERT,
                   mode=PETSc.ScatterMode.FORWARD)
     with residual_vec.localForm() as residual_vec_local:
-            residual_vec_local.set(0.0)
+        residual_vec_local.set(0.0)
     dolfinx.fem.petsc.assemble_vector_block(residual_vec, residual_cpp,
                                             jacobian_cpp, bcs, x0=x,
                                             scale=-1.0)
@@ -76,7 +78,7 @@ def assemble_jacobian(snes, x, jacobian_mat, preconditioner_mat):
 
 
 snes = PETSc.SNES().create(mesh.comm)
-snes.setTolerances(max_it=200)
+snes.setTolerances(max_it=10)
 snes.getKSP().setType("preonly")
 snes.getKSP().getPC().setType("lu")
 snes.getKSP().getPC().setFactorSolverType("mumps")

@@ -42,28 +42,31 @@ gmsh.model.mesh.field.setString(2, "F", "F1^4 + " + str(0.01))
 gmsh.model.mesh.field.setAsBackgroundMesh(2)
 
 # Create mesh
-gmsh.option.setNumber("Mesh.Algorithm", 1) # 8=Frontal-Delaunay for Quads (See section 7.4,  https://gmsh.info/doc/texinfo/gmsh.html#Mesh-options)
-gmsh.option.setNumber("Mesh.RecombinationAlgorithm", 1) # 2=simple full-quad (See section 7.4,  https://gmsh.info/doc/texinfo/gmsh.html#Mesh-options)
+# 8=Frontal-Delaunay for Quads (See section 7.4,  https://gmsh.info/doc/texinfo/gmsh.html#Mesh-options)
+gmsh.option.setNumber("Mesh.Algorithm", 1)
+# 2=simple full-quad (See section 7.4,  https://gmsh.info/doc/texinfo/gmsh.html#Mesh-options)
+gmsh.option.setNumber("Mesh.RecombinationAlgorithm", 1)
 # gmsh.option.setNumber("Mesh.RecombineAll", 1) # Apply recombination algorithm to all surfaces, ignoring per-surface spec
-gmsh.option.setNumber("Mesh.SubdivisionAlgorithm", 0) # Mesh subdivision algorithm (0: none, 1: all quadrangles, 2: all hexahedra, 3: barycentric)
+# Mesh subdivision algorithm (0: none, 1: all quadrangles, 2: all hexahedra, 3: barycentric)
+gmsh.option.setNumber("Mesh.SubdivisionAlgorithm", 0)
 # gmsh.option.setNumber("Mesh.MeshSizeMin", 0.1) # Minimum characteristic element size
-gmsh.option.setNumber("Mesh.MeshSizeMax", 0.03) # Maximum characteristic element size
-gmsh.model.mesh.generate(gdim) # Mesh generation
-gmsh.model.mesh.setOrder(1) # Mesh order
-gmsh.model.mesh.optimize("Netgen") # Mesh optimisation or improving quality of mesh
+gmsh.option.setNumber("Mesh.MeshSizeMax", 0.03)  # Maximum characteristic element size
+gmsh.model.mesh.generate(gdim)  # Mesh generation
+gmsh.model.mesh.setOrder(1)  # Mesh order
+gmsh.model.mesh.optimize("Netgen")  # Mesh optimisation or improving quality of mesh
 
 # Extract edges and surfaces to add physical groups
 surfaces = gmsh.model.getEntities(dim=gdim)
 edges = gmsh.model.getBoundary(surfaces)
 
-for i in range(1,len(surfaces)+1):
-    gmsh.model.addPhysicalGroup(gdim,[surfaces[i-1][1]],surfaces[i-1][1])
-for i in range(1,len(edges)+1):
-    gmsh.model.addPhysicalGroup(gdim-1,[edges[i-1][1]],edges[i-1][1])
+for i in range(1, len(surfaces)+1):
+    gmsh.model.addPhysicalGroup(gdim, [surfaces[i-1][1]], surfaces[i-1][1])
+for i in range(1, len(edges)+1):
+    gmsh.model.addPhysicalGroup(gdim-1, [edges[i-1][1]], edges[i-1][1])
 
 # NOTE Remove gmsh markers as dolfinx.io.gmshio extract_geometry and extract_topology_and_markers expects gmsh to provide model with only physical markers and not point/edge markers.
-#gmsh.model.occ.remove(gmsh.model.getEntities(dim=gdim-1))
-#gmsh.model.occ.remove(gmsh.model.getEntities(dim=gdim))
+# gmsh.model.occ.remove(gmsh.model.getEntities(dim=gdim-1))
+# gmsh.model.occ.remove(gmsh.model.getEntities(dim=gdim))
 
 # Save and visualise the mesh
 gmsh.write("mesh.msh")

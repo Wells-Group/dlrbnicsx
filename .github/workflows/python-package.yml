@@ -31,4 +31,9 @@ jobs:
     - name: Lint with flake8
       run: |
         flake8  --exit-zero  .
-        flake8 ./demo/poisson
+        flake8 ./demo/poisson_equation_dlrbnicsx
+        flake8 ./demo/poisson_equation_dlrbnicsx_distributed
+        flake8 ./demo/poisson_non_linear_geometric_parametrization
+        flake8 ./demo/poisson_non_linear_geometric_parametrization_distributed
+        flake8 ./demo/stokes_flow_dlrbnicsx
+        flake8 ./demo/stokes_flow_dlrbnicsx_distributed
