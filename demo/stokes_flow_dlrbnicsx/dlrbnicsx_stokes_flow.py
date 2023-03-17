@@ -283,7 +283,7 @@ comm = MPI.COMM_WORLD
 gdim = 2
 gmsh_model_rank = 0
 mesh, cell_tags, facet_tags = \
-    dolfinx.io.gmshio.read_from_msh("mesh_data/domain_geometry.msh", comm,
+    dolfinx.io.gmshio.read_from_msh("mesh_data/mesh.msh", comm,
                                     gmsh_model_rank, gdim=gdim)
 
 # Mesh deformation parameters

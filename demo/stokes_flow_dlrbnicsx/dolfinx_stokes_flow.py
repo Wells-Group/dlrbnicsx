@@ -12,7 +12,7 @@ gdim = 2
 comm = MPI.COMM_WORLD
 gmsh_model_rank = 0
 mesh, subdomains, boundaries = dolfinx.io.gmshio.read_from_msh(
-    "mesh_data/domain_geometry.msh", comm, gmsh_model_rank, gdim=gdim)
+    "mesh_data/mesh.msh", comm, gmsh_model_rank, gdim=gdim)
 
 P2 = ufl.VectorElement("Lagrange", mesh.ufl_cell(), 2)
 P1 = ufl.FiniteElement("Lagrange", mesh.ufl_cell(), 1)
@@ -103,9 +103,6 @@ with HarmonicMeshMotion(mesh, boundaries, boundary_markers,
     solution.x.scatter_forward()
     (solution_u, solution_p) = (solution.sub(0).collapse(),
                                 solution.sub(1).collapse())
-
-    print(max(abs(solution_u.x.array)))
-    print(max(abs(solution_p.x.array)))
 
     with dolfinx.io.XDMFFile(mesh.comm, "dolfinx_solution/velocity.xdmf",
                              "w") as solution_file:
