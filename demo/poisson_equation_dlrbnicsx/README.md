@@ -19,12 +19,11 @@ $$\hat{\Omega} \times \mu \to \Omega \ .$$
 The reference domain $\hat{\Omega}$ considered in this problem is shown in the figure below. First a square with vertices (0, 0) -- (0, 10) -- (10, 10) -- (10, 0) is constructed. Next, bottom right quarter of the circle with center at (0, 10) and radius of 5 is cut from the square. The mesh is constructed on the reference domain $\hat{\Omega}$. At a given parameter $\mu$, the mesh is deformed to obtain mesh of the parametric domain $\Omega$.
 
 * **Reference domain**:
-
-![alt text](https://github.com/Wells-Group/dlrbnicsx/blob/main/demo/poisson/mesh_data/domain.png)
+![alt text](https://github.com/Wells-Group/dlrbnicsx/blob/main/demo/poisson_equation_dlrbnicsx/mesh_data/domain.png)
 
 * **Mesh and boundary markers**: 1: Bottom boundary, 2: Right boundary, 3: Top boundary, 4: Curved boundary, 5: Left boundary
 
-![alt text](https://github.com/Wells-Group/dlrbnicsx/blob/main/demo/poisson/mesh_data/boundaries.png)
+![alt text](https://github.com/Wells-Group/dlrbnicsx/blob/main/demo/poisson_equation_dlrbnicsx/mesh_data/boundaries.png)
 
 The domain $\Omega$ is parametrized by 2 geometric parameters $\mu = \lbrace \mu_0, \mu_1 \rbrace$. These parameters are used to deform the domain. The domain boundaries are deformed as:
 
