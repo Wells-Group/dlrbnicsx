@@ -103,5 +103,5 @@ mesh, subdomains, boundaries = \
 
 with dolfinx.io.XDMFFile(mesh.comm, "mesh.xdmf", "w") as mesh_file_xdmf:
     mesh_file_xdmf.write_mesh(mesh)
-    mesh_file_xdmf.write_meshtags(subdomains)
-    mesh_file_xdmf.write_meshtags(boundaries)
+    mesh_file_xdmf.write_meshtags(subdomains, mesh.geometry)
+    mesh_file_xdmf.write_meshtags(boundaries, mesh.geometry)

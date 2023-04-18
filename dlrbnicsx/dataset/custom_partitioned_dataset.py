@@ -21,6 +21,8 @@ tutorial
 (pytorch.org/tutorials/intermediate/dist_tuto.html#writing-distributed-applications-with-pytorch)
 
 TODO mix indices before distributing data
+
+TODO cleanup with dist.destroy_process_group()
 '''
 
 dist.init_process_group("gloo", rank=rank, world_size=size)
