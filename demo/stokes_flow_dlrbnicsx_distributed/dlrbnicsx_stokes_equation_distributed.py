@@ -719,7 +719,7 @@ if rank == 0:
 
     # Compute FEM solution
     (solution_u, solution_p) = problem_parametric.solve(online_mu)
-    
+
     solution_p1 = dolfinx.fem.Function(Q)
     solution_p2 = dolfinx.fem.Function(Q)
     solution_p1.x.array[:] = -solution_p.x.array
@@ -745,7 +745,7 @@ if rank == 0:
                                                          output_scaling_range=reduced_problem.output_scaling_range_p,
                                                          input_range=reduced_problem.input_range_p,
                                                          output_range=reduced_problem.output_range_p))
-    
+
     solution_p2.x.array[:] = -rb_solution_p.x.array
 
     # Post processing of FEM and RB solution
@@ -776,7 +776,7 @@ if rank == 0:
         with dolfinx.io.XDMFFile(mesh.comm, "dlrbnicsx_solution/fem_pressure_online_mu.xdmf",
                                  "w") as solution_file:
             solution_file.write_mesh(mesh)
-            #solution_file.write_function(solution_p)
+            # solution_file.write_function(solution_p)
             solution_file.write_function(solution_p1)
 
         with dolfinx.io.XDMFFile(mesh.comm, "dlrbnicsx_solution/rb_velocity_online_mu.xdmf",
@@ -787,7 +787,7 @@ if rank == 0:
         with dolfinx.io.XDMFFile(mesh.comm, "dlrbnicsx_solution/rb_pressure_online_mu.xdmf",
                                  "w") as solution_file:
             solution_file.write_mesh(mesh)
-            #solution_file.write_function(rb_solution_p)
+            # solution_file.write_function(rb_solution_p)
             solution_file.write_function(solution_p2)
 
         with dolfinx.io.XDMFFile(mesh.comm, "dlrbnicsx_solution/error_velocity_online_mu.xdmf",

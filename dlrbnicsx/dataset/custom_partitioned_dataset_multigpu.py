@@ -1,11 +1,11 @@
 from mpi4py import MPI
-import torch
+import torch  # noqa: F401
 import numpy as np
-import sys
+import sys  # noqa: F401
 
 comm = MPI.COMM_WORLD
 num_gpus = 4
-group_id = [[0,1,2], [4,5], [8], [12,13,14,15]]
+group_id = [[0, 1, 2], [4, 5], [8], [12, 13, 14, 15]]
 gpu_id = [0, 1, 2, 3]
 
 process_group_0 = comm.group.Incl(group_id[0])
