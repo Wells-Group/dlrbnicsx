@@ -24707,4 +24707,4 @@ mesh, sudbdomains, boundaries = \
 
 with dolfinx.io.XDMFFile(MPI.COMM_WORLD, "mesh.xdmf", "w") as mesh_file_xdmf:
     mesh_file_xdmf.write_mesh(mesh)
-    mesh_file_xdmf.write_meshtags(boundaries)
+    mesh_file_xdmf.write_meshtags(boundaries, mesh.geometry)

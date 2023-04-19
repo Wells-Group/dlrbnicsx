@@ -119,5 +119,3 @@ with CustomMeshDeformation(mesh, facet_tags, boundary_markers,
     with dolfinx.io.XDMFFile(mesh.comm, error_file, "w") as solution_file:
         solution_file.write_mesh(mesh)
         solution_file.write_function(u_error)
-    np.save("dlrbnicsx_solution_nonlinear_poisson/dolfinx_array.npy",
-            uh.x.array.copy())

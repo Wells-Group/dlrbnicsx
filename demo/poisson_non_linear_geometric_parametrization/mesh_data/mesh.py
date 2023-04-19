@@ -53,5 +53,5 @@ mesh, cell_tags, facet_tags = dolfinx.io.gmshio.read_from_msh(
 
 with dolfinx.io.XDMFFile(MPI.COMM_WORLD, "mesh.xdmf", "w") as mesh_file_xdmf:
     mesh_file_xdmf.write_mesh(mesh)
-    mesh_file_xdmf.write_meshtags(cell_tags)
-    mesh_file_xdmf.write_meshtags(facet_tags)
+    mesh_file_xdmf.write_meshtags(cell_tags, mesh.geometry)
+    mesh_file_xdmf.write_meshtags(facet_tags, mesh.geometry)
