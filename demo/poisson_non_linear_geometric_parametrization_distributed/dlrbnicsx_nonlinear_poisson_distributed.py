@@ -50,9 +50,13 @@ class CustomMeshDeformation(HarmonicMeshMotion):
             reshape(self._reference_coordinates.shape[0], gdim)
         self._mesh.geometry.x[:, 0] -= min(self._mesh.geometry.x[:, 0])
         return self
+
+
 '''
 
 '''
+
+
 class ProblemOnDeformedDomain(abc.ABC):
     def __init__(self, mesh, subdomains, boundaries, meshDeformationContext):
         self._mesh = mesh
