@@ -361,11 +361,11 @@ def generate_ann_output_set(problem, reduced_problem, input_set,
 
 # Generate ANN input TRAINING samples on the rank 0 and Bcast to other processes
 if rank == 0:
-    ann_input_set = generate_ann_input_set(samples=[6, 6, 7])
+    ann_input_set = generate_ann_input_set(samples=[3, 3, 4])
     np.random.shuffle(ann_input_set)
 else:
     ann_input_set = \
-        np.zeros_like(generate_ann_input_set(samples=[6, 6, 7]))
+        np.zeros_like(generate_ann_input_set(samples=[3, 3, 4]))
 
 world_comm.Bcast(ann_input_set, root=0)
 
@@ -410,125 +410,21 @@ customDataset = \
 valid_dataloader = DataLoader(customDataset, shuffle=False)
 
 # ANN model
-model = HiddenLayersNet(training_set.shape[1], [30, 30],
-                        len(reduced_problem._basis_functions), Tanh())
+cuda_num = world_comm.rank // 32
 
-for param in model.parameters():
-    # print(f"Rank {rank} \n Params before all_reduce: {param.data}")
-    # NOTE This ensures that models in all processes start with same weights and biases
-    dist.all_reduce(param.data, op=dist.ReduceOp.SUM)
-    param.data /= dist.get_world_size()
-    # print(f"Rank {rank} \n Params after all_reduce: {param.data}")
+import torch
 
-# Training of ANN
-training_loss = list()
-validation_loss = list()
+try:
+    print(f"Rank {world_comm.rank}, cuda_num: {cuda_num}")
+    model = HiddenLayersNet(training_set.shape[1], [30, 30],
+                            len(reduced_problem._basis_functions),
+                            Tanh()).to(f"cuda:{cuda_num}")
+    torch.save(model, "model.pth")
+except:
+    print(f"Rank {world_comm.rank} could not mount ANN model on cuda:{cuda_num}, Using cpu instead")
+    model = HiddenLayersNet(training_set.shape[1], [30, 30],
+                            len(reduced_problem._basis_functions),
+                            Tanh()).to("cpu")
 
-max_epochs = 20000
-min_validation_loss = None
-for epochs in range(max_epochs):
-    print(f"Epoch: {epochs+1}/{max_epochs}")
-    current_training_loss = train_nn(reduced_problem, train_dataloader,
-                                     model)
-    training_loss.append(current_training_loss)
-    current_validation_loss = validate_nn(reduced_problem, valid_dataloader,
-                                          model)
-    validation_loss.append(current_validation_loss)
-    if epochs > 0 and current_validation_loss > 1.01 * min_validation_loss \
-       and reduced_problem.regularisation == "EarlyStopping":
-        # 1% safety margin against min_validation_loss
-        # before invoking early stopping criteria
-        print(f"Early stopping criteria invoked at epoch: {epochs+1}")
-        break
-    min_validation_loss = min(validation_loss)
-
-
-# Error analysis dataset
-print("\n")
-print("Generating error analysis (only input/parameters) dataset")
-print("\n")
-
-if rank == 0:
-    error_analysis_set = generate_ann_input_set(samples=[3, 3, 3])
-else:
-    error_analysis_set = \
-        np.zeros_like(generate_ann_input_set(samples=[3, 3, 3]))
-
-world_comm.Bcast(error_analysis_set, root=0)
-
-world_comm.Barrier()
-error_numpy = np.zeros(error_analysis_set.shape[0])
-error_numpy_recv = np.zeros(error_analysis_set.shape[0])
-indices = np.arange(rank, error_analysis_set.shape[0], size)
-
-for i in indices:
-    print(f"Error analysis parameter number {i+1} of ")
-    print(f"{error_analysis_set.shape[0]}: {error_analysis_set[i, :]}")
-    error_numpy[i] = error_analysis(reduced_problem, problem_parametric,
-                                    error_analysis_set[i, :], model,
-                                    len(reduced_problem._basis_functions),
-                                    online_nn, device=None)
-    print(f"Error: {error_numpy[i]}")
-
-world_comm.Barrier()
-world_comm.Allreduce(error_numpy, error_numpy_recv, op=MPI.SUM)
-
-# Online phase at parameter online_mu
-if rank == 0:
-    online_mu = np.array([0.25, -0.3, 2.5])
-    fem_solution = problem_parametric.solve(online_mu)
-    rb_solution = \
-        reduced_problem.reconstruct_solution(
-            online_nn(reduced_problem, problem_parametric, online_mu, model,
-                      len(reduced_problem._basis_functions), device=None))
-
-    fem_online_file \
-        = "dlrbnicsx_solution_nonlinear_poisson/fem_online_mu_computed.xdmf"
-    with CustomMeshDeformation(mesh, facet_tags,
-                               problem_parametric._boundary_markers,
-                               problem_parametric._bcs_geometric,
-                               online_mu, reset_reference=True,
-                               is_deformation=True) as mesh_class:
-        with dolfinx.io.XDMFFile(mesh.comm, fem_online_file,
-                                 "w") as solution_file:
-            solution_file.write_mesh(mesh)
-            solution_file.write_function(fem_solution)
-
-    rb_online_file \
-        = "dlrbnicsx_solution_nonlinear_poisson/rb_online_mu_computed.xdmf"
-    with CustomMeshDeformation(mesh, facet_tags,
-                               problem_parametric._boundary_markers,
-                               problem_parametric._bcs_geometric,
-                               online_mu, reset_reference=True,
-                               is_deformation=True) as mesh_class:
-        with dolfinx.io.XDMFFile(mesh.comm, rb_online_file,
-                                 "w") as solution_file:
-            # NOTE scatter_forward not considered for online solution
-            solution_file.write_mesh(mesh)
-            solution_file.write_function(rb_solution)
-
-    error_function = dolfinx.fem.Function(problem_parametric._V)
-    error_function.x.array[:] = \
-        fem_solution.x.array - rb_solution.x.array
-    fem_rb_error_file \
-        = "dlrbnicsx_solution_nonlinear_poisson/fem_rb_error_computed.xdmf"
-    with CustomMeshDeformation(mesh, facet_tags,
-                               problem_parametric._boundary_markers,
-                               problem_parametric._bcs_geometric,
-                               online_mu, reset_reference=True,
-                               is_deformation=True) as mesh_class:
-        with dolfinx.io.XDMFFile(mesh.comm, fem_rb_error_file,
-                                 "w") as solution_file:
-            solution_file.write_mesh(mesh)
-            solution_file.write_function(error_function)
-
-    with CustomMeshDeformation(mesh, facet_tags,
-                               problem_parametric._boundary_markers,
-                               problem_parametric._bcs_geometric,
-                               online_mu, reset_reference=True,
-                               is_deformation=True) as mesh_class:
-        print(reduced_problem.norm_error(fem_solution, rb_solution))
-        print(reduced_problem.compute_norm(error_function))
-
-    print(reduced_problem.norm_error(fem_solution, rb_solution))
-    print(reduced_problem.compute_norm(error_function))
+if world_comm.rank == 0:
+    model = torch.load("model.pth")
