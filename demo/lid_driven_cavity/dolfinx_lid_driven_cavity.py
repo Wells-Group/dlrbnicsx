@@ -7,30 +7,6 @@ from mpi4py import MPI
 import dolfinx
 from petsc4py import PETSc
 from mdfenicsx.mesh_motion_classes import HarmonicMeshMotion
-
-class CustomMeshDeformation(HarmonicMeshMotion):
-    def __init__(self, mesh, boundaries, bc_marerks_list, bc_function_list, mu, reset_reference = True, is_deformation = False):
-        super().__init__(mesh, boundaries, bc_marerks_list, bc_function_list, reset_reference, is_deformation)
-        self.mu = mu
-
-    def __enter__(self):
-        gdim = self._mesh.geometry.dim
-        mu = self.mu
-
-        # Compute shape parametrization such that 
-        #   mu_1 defines the length of the horizontal edge,
-        #   mu_2 the slanting (possibly vertical) edges, and
-        #   mu_3 the angle between the oblique sides and the positive x-semiaxis
-        self.shape_parametrization = self.solve()
-        if self._is_deformation:
-            self._mesh.geometry.x[:, :gdim] += self.shape_parametrization.x.array.reshape(self._reference_coordinates.shape[0], gdim)
-        else:
-            self._mesh.geometry.x[:, :gdim] = self.shape_parametrization.x.array.reshape(self._reference_coordinates.shape[0], gdim)
-        
-        with dolfinx.io.XDMFFile(MPI.COMM_WORLD, "mesh_data/changed_mesh.xdmf", "w") as mesh_file_xdmf:
-            mesh_file_xdmf.write_mesh(self._mesh)
-        
-        return self
         
 # Read unit square mesh with Triangular elements
 mesh_comm = MPI.COMM_WORLD
@@ -41,6 +17,9 @@ mesh, cell_tags, facet_tags = dolfinx.io.gmshio.read_from_msh("mesh_data/mesh.ms
 # Mesh deformation parameters
 mu = np.array([1.0, 2/np.sqrt(3), math.pi/3])
 # mu = np.array([1.0, 1.0, math.pi/2])
+mu = np.array([2.0,2.0,1.2217])
+
+mu = np.array([1.66666667,1.66666667, 1.91986218])
 
 # Boundary conditions for custom mesh deformation (not for problem)
 def u_bc_bottom(x): return (mu[0] * x[0], x[1])
@@ -99,7 +78,7 @@ F = ufl.inner(ufl.grad(u)* u,v) * ufl.dx\
 
 problem = dolfinx.fem.petsc.NonlinearProblem(F, up, bcs=bcs)
 
-with CustomMeshDeformation(mesh, facet_tags, boundary_markers, [u_bc_bottom, u_bc_right, u_bc_top, u_bc_left], mu, reset_reference=True, is_deformation=False) as mesh_class:
+with HarmonicMeshMotion(mesh, facet_tags, boundary_markers, [u_bc_bottom, u_bc_right, u_bc_top, u_bc_left], reset_reference=True, is_deformation=False) as mesh_class:
     solver = dolfinx.nls.petsc.NewtonSolver(mesh.comm, problem)
     solver.max_it = 100
     solver.rtol = 1e-6

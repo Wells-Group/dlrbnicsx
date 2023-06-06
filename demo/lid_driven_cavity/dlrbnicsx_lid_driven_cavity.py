@@ -26,30 +26,6 @@ from dlrbnicsx.train_validate_test.train_validate_test import \
 import matplotlib.pyplot as plt
 
 Re = 400
-
-class CustomMeshDeformation(HarmonicMeshMotion):
-    def __init__(self, mesh, boundaries, bc_marerks_list, bc_function_list, mu, reset_reference = True, is_deformation = False):
-        super().__init__(mesh, boundaries, bc_marerks_list, bc_function_list, reset_reference, is_deformation)
-        self.mu = mu
-
-    def __enter__(self):
-        gdim = self._mesh.geometry.dim
-        mu = self.mu
-
-        # Compute shape parametrization such that 
-        #   mu_1 defines the length of the horizontal edge,
-        #   mu_2 the slanting (possibly vertical) edges, and
-        #   mu_3 the angle between the oblique sides and the positive x-semiaxis
-        self.shape_parametrization = self.solve()
-        if self._is_deformation:
-            self._mesh.geometry.x[:, :gdim] += self.shape_parametrization.x.array.reshape(self._reference_coordinates.shape[0], gdim)
-        else:
-            self._mesh.geometry.x[:, :gdim] = self.shape_parametrization.x.array.reshape(self._reference_coordinates.shape[0], gdim)
-        
-        with dolfinx.io.XDMFFile(MPI.COMM_WORLD, "mesh_data/changed_mesh.xdmf", "w") as mesh_file_xdmf:
-            mesh_file_xdmf.write_mesh(self._mesh)
-        
-        return self
     
 class ProblemOnDeformedDomain(abc.ABC):
     def __init__(self, mesh, subdomains, boundaries, meshDeformationContext):
@@ -119,11 +95,11 @@ class ProblemOnDeformedDomain(abc.ABC):
                                 ]
         problemNonlinear = self.set_problem
         solution = dolfinx.fem.Function(self._W)
-        with self._meshDeformationContext(self._mesh, self._boundaries, self._boundary_markers, self._bcs_geometric, mu,  is_deformation = False) as mesh_class:
+        with self._meshDeformationContext(self._mesh, self._boundaries, self._boundary_markers, self._bcs_geometric, is_deformation = False, reset_reference = True) as mesh_class:
             solver = dolfinx.nls.petsc.NewtonSolver(mesh_class._mesh.comm, problemNonlinear)
             solver.max_it = 100
             solver.rtol = 1e-6
-
+            self._solution.x.set(0.0)
             n, converged = solver.solve(self._solution)
             assert(converged)
             solution.x.array[:] = self._solution.x.array.copy()
@@ -143,10 +119,10 @@ class PODANNReducedProblem(abc.ABC):
         v, q = ufl.TestFunction(V), ufl.TestFunction(Q)
 
         self._inner_product_u = ufl.inner(u,v) * ufl.dx + ufl.inner(ufl.grad(u), ufl.grad(v))* ufl.dx
-        self._inner_product_action_u = rbnicsx.backends.bilinear_form_action ( self._inner_product, part = "real")
+        self._inner_product_action_u = rbnicsx.backends.bilinear_form_action ( self._inner_product_u, part = "real")
 
         self._inner_product_p = ufl.inner(p,q) * ufl.dx
-        self._inner_product_action_p = rbnicsx.backends.bilinear_form_action ( self._inner_product, part = "real")
+        self._inner_product_action_p = rbnicsx.backends.bilinear_form_action ( self._inner_product_p, part = "real")
 
         
         self.input_scaling_range = [-1., 1.]
@@ -221,15 +197,15 @@ mesh, cell_tags, facet_tags = dolfinx.io.gmshio.read_from_msh("mesh_data/mesh.ms
 mu = np.array([1.0, 2/np.sqrt(3), math.pi/3])
 
 # FEM solve
-problem_parametric = ProblemOnDeformedDomain(mesh, cell_tags, facet_tags, CustomMeshDeformation)
+problem_parametric = ProblemOnDeformedDomain(mesh, cell_tags, facet_tags, HarmonicMeshMotion)
 
 solution_u, solution_p = problem_parametric.solve(mu)
 
 computed_file = "results/solution_computed.xdmf"
 
-with CustomMeshDeformation(mesh, facet_tags,
+with HarmonicMeshMotion(mesh, facet_tags,
                            problem_parametric._boundary_markers,
-                           problem_parametric._bcs_geometric, mu,
+                           problem_parametric._bcs_geometric,
                            reset_reference=True,
                            is_deformation=False) as mesh_class:
     solution_u.name = "Velocity"
@@ -245,9 +221,9 @@ POD
 """
 def generate_training_set(samples=[4, 4, 4]):
     # Todo: was sind das für Parameter?
-    training_set_0 = np.linspace(0.2, 0.3, samples[0])
-    training_set_1 = np.linspace(-0.2, -0.4, samples[1])
-    training_set_2 = np.linspace(1., 4., samples[2])
+    training_set_0 = np.linspace(1.0, 2.0, samples[0])
+    training_set_1 = np.linspace(1.0, 2.0, samples[1])
+    training_set_2 = np.linspace(np.pi/6, 5*np.pi/6, samples[2])
     training_set = np.array(list(itertools.product(training_set_0,
                                                    training_set_1,
                                                    training_set_2)))
@@ -354,9 +330,9 @@ ANN
 def generate_ann_input_set(samples=[4, 4, 4]):
     """Generate an equispaced training set using numpy."""
     # TODO woher kommen diese Parameter
-    training_set_0 = np.linspace(0.2, 0.3, samples[0])
-    training_set_1 = np.linspace(-0.2, -0.4, samples[1])
-    training_set_2 = np.linspace(1., 4., samples[2])
+    training_set_0 = np.linspace(1.0, 2.0, samples[0])
+    training_set_1 = np.linspace(1.0, 2.0, samples[1])
+    training_set_2 = np.linspace(np.pi/6, np.pi/6*5, samples[2])
     training_set = np.array(list(itertools.product(training_set_0,
                                                    training_set_1,
                                                    training_set_2)))
@@ -540,7 +516,7 @@ for i in range(error_analysis_set_p.shape[0]):
     print(f"Error: {error_numpy_p[i]}")
 
 # Online phase at parameter online_mu
-online_mu = np.array([0.25, -0.3, 2.5])
+online_mu = np.array([1.0, 1.0, np.pi/2])
 (solution_u, solution_p) = problem_parametric.solve(online_mu)
 rb_solution_u = \
     reduced_problem.reconstruct_solution_u(
