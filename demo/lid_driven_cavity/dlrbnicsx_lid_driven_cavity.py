@@ -88,14 +88,14 @@ class ProblemOnDeformedDomain(abc.ABC):
     
     def solve(self, mu):
         self._mu = mu
-        self._bcs_geometric = [lambda x: (mu[0] * x[0], x[1]),
-                                lambda x: (mu[0]* x[0] + np.cos(mu[2]) * mu[1] * x[1], np.sin(mu[2]) * mu[1] * x[1]),
-                                lambda x: (mu[0]* x[0] + np.cos(mu[2]) * mu[1], np.sin(mu[2]) * mu[1] +  0.0 * x[1]),
-                                lambda x: (np.cos(mu[2]) * mu[1] * x[1] , np.sin(mu[2]) * mu[1] * x[1])
+        self._bcs_geometric = [lambda x: (mu[0] * x[0] -x[0] , x[1] - x[1]), # Bottom
+                                lambda x: (mu[0]* x[0] + np.cos(mu[2]) * mu[1] * x[1] -x[0], np.sin(mu[2]) * mu[1] * x[1] -x[1]), # Right
+                                lambda x: (mu[0]* x[0] + np.cos(mu[2]) * mu[1] -x[0], np.sin(mu[2]) * mu[1] +  0.0 * x[1]-x[1]), # Top
+                                lambda x: (np.cos(mu[2]) * mu[1] * x[1] -x[0], np.sin(mu[2]) * mu[1] * x[1]-x[1]) # Left
                                 ]
         problemNonlinear = self.set_problem
         solution = dolfinx.fem.Function(self._W)
-        with self._meshDeformationContext(self._mesh, self._boundaries, self._boundary_markers, self._bcs_geometric, is_deformation = False, reset_reference = True) as mesh_class:
+        with self._meshDeformationContext(self._mesh, self._boundaries, self._boundary_markers, self._bcs_geometric, is_deformation = True, reset_reference = True) as mesh_class:
             solver = dolfinx.nls.petsc.NewtonSolver(mesh_class._mesh.comm, problemNonlinear)
             solver.max_it = 100
             solver.rtol = 1e-6
@@ -207,7 +207,7 @@ with HarmonicMeshMotion(mesh, facet_tags,
                            problem_parametric._boundary_markers,
                            problem_parametric._bcs_geometric,
                            reset_reference=True,
-                           is_deformation=False) as mesh_class:
+                           is_deformation=True) as mesh_class:
     solution_u.name = "Velocity"
     solution_p.name = "Pressure"
     with dolfinx.io.XDMFFile(mesh.comm, computed_file,
@@ -554,7 +554,7 @@ solution_pressure_error.name = "Pressure Error"
 
 with HarmonicMeshMotion(problem_parametric._mesh, problem_parametric._boundaries,
                         problem_parametric._boundary_markers, problem_parametric._bcs_geometric,
-                        reset_reference=True, is_deformation=False):
+                        reset_reference=True, is_deformation=True):
 
     with dolfinx.io.XDMFFile(mesh.comm, "results/fem_v_online_mu.xdmf",
                              "w") as solution_file:

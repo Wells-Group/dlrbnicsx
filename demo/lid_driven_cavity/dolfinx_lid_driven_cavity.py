@@ -1,6 +1,7 @@
 import ufl
 import numpy as np
 import math
+import itertools
 
 from mpi4py import MPI
 
@@ -16,16 +17,27 @@ mesh, cell_tags, facet_tags = dolfinx.io.gmshio.read_from_msh("mesh_data/mesh.ms
 
 # Mesh deformation parameters
 mu = np.array([1.0, 2/np.sqrt(3), math.pi/3])
-# mu = np.array([1.0, 1.0, math.pi/2])
-mu = np.array([2.0,2.0,1.2217])
 
-mu = np.array([1.66666667,1.66666667, 1.91986218])
+def generate_training_set(samples=[4, 4, 4]):
+    # Todo: was sind das für Parameter?
+    training_set_0 = np.linspace(1.0, 2.0, samples[0])
+    training_set_1 = np.linspace(1.0, 2.0, samples[1])
+    training_set_2 = np.linspace(np.pi/6, 5*np.pi/6, samples[2])
+    training_set = np.array(list(itertools.product(training_set_0,
+                                                   training_set_1,
+                                                   training_set_2)))
+    return training_set
+
+parameters = generate_training_set()
+mu = parameters[42]
+#mu = np.round(mu, 8)
+
 
 # Boundary conditions for custom mesh deformation (not for problem)
-def u_bc_bottom(x): return (mu[0] * x[0], x[1])
-def u_bc_right(x): return (mu[0]* x[0] + np.cos(mu[2]) * mu[1] * x[1], np.sin(mu[2]) * mu[1] * x[1])
-def u_bc_left(x): return (np.cos(mu[2]) * mu[1] * x[1] , np.sin(mu[2]) * mu[1] * x[1])
-def u_bc_top(x): return (mu[0]* x[0] + np.cos(mu[2]) * mu[1], np.sin(mu[2]) * mu[1] +  0.0 * x[1])
+def u_bc_bottom(x): return (mu[0] * x[0] - x[0],x[1] - x[1])
+def u_bc_right(x): return (mu[0]* x[0] + np.cos(mu[2]) * mu[1] * x[1] -x[0], np.sin(mu[2]) * mu[1] * x[1]-x[1])
+def u_bc_top(x): return (mu[0]* x[0] + np.cos(mu[2]) * mu[1]-x[0], np.sin(mu[2]) * mu[1] +  0.0 * x[1]-x[1])
+def u_bc_left(x): return (np.cos(mu[2]) * mu[1] * x[1] -x[0], np.sin(mu[2]) * mu[1] * x[1]-x[1])
 
 
 # Boundary markers
@@ -38,7 +50,7 @@ q_elem = ufl.FiniteElement("CG", mesh.ufl_cell(), 1) # Ansatz space for pressure
 v_elem = ufl.MixedElement([x_elem, q_elem])
 W = dolfinx.fem.FunctionSpace(mesh, v_elem)
 
-V0, _ = W.sub(0).collapse()
+V, _ = W.sub(0).collapse()
 
 vq = ufl.TestFunction(W)
 (v, q) = ufl.split(vq)
@@ -57,14 +69,14 @@ def lid_velocity_expression(x):
 def noslip_velocity_expression(x):
     return np.zeros(x.shape)
 
-passing_velocity = dolfinx.fem.Function(V0)
-noslip = dolfinx.fem.Function(V0)
+passing_velocity = dolfinx.fem.Function(V)
+noslip = dolfinx.fem.Function(V)
 passing_velocity.interpolate(lid_velocity_expression)
 
-dofs_bottom = dolfinx.fem.locate_dofs_topological((W.sub(0),V0), gdim -1, facet_tags.find(1))
-dofs_right = dolfinx.fem.locate_dofs_topological((W.sub(0),V0), gdim -1, facet_tags.find(2))
-dofs_left = dolfinx.fem.locate_dofs_topological((W.sub(0),V0), gdim -1, facet_tags.find(4))
-dofs_top = dolfinx.fem.locate_dofs_topological((W.sub(0),V0), gdim -1, facet_tags.find(3))
+dofs_bottom = dolfinx.fem.locate_dofs_topological((W.sub(0),V), gdim -1, facet_tags.find(1))
+dofs_right = dolfinx.fem.locate_dofs_topological((W.sub(0),V), gdim -1, facet_tags.find(2))
+dofs_left = dolfinx.fem.locate_dofs_topological((W.sub(0),V), gdim -1, facet_tags.find(4))
+dofs_top = dolfinx.fem.locate_dofs_topological((W.sub(0),V), gdim -1, facet_tags.find(3))
 
 bcs.append(dolfinx.fem.dirichletbc(passing_velocity, dofs_top, W.sub(0)))
 bcs.append(dolfinx.fem.dirichletbc(noslip, dofs_bottom,W.sub(0)))
@@ -78,13 +90,13 @@ F = ufl.inner(ufl.grad(u)* u,v) * ufl.dx\
 
 problem = dolfinx.fem.petsc.NonlinearProblem(F, up, bcs=bcs)
 
-with HarmonicMeshMotion(mesh, facet_tags, boundary_markers, [u_bc_bottom, u_bc_right, u_bc_top, u_bc_left], reset_reference=True, is_deformation=False) as mesh_class:
+with HarmonicMeshMotion(mesh, facet_tags, boundary_markers, [u_bc_bottom, u_bc_right, u_bc_top, u_bc_left], reset_reference=True, is_deformation=True) as mesh_class:
     solver = dolfinx.nls.petsc.NewtonSolver(mesh.comm, problem)
     solver.max_it = 100
     solver.rtol = 1e-6
 
     dolfinx.log.set_log_level(dolfinx.log.LogLevel.INFO)
-
+    print("Solving problem with parameters: ", mu)
     n, converged = solver.solve(up)
     (v_1, p_1) = up.split()
     v_1.name = "Velocity"
