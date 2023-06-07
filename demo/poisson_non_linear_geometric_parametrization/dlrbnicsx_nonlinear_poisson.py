@@ -101,6 +101,8 @@ class ProblemOnDeformedDomain(abc.ABC):
         return problemNonlinear
 
     def solve(self, mu):
+        print(f"mu: {mu}")
+        # self._solution.x.array[:] = 0.
         self._bcs_geometric = \
             [lambda x: (0.*x[1], mu[0]*np.sin(x[0]*np.pi)),
              lambda x: (0.*x[0], 0.*x[1]),
@@ -128,7 +130,7 @@ class ProblemOnDeformedDomain(abc.ABC):
             n, converged = solver.solve(self._solution)
             assert (converged)
             solution.x.array[:] = self._solution.x.array.copy()
-            print(f"Computed solution array: {solution.x.array}")
+            # print(f"Computed solution array: {solution.x.array}")
             print(f"Number of interations: {n:d}")
             return solution
 
