@@ -106,6 +106,7 @@ class ProblemOnDeformedDomain(abc.ABC):
             print(f"Computed solution array: {solution.x.array}")
             print(f"Number of iterations: {n}")
             (solution_u, solution_p) = solution.split()
+            solution_u, solution_p = (solution.sub(0).collapse(), solution.sub(1).collapse())
             return solution_u, solution_p
             
 class PODANNReducedProblem(abc.ABC):
