@@ -536,5 +536,3 @@ if rank == 0:
 
     print(reduced_problem.norm_error(fem_solution, rb_solution))
     print(reduced_problem.compute_norm(error_function))
-
-
