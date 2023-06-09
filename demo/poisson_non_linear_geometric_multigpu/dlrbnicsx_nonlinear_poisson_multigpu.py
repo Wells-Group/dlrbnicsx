@@ -718,7 +718,7 @@ if training_communicator_comm != MPI.COMM_NULL:
 '''
 # TODO
 1. Data transfer during every epoch or only once before customDataset? --> NOTE Only Once (See 2. as well)
-2. If before customDataset, write new customDataset is dlrbnicsx.
+2. If before customDataset, write new customDataset in dlrbnicsx.
 3. NOTE dist needs to be initialised only on training_communicator_comm.
 4. comm.Free() at appropriate places
 5. Create window for error_analysis_set, relative error array
