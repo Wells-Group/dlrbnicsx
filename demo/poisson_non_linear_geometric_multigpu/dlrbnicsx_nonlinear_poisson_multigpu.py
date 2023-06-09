@@ -717,10 +717,11 @@ if training_communicator_comm != MPI.COMM_NULL:
 
 '''
 # TODO
-1. Data transfer during every epoch or only once before customDataset?
+1. Data transfer during every epoch or only once before customDataset? --> NOTE Only Once (See 2. as well)
 2. If before customDataset, write new customDataset is dlrbnicsx.
 3. NOTE dist needs to be initialised only on training_communicator_comm.
 4. comm.Free() at appropriate places
 5. Create window for error_analysis_set, relative error array
 6. FEM computation during error analysis are only performed on 1 CPU comm instead of utilising all CPU cores
+7. Test with multiple model on same GPU
 '''
