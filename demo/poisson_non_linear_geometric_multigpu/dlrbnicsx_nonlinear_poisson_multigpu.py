@@ -536,8 +536,7 @@ def online_nn(reduced_problem, problem, online_mu, model, N, cuda_rank,
 
 def error_analysis(reduced_problem, problem, error_analysis_mu, model, N,
                    online_nn, cuda_rank, norm_error=None,
-                   reconstruct_solution=None,
-                   input_scaling_range=None,
+                   reconstruct_solution=None, input_scaling_range=None,
                    output_scaling_range=None, input_range=None,
                    output_range=None, index=None):
     model.eval()
@@ -632,27 +631,51 @@ if training_communicator_comm != MPI.COMM_NULL:
         else:
             if min_loss > valid_loss:
                 min_loss = valid_loss
-                print(online_mu)
                 online_mu_torch_float = \
                     torch.from_numpy(online_mu).to(torch.float32)
-                print(model.forward(online_mu_torch_float.to(
-                    f"cuda:{cuda_rank}")))
             else:
                 print(f"Early stopping criteria, epoch {current_epoch + 1}")
-                print(online_mu)
                 online_mu_torch_float = \
                     torch.from_numpy(online_mu).to(torch.float32)
-                print(model.forward(online_mu_torch_float.to(
-                    f"cuda:{cuda_rank}")))
                 model.load_state_dict(torch.load(model_save_path))
                 break
         torch.save(model.state_dict(), model_save_path)
 
-    error_analysis_set = generate_ann_input_set()
+    error_analysis_num_para = 15 * 15
+
+    itemsize = MPI.DOUBLE.Get_size()
+
+    if training_communicator_comm.rank == 0:
+        nbytes_para = error_analysis_num_para * itemsize * para_dim
+        nbytes_error = error_analysis_num_para * itemsize
+    else:
+        nbytes_para = 0
+        nbytes_error = 0
+
+    win6 = MPI.Win.Allocate_shared(nbytes_para, itemsize,
+                                   comm=training_communicator_comm)
+    buf6, itemsize = win6.Shared_query(0)
+    error_analysis_set = np.ndarray(buffer=buf6, dtype="d",
+                                    shape=(error_analysis_num_para,
+                                           para_dim))
+
+    win7 = MPI.Win.Allocate_shared(nbytes_error, itemsize,
+                                   comm=training_communicator_comm)
+    buf7, itemsize = win7.Shared_query(0)
+    relative_error = np.ndarray(buffer=buf7, dtype="d",
+                                shape=(error_analysis_num_para))
+
+    if training_communicator_comm.rank == 0:
+        error_analysis_set[:, :] = \
+            generate_ann_input_set(samples=[15, 15])
+        relative_error[:] = np.zeros([error_analysis_num_para])
+
+    training_communicator_comm.Barrier()
+
     error_analysis_indices = np.arange(training_communicator_comm.rank,
                                        error_analysis_set.shape[0],
                                        training_communicator_comm.size)
-    relative_error = np.zeros([error_analysis_set.shape[0]])
+
     for i in error_analysis_indices:
         print(f"Error analysis: Parameter {i+1} of {error_analysis_set.shape[0]}")
         relative_error[i] = error_analysis(reduced_problem, problem_parametric,
@@ -661,14 +684,15 @@ if training_communicator_comm != MPI.COMM_NULL:
                                            online_nn, cuda_rank)
 
     solution = problem_parametric.solve(online_mu)
-    solution_reduced = online_nn(reduced_problem, problem_parametric,
-                                 online_mu, model,
-                                 len(reduced_problem._basis_functions),
-                                 cuda_rank,
-                                 input_scaling_range=reduced_problem.input_scaling_range,
-                                 output_scaling_range=reduced_problem.output_scaling_range,
-                                 input_range=reduced_problem.input_range,
-                                 output_range=reduced_problem.output_range)
+    solution_reduced = \
+        online_nn(reduced_problem, problem_parametric,
+                  online_mu, model,
+                  len(reduced_problem._basis_functions),
+                  cuda_rank,
+                  input_scaling_range=reduced_problem.input_scaling_range,
+                  output_scaling_range=reduced_problem.output_scaling_range,
+                  input_range=reduced_problem.input_range,
+                  output_range=reduced_problem.output_range)
     ann_reconstructed_solution = \
         reduced_problem.reconstruct_solution(solution_reduced)
 
@@ -721,7 +745,5 @@ if training_communicator_comm != MPI.COMM_NULL:
 2. If before customDataset, write new customDataset in dlrbnicsx.
 3. NOTE dist needs to be initialised only on training_communicator_comm.
 4. comm.Free() at appropriate places
-5. Create window for error_analysis_set, relative error array
-6. FEM computation during error analysis are only performed on 1 CPU comm instead of utilising all CPU cores
-7. Test with multiple model on same GPU
+5. FEM computation during error analysis are only performed on 1 CPU comm instead of utilising all CPU cores
 '''
