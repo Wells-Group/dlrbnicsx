@@ -18,3 +18,7 @@ def from_numpy(x, dtype=torch.float32):
     x: torch tensor
     """
     return torch.from_numpy(x).to(dtype)
+
+
+def model_to_gpu(model, cuda_rank=0):
+    model.to(f"cuda:{cuda_rank}")
