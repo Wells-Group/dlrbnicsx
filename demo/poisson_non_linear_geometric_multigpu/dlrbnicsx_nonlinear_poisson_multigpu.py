@@ -739,11 +739,11 @@ if training_communicator_comm != MPI.COMM_NULL:
     print(f"Relative error: {relative_error}")
     print(f"Done! cuda rank {cuda_rank}")
 
+
 '''
 # TODO
 1. Data transfer during every epoch or only once before customDataset? --> NOTE Only Once (See 2. as well)
 2. If before customDataset, write new customDataset in dlrbnicsx.
 3. NOTE dist needs to be initialised only on training_communicator_comm.
 4. comm.Free() at appropriate places
-5. FEM computation during error analysis are only performed on 1 CPU comm instead of utilising all CPU cores
 '''
