@@ -22,3 +22,8 @@ def from_numpy(x, dtype=torch.float32):
 
 def model_to_gpu(model, cuda_rank=0):
     model.to(f"cuda:{cuda_rank}")
+
+
+def data_to_gpu(data, cuda_rank):
+    data_on_gpu = torch.from_numpy(data).to(f"cuda:{cuda_rank}")
+    return data_on_gpu
