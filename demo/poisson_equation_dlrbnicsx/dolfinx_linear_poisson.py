@@ -16,6 +16,7 @@ mesh, subdomains, boundaries = \
     dolfinx.io.gmshio.read_from_msh("mesh_data/mesh.msh",
                                     mesh_comm, gmsh_model_rank, gdim=gdim)
 
+
 # Mesh deformation parameters
 mu = np.array([0.8, 1.1])
 
