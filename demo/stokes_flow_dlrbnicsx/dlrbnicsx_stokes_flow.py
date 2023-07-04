@@ -427,7 +427,7 @@ def generate_ann_output_set(problem, reduced_problem, input_set, mode=None):
     return output_set_u, output_set_p
 
 
-ann_input_set = generate_ann_input_set(samples=[8, 8])
+ann_input_set = generate_ann_input_set(samples=(30, 30)) # (samples=[8, 8])
 np.random.shuffle(ann_input_set)
 ann_output_set_u, ann_output_set_p = \
     generate_ann_output_set(problem_parametric, reduced_problem,
@@ -549,7 +549,7 @@ for epochs in range(max_epochs_p):
 print("\n")
 print("Generating error analysis (only input/parameters) dataset")
 print("\n")
-error_analysis_set_u = generate_ann_input_set(samples=[3, 3])
+error_analysis_set_u = generate_ann_input_set(samples=[15, 15]) # (samples=[3, 3])
 error_numpy_u = np.zeros(error_analysis_set_u.shape[0])
 
 for i in range(error_analysis_set_u.shape[0]):
@@ -572,7 +572,7 @@ for i in range(error_analysis_set_u.shape[0]):
 print("\n")
 print("Generating error analysis (only input/parameters) dataset")
 print("\n")
-error_analysis_set_p = generate_ann_input_set(samples=[3, 3])
+error_analysis_set_p = generate_ann_input_set(samples=[15, 15]) # (samples=[3, 3])
 error_numpy_p = np.zeros(error_analysis_set_p.shape[0])
 
 for i in range(error_analysis_set_p.shape[0]):

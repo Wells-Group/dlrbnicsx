@@ -1,4 +1,5 @@
 import os
+import socket
 
 import numpy as np
 import torch
@@ -8,12 +9,26 @@ from mpi4py import MPI
 
 from dlrbnicsx.dataset.custom_dataset import CustomDataset
 
-os.environ['MASTER_ADDR'] = 'localhost'
-os.environ['MASTER_PORT'] = '29500'
-
 comm = MPI.COMM_WORLD
 size = comm.Get_size()
 rank = comm.Get_rank()
+
+os.environ['MASTER_ADDR'] = 'localhost'
+
+if comm.rank == 0:
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	s.bind(('', 0))
+	free_port = s.getsockname()[1]
+	s.close()
+else:
+	free_port = None
+
+
+free_port = comm.bcast(free_port, root=0)
+comm.Barrier()
+
+os.environ['MASTER_PORT'] = str(free_port)
+
 
 '''
 TODO see mp.set_start_method("spawn") to p.join() in the pytorch distributed
@@ -62,6 +77,7 @@ class CustomPartitionedDataset(CustomDataset):
             local_indices = torch.arange(0, global_indices[rank])
             print(f"Rank {rank}, Local indices {local_indices.tolist()}")
         else:
+            print(global_indices[rank-1], global_indices[rank])
             local_indices = torch.arange(global_indices[rank-1],
                                          global_indices[rank])
             print(f"Rank {rank}, Local indices {local_indices.tolist()}")

@@ -309,7 +309,7 @@ print(f"Pressure: {solution_pre_mu.x.array}")
 # POD Starts ###
 
 
-def generate_training_set(samples=[6, 6]):
+def generate_training_set(samples=[12, 12]): #(samples=[6, 6]):
     # Select input samples for POD
     training_set_0 = np.linspace(0.5, 1., samples[0])
     training_set_1 = np.linspace(0.5, 1., samples[1])
@@ -443,7 +443,9 @@ if rank == 0:
 print(f"Velocity reduced basis size: {len(reduced_problem._basis_functions_u)}")
 print(f"Pressure reduced basis size: {len(reduced_problem._basis_functions_p)}")
 
-# ### POD Ends ###
+del 
+
+# ### POD Ends ###	
 
 # Creating dataset
 
@@ -485,10 +487,10 @@ def generate_ann_output_set(problem, reduced_problem, input_set,
 
 # Generate ANN input TRAINING samples on the rank 0 and Bcast to other processes
 if rank == 0:
-    ann_input_set = generate_ann_input_set(samples=[8, 8])
+    ann_input_set = generate_ann_input_set(samples=[30, 30]) # (samples=[8, 8])
     np.random.shuffle(ann_input_set)
 else:
-    ann_input_set = np.zeros_like(generate_ann_input_set(samples=[8, 8]))
+    ann_input_set = np.zeros_like(generate_ann_input_set(samples=[30, 30])) # (samples=[8, 8]))
 
 world_comm.Bcast(ann_input_set, root=0)
 
@@ -646,9 +648,9 @@ print("\n")
 print("Generating error analysis (only input/parameters) dataset")
 print("\n")
 if rank == 0:
-    error_analysis_set_u = generate_ann_input_set(samples=[3, 3])
+    error_analysis_set_u = generate_ann_input_set(samples=[15, 15])#(samples=[3, 3])
 else:
-    error_analysis_set_u = np.zeros_like(generate_ann_input_set(samples=[3, 3]))
+    error_analysis_set_u = np.zeros_like(generate_ann_input_set(samples=[15, 15])) #(samples=[3, 3]))
 
 world_comm.Bcast(error_analysis_set_u, root=0)
 
@@ -681,9 +683,9 @@ print("\n")
 print("Generating error analysis (only input/parameters) dataset")
 print("\n")
 if rank == 0:
-    error_analysis_set_p = generate_ann_input_set(samples=[3, 3])
+    error_analysis_set_p = generate_ann_input_set(samples=[15, 15]) # (samples=[3, 3])
 else:
-    error_analysis_set_p = np.zeros_like(generate_ann_input_set(samples=[3, 3]))
+    error_analysis_set_p = np.zeros_like(generate_ann_input_set(samples=[15, 15])) # (samples=[3, 3]))
 
 world_comm.Bcast(error_analysis_set_p, root=0)
 
