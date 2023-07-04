@@ -16,12 +16,12 @@ rank = comm.Get_rank()
 os.environ['MASTER_ADDR'] = 'localhost'
 
 if comm.rank == 0:
-	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	s.bind(('', 0))
-	free_port = s.getsockname()[1]
-	s.close()
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind(('', 0))
+    free_port = s.getsockname()[1]
+    s.close()
 else:
-	free_port = None
+    free_port = None
 
 
 free_port = comm.bcast(free_port, root=0)
