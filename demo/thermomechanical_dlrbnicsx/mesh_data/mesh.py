@@ -128,6 +128,22 @@ for i in range(1, len(surfaces)+1):
 for i in range(1, len(edges)+1):
     gmsh.model.addPhysicalGroup(gdim-1, [edges[i-1][1]], edges[i-1][1])
 
+gmsh.model.addPhysicalGroup(gdim-1, [2], 2)
+gmsh.model.addPhysicalGroup(gdim-1, [3], 3)
+gmsh.model.addPhysicalGroup(gdim-1, [4], 4)
+gmsh.model.addPhysicalGroup(gdim-1, [6], 6)
+gmsh.model.addPhysicalGroup(gdim-1, [7], 7)
+gmsh.model.addPhysicalGroup(gdim-1, [8], 8)
+gmsh.model.addPhysicalGroup(gdim-1, [10], 10)
+gmsh.model.addPhysicalGroup(gdim-1, [13], 13)
+gmsh.model.addPhysicalGroup(gdim-1, [14], 14)
+gmsh.model.addPhysicalGroup(gdim-1, [15], 15)
+gmsh.model.addPhysicalGroup(gdim-1, [16], 16)
+gmsh.model.addPhysicalGroup(gdim-1, [17], 17)
+gmsh.model.addPhysicalGroup(gdim-1, [24], 24)
+gmsh.model.addPhysicalGroup(gdim-1, [25], 25)
+gmsh.model.addPhysicalGroup(gdim-1, [26], 26)
+
 gmsh.write("mesh.msh")
 
 gmsh.fltk.run()
