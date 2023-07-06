@@ -15,7 +15,7 @@ mesh, subdomains, boundaries = \
                                     gmsh_model_rank, gdim=gdim)
 
 # Parameter tuple (D_0, D_1, t_0, t_1)
-mu_ref = [0.6438, 0.4313, 1., 0.5]  # refernce geometry
+mu_ref = [0.6438, 0.4313, 1., 0.5]  # reference geometry
 mu = [0.8, 0.55, 0.8, 0.4]  # Parametric geometry
 
 # Geometric deformation boundary condition w.r.t. reference domain
