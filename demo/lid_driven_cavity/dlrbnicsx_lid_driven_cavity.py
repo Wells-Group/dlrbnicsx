@@ -54,17 +54,25 @@ class ProblemOnDeformedDomain(abc.ABC):
         passing_velocity = dolfinx.fem.Function(V)
         noslip = dolfinx.fem.Function(V)
         passing_velocity.interpolate(lambda x: np.stack((u_x * np.ones(x.shape[1]), np.zeros(x.shape[1]))))
+        reference = dolfinx.fem.Function(self._W.sub(1).collapse()[0])
+        reference.interpolate(lambda x: 0.0*x[0])
+        
+        def reference_point(x):
+            bools = np.isclose(x, np.asarray([[0.0]*x.shape[1]]*x.shape[0]))
+            return np.logical_and(bools[0], bools[1])
 
         dofs_bottom = dolfinx.fem.locate_dofs_topological((self._W.sub(0),V), self.gdim -1, self._boundaries.find(1))
         dofs_right = dolfinx.fem.locate_dofs_topological((self._W.sub(0),V), self.gdim -1, self._boundaries.find(2))
         dofs_left = dolfinx.fem.locate_dofs_topological((self._W.sub(0),V), self.gdim -1, self._boundaries.find(4))
         dofs_top = dolfinx.fem.locate_dofs_topological((self._W.sub(0),V), self.gdim -1, self._boundaries.find(3))
+        dofs_reference = dolfinx.fem.locate_dofs_geometrical((self._W.sub(1), self._W.sub(1).collapse()[0]), reference_point)
 
         bcs.append(dolfinx.fem.dirichletbc(passing_velocity, dofs_top, self._W.sub(0)))
         bcs.append(dolfinx.fem.dirichletbc(noslip, dofs_bottom,self._W.sub(0)))
         bcs.append(dolfinx.fem.dirichletbc(noslip, dofs_left,self._W.sub(0)))
         bcs.append(dolfinx.fem.dirichletbc(noslip, dofs_right,self._W.sub(0)))  
-    
+        bcs.append(dolfinx.fem.dirichletbc(reference, dofs_reference, self._W.sub(1)))
+
         return bcs
     
     @property

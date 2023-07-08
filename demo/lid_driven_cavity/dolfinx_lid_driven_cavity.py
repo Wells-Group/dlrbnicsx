@@ -69,19 +69,27 @@ def lid_velocity_expression(x):
 def noslip_velocity_expression(x):
     return np.zeros(x.shape)
 
+def reference_point(x):
+    bools = np.isclose(x, np.asarray([[0.0]*x.shape[1]]*x.shape[0]))
+    return np.logical_and(bools[0], bools[1])
+
 passing_velocity = dolfinx.fem.Function(V)
 noslip = dolfinx.fem.Function(V)
 passing_velocity.interpolate(lid_velocity_expression)
+reference = dolfinx.fem.Function(W.sub(1).collapse()[0])
+reference.interpolate(lambda x: 0.0*x[0])
 
 dofs_bottom = dolfinx.fem.locate_dofs_topological((W.sub(0),V), gdim -1, facet_tags.find(1))
 dofs_right = dolfinx.fem.locate_dofs_topological((W.sub(0),V), gdim -1, facet_tags.find(2))
 dofs_left = dolfinx.fem.locate_dofs_topological((W.sub(0),V), gdim -1, facet_tags.find(4))
 dofs_top = dolfinx.fem.locate_dofs_topological((W.sub(0),V), gdim -1, facet_tags.find(3))
+dofs_reference = dolfinx.fem.locate_dofs_geometrical((W.sub(1), W.sub(1).collapse()[0]), reference_point)
 
 bcs.append(dolfinx.fem.dirichletbc(passing_velocity, dofs_top, W.sub(0)))
 bcs.append(dolfinx.fem.dirichletbc(noslip, dofs_bottom,W.sub(0)))
 bcs.append(dolfinx.fem.dirichletbc(noslip, dofs_left,W.sub(0)))
 bcs.append(dolfinx.fem.dirichletbc(noslip, dofs_right,W.sub(0)))
+bcs.append(dolfinx.fem.dirichletbc(reference, dofs_reference, W.sub(1)))
 
 F = ufl.inner(ufl.grad(u)* u,v) * ufl.dx\
     + nu * ufl.inner(ufl.grad(u), ufl.grad(v)) * ufl.dx\
