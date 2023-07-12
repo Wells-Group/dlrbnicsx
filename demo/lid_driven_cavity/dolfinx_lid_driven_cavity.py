@@ -29,16 +29,24 @@ def generate_training_set(samples=[4, 4, 4]):
     return training_set
 
 parameters = generate_training_set()
-mu = parameters[42]
+mu = [1.0,1.0,np.pi/6]
 #mu = np.round(mu, 8)
 
 
-# Boundary conditions for custom mesh deformation (not for problem)
-def u_bc_bottom(x): return (mu[0] * x[0] - x[0],x[1] - x[1])
-def u_bc_right(x): return (mu[0]* x[0] + np.cos(mu[2]) * mu[1] * x[1] -x[0], np.sin(mu[2]) * mu[1] * x[1]-x[1])
-def u_bc_top(x): return (mu[0]* x[0] + np.cos(mu[2]) * mu[1]-x[0], np.sin(mu[2]) * mu[1] +  0.0 * x[1]-x[1])
-def u_bc_left(x): return (np.cos(mu[2]) * mu[1] * x[1] -x[0], np.sin(mu[2]) * mu[1] * x[1]-x[1])
+"""
+Comment one of the following two options to choose between reset_reference=True and reset_reference=False
+"""
+# Boundary conditions for custom mesh deformation (not for problem) with reset_reference=True and is_deformation=False
+def u_bc_bottom(x): return (mu[0] * x[0] , 0.0*x[1])
+def u_bc_right(x): return (mu[0] + np.cos(mu[2]) * mu[1] * x[1] , np.sin(mu[2]) * mu[1] * x[1])
+def u_bc_top(x): return (mu[0]* x[0] + np.cos(mu[2]) * mu[1], np.sin(mu[2]) * mu[1] +  0.0 * x[1])
+def u_bc_left(x): return (np.cos(mu[2]) * mu[1] * x[1] , np.sin(mu[2]) * mu[1] * x[1])
 
+# Boundary conditions for custom mesh deformation (not for problem) with reset_reference=False and is_deformation=False
+def u_bc_bottom(x): return (mu[0] * x[0] / np.max(x[0]) , 0.0*x[1])
+def u_bc_right(x): return (mu[0] + np.cos(mu[2]) * mu[1] * x[1]/ np.max(x[1]) , np.sin(mu[2]) * mu[1] * x[1] / np.max(x[1]) )
+def u_bc_top(x): return (mu[0]* x[0] / np.max(x[0]) + np.cos(mu[2]) * mu[1] , np.sin(mu[2]) * mu[1] +  0.0 * x[1])
+def u_bc_left(x): return (np.cos(mu[2]) * mu[1] * x[1] / np.max(x[1]) , np.sin(mu[2]) * mu[1] * x[1] / np.max(x[1]))
 
 # Boundary markers
 boundary_markers = [1, 2, 3, 4]
@@ -98,7 +106,7 @@ F = ufl.inner(ufl.grad(u)* u,v) * ufl.dx\
 
 problem = dolfinx.fem.petsc.NonlinearProblem(F, up, bcs=bcs)
 
-with HarmonicMeshMotion(mesh, facet_tags, boundary_markers, [u_bc_bottom, u_bc_right, u_bc_top, u_bc_left], reset_reference=True, is_deformation=True) as mesh_class:
+with HarmonicMeshMotion(mesh, facet_tags, boundary_markers, [u_bc_bottom, u_bc_right, u_bc_top, u_bc_left], reset_reference=False, is_deformation=False) as mesh_class:
     solver = dolfinx.nls.petsc.NewtonSolver(mesh.comm, problem)
     solver.max_it = 100
     solver.rtol = 1e-6
@@ -113,6 +121,29 @@ with HarmonicMeshMotion(mesh, facet_tags, boundary_markers, [u_bc_bottom, u_bc_r
     assert(converged)
 
     with dolfinx.io.XDMFFile(mesh.comm, "results/lid_driven_cavity.xdmf", "w") as xdmf:
+        xdmf.write_mesh(mesh)
+        xdmf.write_function(v_1, 0.0)
+        xdmf.write_function(p_1, 0.0)
+
+mu = [2.0, 2.0 , 5*np.pi/6]
+up.vector[:] = np.zeros(np.shape(up.vector[:]))
+
+
+with HarmonicMeshMotion(mesh, facet_tags, boundary_markers, [u_bc_bottom, u_bc_right, u_bc_top, u_bc_left], reset_reference=False, is_deformation=False) as mesh_class:
+    solver = dolfinx.nls.petsc.NewtonSolver(mesh.comm, problem)
+    solver.max_it = 100
+    solver.rtol = 1e-6
+
+    dolfinx.log.set_log_level(dolfinx.log.LogLevel.INFO)
+    print("Solving problem with parameters: ", mu)
+    n, converged = solver.solve(up)
+    (v_1, p_1) = up.split()
+    v_1.name = "Velocity"
+    p_1.name = "Pressure"
+
+    assert(converged)
+
+    with dolfinx.io.XDMFFile(mesh.comm, "results/lid_driven_cavity_2.xdmf", "w") as xdmf:
         xdmf.write_mesh(mesh)
         xdmf.write_function(v_1, 0.0)
         xdmf.write_function(p_1, 0.0)

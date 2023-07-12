@@ -26,6 +26,9 @@ from dlrbnicsx.train_validate_test.train_validate_test import \
 import matplotlib.pyplot as plt
 
 Re = 400
+
+is_deformation = False
+reset_reference = False
     
 class ProblemOnDeformedDomain(abc.ABC):
     def __init__(self, mesh, subdomains, boundaries, meshDeformationContext):
@@ -96,14 +99,32 @@ class ProblemOnDeformedDomain(abc.ABC):
     
     def solve(self, mu):
         self._mu = mu
-        self._bcs_geometric = [lambda x: (mu[0] * x[0] -x[0] , x[1] - x[1]), # Bottom
-                                lambda x: (mu[0]* x[0] + np.cos(mu[2]) * mu[1] * x[1] -x[0], np.sin(mu[2]) * mu[1] * x[1] -x[1]), # Right
-                                lambda x: (mu[0]* x[0] + np.cos(mu[2]) * mu[1] -x[0], np.sin(mu[2]) * mu[1] +  0.0 * x[1]-x[1]), # Top
-                                lambda x: (np.cos(mu[2]) * mu[1] * x[1] -x[0], np.sin(mu[2]) * mu[1] * x[1]-x[1]) # Left
-                                ]
+        if is_deformation and reset_reference:
+            # Deformed boundaries for is_deformation=True and reset_reference=True
+            self._bcs_geometric = [lambda x: (mu[0] * x[0] -x[0] , x[1] - x[1]), # Bottom
+                                    lambda x: (mu[0] + np.cos(mu[2]) * mu[1] * x[1] -x[0], np.sin(mu[2]) * mu[1] * x[1] -x[1]), # Right
+                                    lambda x: (mu[0]* x[0] + np.cos(mu[2]) * mu[1] -x[0], np.sin(mu[2]) * mu[1] +  0.0 * x[1]-x[1]), # Top
+                                    lambda x: (np.cos(mu[2]) * mu[1] * x[1] -x[0], np.sin(mu[2]) * mu[1] * x[1]-x[1]) # Left
+                                    ]
+            
+        elif not is_deformation and reset_reference:
+            # Deformed boundaries for is_deformation=False and reset_reference=True
+            self._bcs_geometric = [lambda x: (mu[0] * x[0] , 0.0 * x[1]), # Bottom
+                                    lambda x: (mu[0] + np.cos(mu[2]) * mu[1] * x[1] , np.sin(mu[2]) * mu[1] * x[1] ), # Right
+                                    lambda x: (mu[0]* x[0] + np.cos(mu[2]) * mu[1] , np.sin(mu[2]) * mu[1] +  0.0 * x[1]), # Top
+                                    lambda x: (np.cos(mu[2]) * mu[1] * x[1] , np.sin(mu[2]) * mu[1] * x[1]) # Left
+                                    ]
+        
+        # Deformed boundaries for is_deformation=False and reset_reference=False
+        elif not is_deformation and not reset_reference:
+            self._bcs_geometric = [lambda x: (mu[0] * x[0] / np.max(x[0]) , x[1]/ np.max(x[1])), # Bottom
+                            lambda x: (mu[0]+ np.cos(mu[2]) * mu[1] * x[1]/ np.max(x[1]) , np.sin(mu[2]) * mu[1] * x[1] / np.max(x[1]) ), # Right
+                            lambda x: (mu[0]* x[0] / np.max(x[0]) + np.cos(mu[2]) * mu[1] , np.sin(mu[2]) * mu[1] +  0.0 * x[1] / np.max(x[1])), # Top
+                            lambda x: (np.cos(mu[2]) * mu[1] * x[1] / np.max(x[1]) , np.sin(mu[2]) * mu[1] * x[1]/ np.max(x[1])) # Left
+                            ]
         problemNonlinear = self.set_problem
         solution = dolfinx.fem.Function(self._W)
-        with self._meshDeformationContext(self._mesh, self._boundaries, self._boundary_markers, self._bcs_geometric, is_deformation = True, reset_reference = True) as mesh_class:
+        with self._meshDeformationContext(self._mesh, self._boundaries, self._boundary_markers, self._bcs_geometric, is_deformation = is_deformation, reset_reference = reset_reference) as mesh_class:
             solver = dolfinx.nls.petsc.NewtonSolver(mesh_class._mesh.comm, problemNonlinear)
             solver.max_it = 100
             solver.rtol = 1e-6
@@ -137,7 +158,7 @@ class PODANNReducedProblem(abc.ABC):
         self.input_scaling_range = [-1., 1.]
         self.output_scaling_range = [-1., 1.]
         self.input_range = \
-            np.array([[0.8, 0.8], [1.1, 1.2]])  # TODO: keine Ahnung was das für Parameter sein sollen
+            np.array([[0.8, 0.8], [1.1, 1.2]]) 
         self.output_range = [None, None]
         self.loss_fn = "MSE"
         self.learning_rate = 1e-4
@@ -151,7 +172,6 @@ class PODANNReducedProblem(abc.ABC):
         return self._basis_functions_p[:reduced_solution.size] * reduced_solution
     
     def compute_norm_u(self, function):
-        #TODO: warum sind die zwei functions getrennt?
         return np.sqrt(self._inner_product_action_u(function)(function))
     
     def compute_norm_p(self, function):
@@ -215,8 +235,8 @@ computed_file = "results/solution_computed.xdmf"
 with HarmonicMeshMotion(mesh, facet_tags,
                            problem_parametric._boundary_markers,
                            problem_parametric._bcs_geometric,
-                           reset_reference=True,
-                           is_deformation=True) as mesh_class:
+                           reset_reference=reset_reference,
+                           is_deformation=is_deformation) as mesh_class:
     solution_u.name = "Velocity"
     solution_p.name = "Pressure"
     with dolfinx.io.XDMFFile(mesh.comm, computed_file,
@@ -338,7 +358,6 @@ ANN
 """
 def generate_ann_input_set(samples=[4, 4, 4]):
     """Generate an equispaced training set using numpy."""
-    # TODO woher kommen diese Parameter
     training_set_0 = np.linspace(1.0, 2.0, samples[0])
     training_set_1 = np.linspace(1.0, 2.0, samples[1])
     training_set_2 = np.linspace(np.pi/6, np.pi/6*5, samples[2])
