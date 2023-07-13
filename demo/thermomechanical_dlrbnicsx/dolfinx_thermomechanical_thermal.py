@@ -215,7 +215,7 @@ l_T_cpp = dolfinx.fem.form(l_T)
 
 # Parameter tuple (D_0, D_1, t_0, t_1)
 mu_ref = [0.6438, 0.4313, 1., 0.5]  # reference geometry
-mu = [0.8, 0.55, 0.8, 0.4]  # Parametric geometry
+mu = mu_ref # [0.8, 0.55, 0.8, 0.4]  # Parametric geometry
 
 # Geometric deformation boundary condition w.r.t. reference domain
 # i.e. set reset_reference=True and is_deformation=True
@@ -573,6 +573,7 @@ with HarmonicMeshMotion(mesh, boundaries, bc_markers_list,
         solution = dolfinx.fem.Function(V)
         ksp.solve(L, solution.vector)
         solution.x.scatter_forward()
+        print(solution.x.array)
 
         update_function = dolfinx.fem.Function(V)
         update_function.x.array[:] = solution.x.array[:] - temperature_field.x.array[:]
