@@ -583,11 +583,10 @@ with HarmonicMeshMotion(mesh, boundaries, bc_markers_list,
                                 x[0] * ufl.dx + ufl.inner(ufl.grad(temperature_field), ufl.grad(temperature_field)) * x[0] * ufl.dx)), op=MPI.SUM)
 
         print(f"Relative update (in norm): {solution_update}")
+        temperature_field.x.array[:] = solution.x.array.copy()
         if solution_update < 1.e-12:
             print(f"Relative update tolerance reached")
             break
-
-        temperature_field.x.array[:] = solution.x.array.copy()
 
         computed_file = "solution_nonlinear_thermomechanical_thermal/solution_computed.xdmf"
         with dolfinx.io.XDMFFile(mesh.comm, computed_file, "w") as solution_file:
@@ -601,3 +600,8 @@ with HarmonicMeshMotion(mesh, boundaries, bc_markers_list,
 
         print(mesh.comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(solution, solution) *
             x[0] * ufl.dx + ufl.inner(ufl.grad(solution), ufl.grad(solution)) * x[0] * ufl.dx)), op=MPI.SUM))
+
+
+solution_norm = dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(temperature_field, temperature_field) * x[0] * ufl.dx +
+                                                             ufl.inner(ufl.grad(temperature_field), ufl.grad(temperature_field)) * x[0] * ufl.dx))
+print(f"Solution norm at mu:{mu}: {solution_norm}")

@@ -16,12 +16,11 @@ import rbnicsx
 import rbnicsx.backends
 
 class ThermalProblemOnDeformedDomain(abc.ABC):
-    def __init__(self, mesh, subdomains, boundaries, meshDeformationContext):
+    def __init__(self, mesh, subdomains, boundaries):
         self._mesh = mesh
         self._subdomains = subdomains
         self._boundaries = boundaries
         self._boundary_markers = list(np.arange(1, 32))
-        self._meshDeformationContext = meshDeformationContext
         # For function space
         self._V = dolfinx.fem.FunctionSpace(self._mesh, ("CG", 1))
         # For material properties
@@ -35,7 +34,7 @@ class ThermalProblemOnDeformedDomain(abc.ABC):
             rbnicsx.backends.bilinear_form_action(self._inner_product,
                                                   part="real")
         self._solution = dolfinx.fem.Function(self._V)
-        self._solution.x.array[:] = 300.  # Initial solution
+        self._solution.x.array[:] = 300.  # Initial solution guess
         self._thermal_conductivity_func = dolfinx.fem.Function(self._Q)
         self._thermal_conductivity_func_diff = dolfinx.fem.Function(self._Q)
         self._max_iterations = 20
@@ -46,6 +45,7 @@ class ThermalProblemOnDeformedDomain(abc.ABC):
         self._ds_out = ds(30)
         self._h_cf, self._h_bottom, self._h_out = 2000., 200., 200.
         self._T_f, self._T_bottom, self._T_out = 1773., 300., 300.
+        self.mu_ref = [0.6438, 0.4313, 1., 0.5]
 
         thermal_conductivity_sym_1 = sympy.interpolating_spline(2, sym_T, [293., 473., 873., 1273.], [15., 15.2, 16.2, 15.1])
         thermal_conductivity_sym_1 = sympy.Piecewise(
@@ -197,69 +197,306 @@ class ThermalProblemOnDeformedDomain(abc.ABC):
                                 ufl.inner(self._h_bottom * (self._solution - self._T_bottom), v) * x[0] * self._ds_bottom +
                                 ufl.inner(self._h_out * (self._solution - self._T_out), v) * x[0] * self._ds_out)
 
+    def bc_1_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        indices_0 = np.where((x[0] >= 4.875) & (x[0] <= 5.5188))[0]
+        indices_1 = np.where((x[0] >= 5.5188) & (x[0] <= 5.9501))[0]
+        y = (0. * x[0], 0. * x[1])
+        y[0][indices_0] = (x[0][indices_0] - 4.875) * (mu[0] - mu_ref[0]) / (5.5188 - 4.875)
+        y[0][indices_1] = \
+            (x[0][indices_1] - 5.5188) * (mu[1] - mu_ref[1]) / (5.9501 - 5.5188) + \
+            (mu[0] - mu_ref[0]) * (x[0][indices_1] / x[0][indices_1])
+        return y
+
+    def bc_2_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        return ((mu[1] - mu_ref[1] + mu[0] - mu_ref[0]) * (x[0] / x[0]), (x[1] - 0.) * (mu[2] - mu_ref[2]) / (1. - 0.))
+
+    def bc_3_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        indices_0 = np.where((x[0] >= 4.875) & (x[0] <= 5.5188))[0]
+        indices_1 = np.where((x[0] >= 5.5188) & (x[0] <= 5.9501))[0]
+        y = (0. * x[0], 0. * x[1])
+        y[0][indices_0] = (x[0][indices_0] - 4.875) * (mu[0] - mu_ref[0]) / (5.5188 - 4.875)
+        y[0][indices_1] = \
+            (x[0][indices_1] - 5.5188) * (mu[1] - mu_ref[1]) / (5.9501 - 5.5188) + \
+            (mu[0] - mu_ref[0]) * (x[0][indices_1] / x[0][indices_1])
+        y[1][:] = (mu[2] - mu_ref[2]) * x[1]
+        return y
+
+    def bc_4_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        return (0. * x[0], (mu[2] - mu_ref[2]) * x[1])
+
+    def bc_5_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        return (0. * x[0], (mu[2] - mu_ref[2]) * x[1])
+
+    def bc_6_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        return (0. * x[0], (mu[2] - mu_ref[2]) * (x[1] / x[1]))
+
+    def bc_7_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        return (0. * x[0], (mu[2] - mu_ref[2]) * (x[1] / x[1]))
+
+    def bc_8_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        return (0. * x[0], (mu[2] - mu_ref[2]) * (x[1] / x[1]))
+
+    def bc_9_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        return (0. * x[0], (mu[2] - mu_ref[2]) * (x[1] / x[1]))
+
+    def bc_10_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        return (0. * x[0], (x[1] - 1.6) * (mu[3] - mu_ref[3]) / (2.1 - 1.6) + (mu[2] - mu_ref[2]) * (x[1] / x[1]))
+
+    def bc_11_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        return (0. * x[0], (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * (x[1] / x[1]))
+
+    def bc_12_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        return (0. * x[0], (x[1] - 1.6) * (mu[3] - mu_ref[3]) / (2.1 - 1.6) + (mu[2] - mu_ref[2]) * (x[1] / x[1]))
+
+    def bc_13_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        return (0. * x[0], (mu[2] - mu_ref[2]) * x[1] / x[1])
+
+    def bc_14_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        indices_0 = np.where((x[1] >= 1.6) & (x[1] <= 2.1))[0]
+        indices_1 = np.where(x[1] > 2.1)[0]
+        y = (0. * x[0], 0. * x[1])
+        y[1][indices_0] = (x[1][indices_0] - 1.6) * (mu[3] - mu_ref[3]) / (2.1 - 1.6) + \
+            (mu[2] - mu_ref[2]) * x[1][indices_0] / x[1][indices_0]
+        y[1][indices_1] = (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1][indices_1] / x[1][indices_1]
+        return y
+
+    def bc_15_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        return (0. * x[0], (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1] / x[1])
+
+    def bc_16_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        return ((x[0] - 4.875) * (mu[0] - mu_ref[0]) / (5.5188 - 4.875),
+                (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1] / x[1])
+
+    def bc_17_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        return ((x[0] - 4.875) * (mu[0] - mu_ref[0]) / (5.5188 - 4.875),
+                (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1] / x[1])
+
+    def bc_18_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        return ((x[0] - 4.875) * (mu[0] - mu_ref[0]) / (5.5188 - 4.875),
+                (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1] / x[1])
+
+    def bc_19_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        return ((x[0] - 4.875) * (mu[0] - mu_ref[0]) / (5.5188 - 4.875),
+                (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1] / x[1])
+
+    def bc_20_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        return ((x[0] - 4.875) * (mu[0] - mu_ref[0]) / (5.5188 - 4.875),
+                (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1] / x[1])
+
+    def bc_21_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        return (0. * x[0], (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1] / x[1])
+
+    def bc_22_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        return (0. * x[0], (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1] / x[1])
+
+    def bc_23_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        return (0. * x[0], (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1] / x[1])
+
+    def bc_24_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        indices_0 = np.where(x[1] < 1.6)[0]
+        indices_1 = np.where((x[1] >= 1.6) & (x[1] <= 2.1))[0]
+        indices_2 = np.where(x[1] > 2.1)[0]
+        y = (0. * x[0], 0. * x[1])
+        y[1][indices_0] = (mu[2] - mu_ref[2]) * (x[1][indices_0] / x[1][indices_0])
+        y[1][indices_1] = (mu[3] - mu_ref[3]) * (x[1][indices_1] - 1.6) / (2.1 - 1.6) + \
+            (mu[2] - mu_ref[2]) * x[1][indices_1] / x[1][indices_1]
+        y[1][indices_2] = (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1][indices_2] / x[1][indices_2]
+        y[0][:] = (mu[1] - mu_ref[1] + mu[0] - mu_ref[0]) * (x[0] / x[0])
+        return y
+
+    def bc_25_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        indices_0 = np.where((x[0] >= 4.875) & (x[0] <= 5.5188))[0]
+        indices_1 = np.where((x[0] >= 5.5188) & (x[0] <= 5.9501))[0]
+        y = (0. * x[0], 0. * x[1])
+        y[0][indices_0] = (x[0][indices_0] - 4.875) * (mu[0] - mu_ref[0]) / (5.5188 - 4.875)
+        y[0][indices_1] = \
+            (x[0][indices_1] - 5.5188) * (mu[1] - mu_ref[1]) / (5.9501 - 5.5188) + \
+            (mu[0] - mu_ref[0]) * (x[1][indices_1] / x[1][indices_1])
+        y[1][:] = (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1] / x[1]
+        return y
+
+    def bc_26_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        return ((mu[1] - mu_ref[1] + mu[0] - mu_ref[0]) * x[0] / x[0],
+                (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1] / x[1])
+
+    def bc_27_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        return ((x[0] - 5.5188) * (mu[1] - mu_ref[1]) / (5.9501 - 5.5188) + (mu[0] - mu_ref[0]) * (x[0] / x[0]),
+                (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1] / x[1])
+
+    def bc_28_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        return ((mu[1] - mu_ref[1] + mu[0] - mu_ref[0]) * x[0] / x[0],
+                (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1] / x[1])
+
+    def bc_29_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        return ((mu[1] - mu_ref[1] + mu[0] - mu_ref[0]) * x[0] / x[0],
+                (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1] / x[1])
+
+    def bc_30_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        indices_0 = np.where(x[1] < 1.)[0]
+        indices_1 = np.where((x[1] >= 1.) & (x[1] <= 1.6))[0]
+        indices_2 = np.where((x[1] > 1.6) & (x[1] <= 2.1))[0]
+        indices_3 = np.where(x[1] > 2.1)[0]
+        y = (0 * x[0], 0. * x[1])
+        y[0][:] = (mu[1] - mu_ref[1] + mu[0] - mu_ref[0]) * x[0] / x[0]
+        y[1][indices_0] = (x[1][indices_0] - 0.) * (mu[2] - mu_ref[2]) / (1. - 0.)
+        y[1][indices_1] = (mu[2] - mu_ref[2]) * (x[1][indices_1] / x[1][indices_1])
+        y[1][indices_2] = (x[1][indices_2] - 1.6) * (mu[3] - mu_ref[3]) / (2.1 - 1.6) + \
+            (mu[2] - mu_ref[2]) * x[1][indices_2] / x[1][indices_2]
+        y[1][indices_3] = (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1][indices_3] / x[1][indices_3]
+        return y
+
+    def bc_31_geometric(self, x):
+        mu_ref = self.mu_ref
+        mu = self.mu
+        return ((mu[1] - mu_ref[1] + mu[0] - mu_ref[0]) * x[0] / x[0], 0. * x[1])
+
+    def assemble_bc_list_geometric(self):
+        bc_list_geometric = [self.bc_1_geometric, self.bc_2_geometric,
+                             self.bc_3_geometric, self.bc_4_geometric,
+                             self.bc_5_geometric, self.bc_6_geometric,
+                             self.bc_7_geometric, self.bc_8_geometric,
+                             self.bc_9_geometric, self.bc_10_geometric,
+                             self.bc_11_geometric, self.bc_12_geometric,
+                             self.bc_13_geometric, self.bc_14_geometric,
+                             self.bc_15_geometric, self.bc_16_geometric,
+                             self.bc_17_geometric, self.bc_18_geometric,
+                             self.bc_19_geometric, self.bc_20_geometric,
+                             self.bc_21_geometric, self.bc_22_geometric,
+                             self.bc_23_geometric, self.bc_24_geometric,
+                             self.bc_25_geometric, self.bc_26_geometric,
+                             self.bc_27_geometric, self.bc_28_geometric,
+                             self.bc_29_geometric, self.bc_30_geometric,
+                             self.bc_31_geometric]
+        return bc_list_geometric
+
     def solve(self, mu):
+        self.mu = mu
+        bc_list_geometric = self.assemble_bc_list_geometric()
+        bc_markers_list = self._boundary_markers
         update_function = dolfinx.fem.Function(self._V)
+        with HarmonicMeshMotion(self._mesh, self._boundaries, bc_markers_list,
+                                bc_list_geometric, reset_reference=True,
+                                is_deformation=True):
+            for iteration in range(self._max_iterations):
 
-        for iteration in range(self._max_iterations):
+                print("\n =======================================================")
+                print(f"\n Iteration {iteration + 1} / {self._max_iterations} \n")
 
-            print("\n =======================================================")
-            print(f"\n Iteration {iteration + 1} / {self._max_iterations} \n")
+                self.thermal_conductivity_func_assemble()
+                self.thermal_conductivity_func_diff_assemble()
+                residual = dolfinx.fem.assemble_scalar(self.residual_form)
+                residual = mesh_comm.allreduce(residual, op=MPI.SUM)
+                if iteration == 0:
+                    initial_residual = residual
+                else:
+                    if residual / initial_residual < 1.e-4:
+                        print(f"Residual rtol reached")
+                        break
 
-            self.thermal_conductivity_func_assemble()
-            self.thermal_conductivity_func_diff_assemble()
-            residual = dolfinx.fem.assemble_scalar(self.residual_form)
-            residual = mesh_comm.allreduce(residual, op=MPI.SUM)
-            if iteration == 0:
-                initial_residual = residual
-            else:
-                if residual / initial_residual < 1.e-4:
-                    print(f"Residual rtol reached")
+                a_T_cpp = self.bilinear_form
+                l_T_cpp = self.linear_form
+                print(f"Relative residual: {residual/initial_residual}")
+
+                # Bilinear side assembly
+                A = dolfinx.fem.petsc.assemble_matrix(a_T_cpp, bcs=[])
+                A.assemble()
+
+                # Linear side assembly
+                L = dolfinx.fem.petsc.assemble_vector(l_T_cpp)
+                dolfinx.fem.petsc.apply_lifting(L, [a_T_cpp], [[]])
+                L.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
+                dolfinx.fem.petsc.set_bc(L, [])
+
+                # Solver setup
+                ksp = PETSc.KSP()
+                ksp.create(self._mesh.comm)
+                ksp.setOperators(A)
+                ksp.setType("preonly")
+                ksp.getPC().setType("lu")
+                ksp.getPC().setFactorSolverType("mumps")
+                ksp.setFromOptions()
+                current_solution = dolfinx.fem.Function(self._V)
+                ksp.solve(L, current_solution.vector)
+                current_solution.x.scatter_forward()
+                print(current_solution.x.array)
+
+                update_function.x.array[:] = current_solution.x.array[:].copy() -self._solution.x.array[:].copy()
+
+                x = ufl.SpatialCoordinate(self._mesh)
+                solution_update = \
+                    mesh_comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(update_function, update_function) * x[0] * ufl.dx +
+                                                                                    ufl.inner(ufl.grad(update_function), ufl.grad(update_function)) * x[0] * ufl.dx)), op=MPI.SUM) / \
+                    mesh_comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(self._solution, self._solution) * x[0] * ufl.dx +
+                                                                                    ufl.inner(ufl.grad(self._solution), ufl.grad(self._solution)) * x[0] * ufl.dx)), op=MPI.SUM)
+
+                print(f"Relative update (in norm): {solution_update}")
+                if solution_update < 1.e-12:
+                    print(f"Relative update tolerance reached")
                     break
 
-            a_T_cpp = self.bilinear_form
-            l_T_cpp = self.linear_form
-            print(f"Relative residual: {residual/initial_residual}")
+                self._solution.x.array[:] = current_solution.x.array.copy()
 
-            # Bilinear side assembly
-            A = dolfinx.fem.petsc.assemble_matrix(a_T_cpp, bcs=[])
-            A.assemble()
-
-            # Linear side assembly
-            L = dolfinx.fem.petsc.assemble_vector(l_T_cpp)
-            dolfinx.fem.petsc.apply_lifting(L, [a_T_cpp], [[]])
-            L.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
-            dolfinx.fem.petsc.set_bc(L, [])
-
-            # Solver setup
-            ksp = PETSc.KSP()
-            ksp.create(self._mesh.comm)
-            ksp.setOperators(A)
-            ksp.setType("preonly")
-            ksp.getPC().setType("lu")
-            ksp.getPC().setFactorSolverType("mumps")
-            ksp.setFromOptions()
-            current_solution = dolfinx.fem.Function(self._V)
-            ksp.solve(L, current_solution.vector)
-            current_solution.x.scatter_forward()
-            print(current_solution.x.array)
-
-            update_function.x.array[:] = current_solution.x.array[:].copy() -self._solution.x.array[:].copy()
-
-            x = ufl.SpatialCoordinate(self._mesh)
-            solution_update = \
-                mesh_comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(update_function, update_function) * x[0] * ufl.dx +
-                                                                                 ufl.inner(ufl.grad(update_function), ufl.grad(update_function)) * x[0] * ufl.dx)), op=MPI.SUM) / \
-                mesh_comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(self._solution, self._solution) * x[0] * ufl.dx +
-                                                                                 ufl.inner(ufl.grad(self._solution), ufl.grad(self._solution)) * x[0] * ufl.dx)), op=MPI.SUM)
-
-            print(f"Relative update (in norm): {solution_update}")
-            if solution_update < 1.e-12:
-                print(f"Relative update tolerance reached")
-                break
-
-            self._solution.x.array[:] = current_solution.x.array.copy()
-
-        return current_solution
+            return current_solution
 
 
 
@@ -277,7 +514,11 @@ mu_ref = [0.6438, 0.4313, 1., 0.5]  # reference geometry
 mu = [0.8, 0.55, 0.8, 0.4]  # Parametric geometry
 
 # FEM solve
-problem_parametric = ThermalProblemOnDeformedDomain(mesh, cell_tags,
-                                             facet_tags,
-                                             HarmonicMeshMotion)
+problem_parametric = \
+    ThermalProblemOnDeformedDomain(mesh, cell_tags, facet_tags)
+
+solution_mu = problem_parametric.solve(mu)
+print(f"Solution norm at mu:{mu}: {problem_parametric.inner_product_action(solution_mu)(solution_mu)}")
+
 solution_mu = problem_parametric.solve(mu_ref)
+print(f"Solution norm at mu:{mu_ref}: {problem_parametric.inner_product_action(solution_mu)(solution_mu)}")
