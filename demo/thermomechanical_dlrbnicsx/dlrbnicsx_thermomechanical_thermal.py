@@ -14,9 +14,10 @@ import matplotlib.pyplot as plt
 
 import rbnicsx
 import rbnicsx.backends
+import rbnicsx.online
 
 from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
-from dlrbnicsx.activation_function.activation_function_factory import Tanh
+from dlrbnicsx.activation_function.activation_function_factory import Sigmoid
 from dlrbnicsx.dataset.custom_dataset import CustomDataset
 from dlrbnicsx.interface.wrappers import DataLoader
 from dlrbnicsx.train_validate_test.train_validate_test import \
@@ -523,17 +524,15 @@ class PODANNReducedProblem(abc.ABC):
         self._inner_product_action = \
             rbnicsx.backends.bilinear_form_action(self._inner_product,
                                                   part="real")
-        '''
-        self.input_scaling_range = [-1., 1.]
-        self.output_scaling_range = [-1., 1.]
+        self.input_scaling_range = [0., 1.]
+        self.output_scaling_range = [0., 1.]
         self.input_range = \
-            np.array([[0.2, -0.2, 1.], [0.3, -0.4, 4.]])
+            np.array([[0.55, 0.35, 0.8, 0.4], [0.75, 0.55, 1.2, 0.6]])
         self.output_range = [-6., 3.]
         self.loss_fn = "MSE"
-        self.learning_rate = 1e-5
+        self.learning_rate = 1e-3
         self.optimizer = "Adam"
         self.regularisation = "EarlyStopping"
-        '''
 
     def reconstruct_solution(self, reduced_solution):
         """Reconstructed reduced solution on the high fidelity space."""
@@ -685,11 +684,9 @@ def generate_ann_input_set(samples=[2, 2, 2, 2]):
 
 
 def generate_ann_output_set(problem, reduced_problem, N,
-                            input_set, indices, mode=None):
-    # Solve the FE problem at given input_sets and
-    # project on the RB space
+                            input_set, mode=None):
     output_set = np.zeros([input_set.shape[0], N])
-    for i in indices:
+    for i in range(input_set.shape[0]):
         if mode is None:
             print(f"Parameter number {i+1} of {input_set.shape[0]}")
             print(f"Parameter: {input_set[i,:]}")
@@ -740,3 +737,107 @@ thermal_customDataset = \
                   len(thermal_reduced_problem._basis_functions),
                   thermal_input_validation_set, thermal_output_validation_set)
 thermal_valid_dataloader = DataLoader(thermal_customDataset, shuffle=False)
+
+
+# ANN model
+thermal_model = HiddenLayersNet(thermal_input_training_set.shape[1], [40, 40, 40],
+                        len(thermal_reduced_problem._basis_functions), Sigmoid())
+
+# Training of ANN
+training_loss = list()
+validation_loss = list()
+
+max_epochs = 20000
+min_validation_loss = None
+for epochs in range(max_epochs):
+    print(f"Epoch: {epochs+1}/{max_epochs}")
+    current_training_loss = train_nn(thermal_reduced_problem,
+                                     thermal_train_dataloader,
+                                     thermal_model)
+    training_loss.append(current_training_loss)
+    current_validation_loss = validate_nn(thermal_reduced_problem,
+                                          thermal_valid_dataloader,
+                                          thermal_model)
+    validation_loss.append(current_validation_loss)
+    if epochs > 0 and current_validation_loss > 1.01 * min_validation_loss \
+       and thermal_reduced_problem.regularisation == "EarlyStopping":
+        # 1% safety margin against min_validation_loss
+        # before invoking early stopping criteria
+        print(f"Early stopping criteria invoked at epoch: {epochs+1}")
+        break
+    min_validation_loss = min(validation_loss)
+
+
+# Error analysis dataset
+print("\n")
+print("Generating error analysis (only input/parameters) dataset")
+print("\n")
+thermal_error_analysis_set = generate_ann_input_set(samples=[2, 2, 2, 2])
+thermal_error_numpy = np.zeros(thermal_error_analysis_set.shape[0])
+
+for i in range(thermal_error_analysis_set.shape[0]):
+    print(f"Error analysis {i+1} of {thermal_error_analysis_set.shape[0]}")
+    print(f"Parameter: : {thermal_error_analysis_set[i,:]}")
+    thermal_error_numpy[i] = \
+        error_analysis(thermal_reduced_problem,
+                       thermal_problem_parametric,
+                       thermal_error_analysis_set[i, :],
+                       thermal_model,
+                       len(thermal_reduced_problem._basis_functions),
+                       online_nn, device=None)
+    print(f"Error: {thermal_error_numpy[i]}")
+
+# Online phase at parameter online_mu
+online_mu = np.array([0.65, 0.45, 1., 0.5])
+thermal_fem_solution = thermal_problem_parametric.solve(online_mu)
+thermal_rb_solution = \
+    thermal_reduced_problem.reconstruct_solution(
+        online_nn(thermal_reduced_problem, thermal_problem_parametric,
+                  online_mu, thermal_model,
+                  len(thermal_reduced_problem._basis_functions), device=None))
+
+thermal_fem_online_file \
+    = "dlrbnicsx_solution_thermomechanical_thermal/thermal_fem_online_mu_computed.xdmf"
+
+bc_markers_list = thermal_problem_parametric._boundary_markers
+bc_list_geometric = thermal_problem_parametric.assemble_bc_list_geometric()
+with HarmonicMeshMotion(mesh, facet_tags, bc_markers_list,
+                        bc_list_geometric, reset_reference=True,
+                        is_deformation=True):
+    with dolfinx.io.XDMFFile(mesh.comm, thermal_fem_online_file,
+                             "w") as solution_file:
+        solution_file.write_mesh(mesh)
+        solution_file.write_function(thermal_fem_solution)
+
+thermal_rb_online_file \
+    = "dlrbnicsx_solution_thermomechanical_thermal/thermal_rb_online_mu_computed.xdmf"
+with HarmonicMeshMotion(mesh, facet_tags, bc_markers_list,
+                        bc_list_geometric, reset_reference=True,
+                        is_deformation=True):
+    with dolfinx.io.XDMFFile(mesh.comm, thermal_rb_online_file,
+                             "w") as solution_file:
+        # NOTE scatter_forward not considered for online solution
+        solution_file.write_mesh(mesh)
+        solution_file.write_function(thermal_rb_solution)
+
+thermal_error_function = dolfinx.fem.Function(thermal_problem_parametric._V)
+thermal_error_function.x.array[:] = \
+    thermal_fem_solution.x.array - thermal_rb_solution.x.array
+thermal_fem_rb_error_file \
+    = "dlrbnicsx_solution_thermomechanical_thermal/thermal_fem_rb_error_computed.xdmf"
+with HarmonicMeshMotion(mesh, facet_tags, bc_markers_list,
+                        bc_list_geometric, reset_reference=True,
+                        is_deformation=True):
+    with dolfinx.io.XDMFFile(mesh.comm, thermal_fem_rb_error_file,
+                             "w") as solution_file:
+        solution_file.write_mesh(mesh)
+        solution_file.write_function(thermal_error_function)
+
+with HarmonicMeshMotion(mesh, facet_tags, bc_markers_list,
+                        bc_list_geometric, reset_reference=True,
+                        is_deformation=True):
+    print(thermal_reduced_problem.norm_error(thermal_fem_solution, thermal_rb_solution))
+    print(thermal_reduced_problem.compute_norm(thermal_error_function))
+
+print(thermal_reduced_problem.norm_error(thermal_fem_solution, thermal_rb_solution))
+print(thermal_reduced_problem.compute_norm(thermal_error_function))
