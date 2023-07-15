@@ -34,7 +34,6 @@ class ThermalProblemOnDeformedDomain(abc.ABC):
             rbnicsx.backends.bilinear_form_action(self._inner_product,
                                                   part="real")
         self._solution = dolfinx.fem.Function(self._V)
-        self._solution.x.array[:] = 300.  # Initial solution guess
         self._thermal_conductivity_func = dolfinx.fem.Function(self._Q)
         self._thermal_conductivity_func_diff = dolfinx.fem.Function(self._Q)
         self._max_iterations = 20
@@ -433,6 +432,7 @@ class ThermalProblemOnDeformedDomain(abc.ABC):
         self.mu = mu
         bc_list_geometric = self.assemble_bc_list_geometric()
         bc_markers_list = self._boundary_markers
+        self._solution.x.array[:] = 300.  # Initial solution guess
         update_function = dolfinx.fem.Function(self._V)
         with HarmonicMeshMotion(self._mesh, self._boundaries, bc_markers_list,
                                 bc_list_geometric, reset_reference=True,
@@ -445,7 +445,7 @@ class ThermalProblemOnDeformedDomain(abc.ABC):
                 self.thermal_conductivity_func_assemble()
                 self.thermal_conductivity_func_diff_assemble()
                 residual = dolfinx.fem.assemble_scalar(self.residual_form)
-                residual = mesh_comm.allreduce(residual, op=MPI.SUM)
+                residual = mesh.comm.allreduce(residual, op=MPI.SUM)
                 if iteration == 0:
                     initial_residual = residual
                 else:
@@ -484,9 +484,9 @@ class ThermalProblemOnDeformedDomain(abc.ABC):
 
                 x = ufl.SpatialCoordinate(self._mesh)
                 solution_update = \
-                    mesh_comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(update_function, update_function) * x[0] * ufl.dx +
+                    mesh.comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(update_function, update_function) * x[0] * ufl.dx +
                                                                                     ufl.inner(ufl.grad(update_function), ufl.grad(update_function)) * x[0] * ufl.dx)), op=MPI.SUM) / \
-                    mesh_comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(self._solution, self._solution) * x[0] * ufl.dx +
+                    mesh.comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(self._solution, self._solution) * x[0] * ufl.dx +
                                                                                     ufl.inner(ufl.grad(self._solution), ufl.grad(self._solution)) * x[0] * ufl.dx)), op=MPI.SUM)
 
                 print(f"Relative update (in norm): {solution_update}")
@@ -499,26 +499,233 @@ class ThermalProblemOnDeformedDomain(abc.ABC):
             return current_solution
 
 
+class PODANNReducedProblem(abc.ABC):
+    '''
+    TODO
+    Mesh deformation at reconstruct_solution,
+    compute_norm, project_snapshot (??)
+    '''
+    """Define a linear projection-based problem, and solve it with KSP."""
+
+    def __init__(self, problem) -> None:
+        self._basis_functions = rbnicsx.backends.FunctionsList(problem._V)
+        u, v = ufl.TrialFunction(problem._V), ufl.TestFunction(problem._V)
+        x = ufl.SpatialCoordinate(problem._mesh)
+        self._inner_product = ufl.inner(u, v) * x[0] * ufl.dx +\
+            ufl.inner(ufl.grad(u), ufl.grad(v)) * x[0] * ufl.dx
+        self._inner_product_action = \
+            rbnicsx.backends.bilinear_form_action(self._inner_product,
+                                                  part="real")
+        '''
+        self.input_scaling_range = [-1., 1.]
+        self.output_scaling_range = [-1., 1.]
+        self.input_range = \
+            np.array([[0.2, -0.2, 1.], [0.3, -0.4, 4.]])
+        self.output_range = [-6., 3.]
+        self.loss_fn = "MSE"
+        self.learning_rate = 1e-5
+        self.optimizer = "Adam"
+        self.regularisation = "EarlyStopping"
+        '''
+
+    def reconstruct_solution(self, reduced_solution):
+        """Reconstructed reduced solution on the high fidelity space."""
+        return self._basis_functions[:reduced_solution.size] * \
+            reduced_solution
+
+    def compute_norm(self, function):
+        """Compute the norm of a function inner product
+        on the reference domain."""
+        return np.sqrt(self._inner_product_action(function)(function))
+
+    def project_snapshot(self, solution, N):
+        return self._project_snapshot(solution, N)
+
+    def _project_snapshot(self, solution, N):
+        projected_snapshot = rbnicsx.online.create_vector(N)
+        A = rbnicsx.backends.\
+            project_matrix(self._inner_product_action,
+                           self._basis_functions[:N])
+        F = rbnicsx.backends.\
+            project_vector(self._inner_product_action(solution),
+                           self._basis_functions[:N])
+        ksp = PETSc.KSP()
+        ksp.create(projected_snapshot.comm)
+        ksp.setOperators(A)
+        ksp.setType("preonly")
+        ksp.getPC().setType("lu")
+        ksp.setFromOptions()
+        ksp.solve(F, projected_snapshot)
+        return projected_snapshot
+
+    def norm_error(self, u, v):
+        return self.compute_norm(u-v)/self.compute_norm(u)
 
 
 # Read mesh
-mesh_comm = MPI.COMM_WORLD
+world_comm = MPI.COMM_WORLD
 gdim = 2
 gmsh_model_rank = 0
 mesh, cell_tags, facet_tags = \
     dolfinx.io.gmshio.read_from_msh("mesh_data/mesh.msh",
-                                    mesh_comm, gmsh_model_rank, gdim=gdim)
+                                    world_comm, gmsh_model_rank, gdim=gdim)
 
 # Mesh deformation parameters
 mu_ref = [0.6438, 0.4313, 1., 0.5]  # reference geometry
 mu = [0.8, 0.55, 0.8, 0.4]  # Parametric geometry
 
 # FEM solve
-problem_parametric = \
+thermal_problem_parametric = \
     ThermalProblemOnDeformedDomain(mesh, cell_tags, facet_tags)
 
-solution_mu = problem_parametric.solve(mu)
-print(f"Solution norm at mu:{mu}: {problem_parametric.inner_product_action(solution_mu)(solution_mu)}")
+'''
+solution_mu = thermal_problem_parametric.solve(mu)
+print(f"Solution norm at mu:{mu}: {thermal_problem_parametric.inner_product_action(solution_mu)(solution_mu)}")
 
-solution_mu = problem_parametric.solve(mu_ref)
-print(f"Solution norm at mu:{mu_ref}: {problem_parametric.inner_product_action(solution_mu)(solution_mu)}")
+solution_mu = thermal_problem_parametric.solve(mu_ref)
+print(f"Solution norm at mu:{mu_ref}: {thermal_problem_parametric.inner_product_action(solution_mu)(solution_mu)}")
+'''
+
+# POD starts ###
+
+def generate_training_set(samples=[3, 2, 3, 2]):#(samples=[5, 4, 5, 4]):
+    # Parameter tuple (D_0, D_1, t_0, t_1)
+    training_set_0 = np.linspace(0.55, 0.75, samples[0])
+    training_set_1 = np.linspace(0.35, 0.55, samples[1])
+    training_set_2 = np.linspace(0.8, 1.2, samples[2])
+    training_set_3 = np.linspace(0.4, 0.6, samples[3])
+    training_set = np.array(list(itertools.product(training_set_0,
+                                                   training_set_1,
+                                                   training_set_2,
+                                                   training_set_3)))
+    return training_set
+
+thermal_training_set = rbnicsx.io.on_rank_zero(mesh.comm, generate_training_set)
+
+Nmax = 30
+
+print(rbnicsx.io.TextBox("POD offline phase begins", fill="="))
+print("")
+
+print("set up thermal snapshots matrix")
+thermal_snapshots_matrix = rbnicsx.backends.FunctionsList(thermal_problem_parametric._V)
+
+print("set up reduced problem")
+thermal_reduced_problem = PODANNReducedProblem(thermal_problem_parametric)
+
+print("")
+
+for (mu_index, mu) in enumerate(thermal_training_set):
+    print(rbnicsx.io.TextLine(str(mu_index+1), fill="#"))
+
+    print("Parameter number ", (mu_index+1), "of", thermal_training_set.shape[0])
+    print("high fidelity solve for mu =", mu)
+    thermal_snapshot = thermal_problem_parametric.solve(mu)
+
+    print("update snapshots matrix")
+    thermal_snapshots_matrix.append(thermal_snapshot)
+
+    print("")
+
+print(rbnicsx.io.TextLine("perform POD", fill="#"))
+eigenvalues, modes, _ = \
+    rbnicsx.backends.\
+    proper_orthogonal_decomposition(thermal_snapshots_matrix,
+                                    thermal_reduced_problem._inner_product_action,
+                                    N=Nmax, tol=1.e-6)
+thermal_reduced_problem._basis_functions.extend(modes)
+thermal_reduced_size = len(thermal_reduced_problem._basis_functions)
+print("")
+
+print(rbnicsx.io.TextBox("POD-Galerkin offline phase ends", fill="="))
+
+positive_eigenvalues = np.where(eigenvalues > 0., eigenvalues, np.nan)
+singular_values = np.sqrt(positive_eigenvalues)
+
+plt.figure(figsize=[8, 10])
+xint = list()
+yval = list()
+
+for x, y in enumerate(eigenvalues[:len(thermal_reduced_problem._basis_functions)]):
+    yval.append(y)
+    xint.append(x+1)
+
+plt.plot(xint, yval, "*-", color="orange")
+plt.xlabel("Eigenvalue number", fontsize=18)
+plt.ylabel("Eigenvalue", fontsize=18)
+plt.xticks(xint)
+plt.yscale("log")
+plt.title("Eigenvalue decay", fontsize=24)
+plt.tight_layout()
+plt.savefig("eigenvalue_thermal")
+# plt.show()
+
+# POD Ends ###
+
+# ### ANN implementation ###
+
+def generate_ann_input_set(samples=[2, 2, 2, 2]):
+    # Parameter tuple (D_0, D_1, t_0, t_1)
+    training_set_0 = np.linspace(0.55, 0.75, samples[0])
+    training_set_1 = np.linspace(0.35, 0.55, samples[1])
+    training_set_2 = np.linspace(0.8, 1.2, samples[2])
+    training_set_3 = np.linspace(0.4, 0.6, samples[3])
+    training_set = np.array(list(itertools.product(training_set_0,
+                                                   training_set_1,
+                                                   training_set_2,
+                                                   training_set_3)))
+    return training_set
+
+
+def generate_ann_output_set(problem, reduced_problem, N,
+                            input_set, indices, mode=None):
+    # Solve the FE problem at given input_sets and
+    # project on the RB space
+    output_set = np.zeros([input_set.shape[0], N])
+    for i in indices:
+        if mode is None:
+            print(f"Parameter number {i+1} of {input_set.shape[0]}")
+            print(f"Parameter: {input_set[i,:]}")
+        else:
+            print(f"{mode} parameter number {i+1} of {input_set.shape[0]}")
+            print(f"Parameter: {input_set[i,:]}")
+        output_set[i, :] = \
+            reduced_problem.project_snapshot(problem.solve(input_set[i, :]),
+                                             N).array.astype("f")
+    return output_set
+
+
+# Generate ANN input TRAINING samples on the rank 0 and Bcast to other processes
+if world_comm.rank == 0:
+    input_training_set = generate_ann_input_set()
+else:
+    input_training_set = \
+        np.zeros_like(generate_ann_input_set())
+
+# TODO instead of Bcast, use shared memory
+world_comm.Bcast(input_training_set, root=0)
+
+indices = np.arange(world_comm.rank, input_training_set.shape[0],
+                    world_comm.size)
+
+# Generate ANN output samples
+
+# ### The input data is available in all processes but output data uses
+# only a chunk of the data as specified in the indices ###
+output_training_set = \
+    generate_ann_output_set(thermal_problem_parametric, thermal_reduced_problem,
+                            len(thermal_reduced_problem._basis_functions),
+                            input_training_set, indices, mode="Training")
+
+
+output_training_set_recv = np.zeros_like(output_training_set)
+world_comm.Barrier()
+world_comm.Allreduce(output_training_set, output_training_set_recv, op=MPI.SUM)
+
+print("\n")
+
+thermal_reduced_problem.output_range[0] = np.min(output_training_set_recv)
+thermal_reduced_problem.output_range[1] = np.max(output_training_set_recv)
+# NOTE Output_range based on the computed values instead of user guess.
+
+print("\n")
