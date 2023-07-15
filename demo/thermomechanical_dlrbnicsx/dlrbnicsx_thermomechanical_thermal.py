@@ -15,6 +15,13 @@ import matplotlib.pyplot as plt
 import rbnicsx
 import rbnicsx.backends
 
+from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
+from dlrbnicsx.activation_function.activation_function_factory import Tanh
+from dlrbnicsx.dataset.custom_dataset import CustomDataset
+from dlrbnicsx.interface.wrappers import DataLoader
+from dlrbnicsx.train_validate_test.train_validate_test import \
+    train_nn, validate_nn, online_nn, error_analysis
+
 class ThermalProblemOnDeformedDomain(abc.ABC):
     def __init__(self, mesh, subdomains, boundaries):
         self._mesh = mesh
@@ -588,7 +595,7 @@ print(f"Solution norm at mu:{mu_ref}: {thermal_problem_parametric.inner_product_
 
 # POD starts ###
 
-def generate_training_set(samples=[3, 2, 3, 2]):#(samples=[5, 4, 5, 4]):
+def generate_training_set(samples=[2, 2, 2, 2]):#(samples=[5, 4, 5, 4]):
     # Parameter tuple (D_0, D_1, t_0, t_1)
     training_set_0 = np.linspace(0.55, 0.75, samples[0])
     training_set_1 = np.linspace(0.35, 0.55, samples[1])
@@ -695,37 +702,41 @@ def generate_ann_output_set(problem, reduced_problem, N,
     return output_set
 
 
-# Generate ANN input TRAINING samples on the rank 0 and Bcast to other processes
-if world_comm.rank == 0:
-    input_training_set = generate_ann_input_set()
-else:
-    input_training_set = \
-        np.zeros_like(generate_ann_input_set())
-
-# TODO instead of Bcast, use shared memory
-world_comm.Bcast(input_training_set, root=0)
-
-indices = np.arange(world_comm.rank, input_training_set.shape[0],
-                    world_comm.size)
-
-# Generate ANN output samples
-
-# ### The input data is available in all processes but output data uses
-# only a chunk of the data as specified in the indices ###
-output_training_set = \
-    generate_ann_output_set(thermal_problem_parametric, thermal_reduced_problem,
+# Training dataset
+thermal_ann_input_set = generate_ann_input_set()
+np.random.shuffle(thermal_ann_input_set)
+thermal_ann_output_set = \
+    generate_ann_output_set(thermal_problem_parametric,
+                            thermal_reduced_problem,
                             len(thermal_reduced_problem._basis_functions),
-                            input_training_set, indices, mode="Training")
+                            thermal_ann_input_set, mode="Training")
 
+num_training_samples = int(0.7 * thermal_ann_input_set.shape[0])
+num_validation_samples = thermal_ann_input_set.shape[0] - num_training_samples
 
-output_training_set_recv = np.zeros_like(output_training_set)
-world_comm.Barrier()
-world_comm.Allreduce(output_training_set, output_training_set_recv, op=MPI.SUM)
-
-print("\n")
-
-thermal_reduced_problem.output_range[0] = np.min(output_training_set_recv)
-thermal_reduced_problem.output_range[1] = np.max(output_training_set_recv)
+thermal_reduced_problem.output_range[0] = np.min(thermal_ann_output_set)
+thermal_reduced_problem.output_range[1] = np.max(thermal_ann_output_set)
 # NOTE Output_range based on the computed values instead of user guess.
 
-print("\n")
+thermal_input_training_set = \
+    thermal_ann_input_set[:num_training_samples, :]
+thermal_output_training_set = \
+    thermal_ann_output_set[:num_training_samples, :]
+
+thermal_input_validation_set = \
+    thermal_ann_input_set[num_training_samples:, :]
+thermal_output_validation_set = \
+    thermal_ann_output_set[num_training_samples:, :]
+
+thermal_customDataset = \
+    CustomDataset(thermal_problem_parametric, thermal_reduced_problem,
+                  len(thermal_reduced_problem._basis_functions),
+                  thermal_input_training_set, thermal_output_training_set)
+thermal_train_dataloader = DataLoader(thermal_customDataset, batch_size=30,
+                                      shuffle=True)
+
+thermal_customDataset = \
+    CustomDataset(thermal_problem_parametric, thermal_reduced_problem,
+                  len(thermal_reduced_problem._basis_functions),
+                  thermal_input_validation_set, thermal_output_validation_set)
+thermal_valid_dataloader = DataLoader(thermal_customDataset, shuffle=False)

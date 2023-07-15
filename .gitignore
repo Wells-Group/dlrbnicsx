@@ -2,6 +2,14 @@
 *.h5
 *.npy
 
+# Mesh data
+demo/*/mesh_data/*.xdmf
+demo/*/mesh_data/*.h5
+demo/*/mesh_data/*.msh
+
+# .npy files
+demo/*/*.npy
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
