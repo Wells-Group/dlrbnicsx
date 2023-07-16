@@ -44,5 +44,6 @@ def model_synchronise(model, verbose=False):
         if verbose is True:
             print(f"Params before synchronisation: {param.data}")
         dist.all_reduce(param.data, op=dist.ReduceOp.SUM)
+        param.data /= dist.get_world_size()
         if verbose is True:
             print(f"Params after synchronisation: {param.data}")
