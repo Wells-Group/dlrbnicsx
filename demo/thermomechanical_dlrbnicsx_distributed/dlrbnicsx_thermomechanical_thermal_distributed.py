@@ -600,7 +600,7 @@ print(f"Solution norm at mu:{mu_ref}: {thermal_problem_parametric.inner_product_
 
 
 itemsize = MPI.DOUBLE.Get_size()
-num_snapshots = 2 * 2 * 2 * 2# 5 * 4 * 5 * 4
+num_snapshots = 5 * 4 * 3 * 2 # 5 * 4 * 5 * 4
 num_dofs = solution_mu.x.array.shape[0]
 para_dim = 4
 
@@ -613,7 +613,7 @@ else:
 
 # POD starts ###
 
-def generate_training_set(samples=[2, 2, 2, 2]):#(samples=[5, 4, 5, 4]):
+def generate_training_set(samples=[5, 4, 3, 2]):#(samples=[5, 4, 5, 4]):
     # Parameter tuple (D_0, D_1, t_0, t_1)
     training_set_0 = np.linspace(0.55, 0.75, samples[0])
     training_set_1 = np.linspace(0.35, 0.55, samples[1])
@@ -715,7 +715,7 @@ if world_comm.rank == 0:
 
 # ### ANN implementation ###
 
-def generate_ann_input_set(samples=[2, 2, 2, 2]):
+def generate_ann_input_set(samples=[2, 3, 4, 5]):#(samples=[4, 5, 4, 5]):
     # Parameter tuple (D_0, D_1, t_0, t_1)
     training_set_0 = np.linspace(0.55, 0.75, samples[0])
     training_set_1 = np.linspace(0.35, 0.55, samples[1])
@@ -745,7 +745,7 @@ def generate_ann_output_set(problem, reduced_problem, input_set,
     # return output_set
 
 
-num_ann_input_samples = 2 * 2 * 2 * 2
+num_ann_input_samples = 2 * 3 * 4 * 5 # 4 * 5 * 4 * 5
 num_ann_input_samples_training = int(0.7 * num_ann_input_samples)
 num_ann_input_samples_validation = \
     num_ann_input_samples - int(0.7 * num_ann_input_samples)
@@ -754,7 +754,7 @@ itemsize = MPI.DOUBLE.Get_size()
 
 if world_comm.rank == 0:
     ann_input_samples = generate_ann_input_set()
-    np.random.shuffle(ann_input_samples)
+    # np.random.shuffle(ann_input_samples)
     nbytes_para_ann_training = num_ann_input_samples_training * \
         itemsize * para_dim
     nbytes_dofs_ann_training = num_ann_input_samples_training * itemsize * \
@@ -857,7 +857,7 @@ thermal_customDataset = \
                              len(thermal_reduced_problem._basis_functions),
                              ann_input_samples_training,
                              ann_output_samples_training)
-thermal_train_dataloader = DataLoader(thermal_customDataset, batch_size=30,
+thermal_train_dataloader = DataLoader(thermal_customDataset, batch_size=1000,
                                       shuffle=True)
 
 thermal_customDataset = \
@@ -870,13 +870,14 @@ thermal_valid_dataloader = DataLoader(thermal_customDataset, shuffle=False)
 
 
 # ANN model
-#thermal_model = HiddenLayersNet(ann_input_training_set.shape[1], [40, 40, 40],
-#                        len(thermal_reduced_problem._basis_functions), Sigmoid())
-
-thermal_model = HiddenLayersNet(ann_input_samples_training.shape[1], [4, 4, 4],
+thermal_model = HiddenLayersNet(ann_input_samples_training.shape[1], [40, 40, 40],
                         len(thermal_reduced_problem._basis_functions), Sigmoid())
 
 model_synchronise(thermal_model, verbose=True)
+
+import torch
+# torch.save(thermal_model.state_dict(), "initial_thermal_model_state_dict.pth")
+thermal_model.load_state_dict(torch.load('initial_thermal_model_state_dict.pth'))
 
 # Training of ANN
 training_loss = list()
@@ -1012,3 +1013,6 @@ if world_comm.rank == 0:
 
     print(thermal_reduced_problem.norm_error(thermal_fem_solution, thermal_rb_solution))
     print(thermal_reduced_problem.compute_norm(thermal_error_function))
+
+    print(f"Error array: {thermal_relative_error}")
+    print(f"Eigenvalues: {eigenvalues}")
