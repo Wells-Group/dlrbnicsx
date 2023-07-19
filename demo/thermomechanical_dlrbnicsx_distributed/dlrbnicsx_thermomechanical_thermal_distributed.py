@@ -857,11 +857,8 @@ thermal_customDataset = \
                              len(thermal_reduced_problem._basis_functions),
                              ann_input_samples_training,
                              ann_output_samples_training)
-'''
+
 thermal_train_dataloader = DataLoader(thermal_customDataset, batch_size=25,
-                                      shuffle=True)
-'''
-thermal_train_dataloader = DataLoader(thermal_customDataset, batch_size=3,
                                       shuffle=False)
 
 thermal_customDataset = \
