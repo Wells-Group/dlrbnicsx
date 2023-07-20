@@ -321,9 +321,6 @@ if __name__ == "__main__":
         gpu_group0_comm.Allreduce(weight, weight_recv, op=MPI.SUM)
         X = X_recv
         weight = weight_recv
-        gpu_group0_comm.Allreduce(weight, weight_recv, op=MPI.SUM)
-        X = X_recv
-        weight = weight_recv
         np.save("input_set.npy", X)
         np.save("output_set.npy", weight)
 
