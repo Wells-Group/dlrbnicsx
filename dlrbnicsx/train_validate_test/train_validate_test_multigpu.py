@@ -282,7 +282,7 @@ if __name__ == "__main__":
 
     # train_nn and validate_nn test
     world_comm = MPI.COMM_WORLD
-    gpu_group0_procs = world_comm.group.Incl([0, 1])
+    gpu_group0_procs = world_comm.group.Incl([0, 1, 2, 3])
     gpu_group0_comm = world_comm.Create_group(gpu_group0_procs)
 
     num_training_samples = 12
@@ -321,6 +321,9 @@ if __name__ == "__main__":
         gpu_group0_comm.Allreduce(weight, weight_recv, op=MPI.SUM)
         X = X_recv
         weight = weight_recv
+        gpu_group0_comm.Allreduce(weight, weight_recv, op=MPI.SUM)
+        X = X_recv
+        weight = weight_recv
         np.save("input_set.npy", X)
         np.save("output_set.npy", weight)
 
@@ -335,7 +338,6 @@ if __name__ == "__main__":
                             gpu_group0_comm.size)
 
         print(f"Gpu comm rank: {gpu_group0_comm.rank}, world comm rank: {world_comm.rank}, indices: {indices}")
-
 
         # NOTE Same customDataset and dataloader only for testing NOT in demos
         customDataset = \
@@ -353,7 +355,7 @@ if __name__ == "__main__":
         # model.load_state_dict(torch.load("model_state_dict.pth"))
 
         model_synchronise(model, verbose=True)
-        exit()
+
         max_iter = 10
         for current_iter in range(max_iter):
             print(f"Iteration: {current_iter+1}")
@@ -363,7 +365,6 @@ if __name__ == "__main__":
                 validate_nn(reduced_problem, valid_dataloader, model,
                             cuda_rank[gpu_group0_comm.rank])
 
-    
     world_comm.Barrier()
 
     try:
@@ -371,9 +372,6 @@ if __name__ == "__main__":
             print(param)
     except:
         print(f"print failed on rank: {world_comm.rank}")
-
-    exit()
-
 
     # Error analysis test
     num_error_input_samples = 8
@@ -426,5 +424,3 @@ if __name__ == "__main__":
                           input_range=reduced_problem.input_range,
                           output_range=reduced_problem.output_range)
             print(f"Prediction online (error_mode = False): {rb_solution.array}")
-
-
