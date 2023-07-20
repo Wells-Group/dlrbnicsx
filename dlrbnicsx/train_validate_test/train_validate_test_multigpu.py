@@ -282,8 +282,7 @@ if __name__ == "__main__":
 
     # train_nn and validate_nn test
     world_comm = MPI.COMM_WORLD
-    gpu_group0_procs = world_comm.group.Incl([0])
-    # world_comm.group.Incl([0, 1, 2, 3])
+    gpu_group0_procs = world_comm.group.Incl([0, 1])
     gpu_group0_comm = world_comm.Create_group(gpu_group0_procs)
 
     num_training_samples = 12
@@ -308,7 +307,7 @@ if __name__ == "__main__":
 
     problem = Problem()
     reduced_problem = ReducedProblem(input_features)
-    cuda_rank = [0, 0, 0, 0]
+    cuda_rank = [0, 1, 2, 3]
 
     if gpu_group0_comm != MPI.COMM_NULL:
         dist.init_process_group("nccl", rank=gpu_group0_comm.rank,
@@ -322,31 +321,39 @@ if __name__ == "__main__":
         gpu_group0_comm.Allreduce(weight, weight_recv, op=MPI.SUM)
         X = X_recv
         weight = weight_recv
+        np.save("input_set.npy", X)
+        np.save("output_set.npy", weight)
+
+        '''
+        X = np.load("input_set.npy")
+        weight = np.load("output_set.npy")
+        '''
 
         Y = np.matmul(X, weight)
 
         indices = np.arange(gpu_group0_comm.rank, X.shape[0],
                             gpu_group0_comm.size)
 
-        X_sliced = X[indices, :]
-        Y_sliced = Y[indices, :]
+        print(f"Gpu comm rank: {gpu_group0_comm.rank}, world comm rank: {world_comm.rank}, indices: {indices}")
+
 
         # NOTE Same customDataset and dataloader only for testing NOT in demos
         customDataset = \
             CustomPartitionedDatasetGpu(problem, reduced_problem,
-                                        output_features, X_sliced,
-                                        Y_sliced, indices,
-                                        cuda_rank[gpu_group0_comm.rank])
+                                        output_features, X, Y,
+                                        indices, cuda_rank[gpu_group0_comm.rank])
 
         # NOTE shuffle=False in training only for testing NOT in demos
-        train_dataloader = DataLoader(customDataset, batch_size=2, shuffle=False)
+        train_dataloader = DataLoader(customDataset, batch_size=1000, shuffle=False)
         valid_dataloader = DataLoader(customDataset, shuffle=False)
 
         model = HiddenLayersNet(input_features, [], output_features, Tanh())
-        model_to_gpu(model, cuda_rank=0)
+        model_to_gpu(model, cuda_rank=cuda_rank[gpu_group0_comm.rank])
+        torch.save(model.state_dict(), "model_state_dict.pth")
+        # model.load_state_dict(torch.load("model_state_dict.pth"))
 
         model_synchronise(model, verbose=True)
-
+        exit()
         max_iter = 10
         for current_iter in range(max_iter):
             print(f"Iteration: {current_iter+1}")
@@ -356,7 +363,17 @@ if __name__ == "__main__":
                 validate_nn(reduced_problem, valid_dataloader, model,
                             cuda_rank[gpu_group0_comm.rank])
 
+    
     world_comm.Barrier()
+
+    try:
+        for param in model.parameters():
+            print(param)
+    except:
+        print(f"print failed on rank: {world_comm.rank}")
+
+    exit()
+
 
     # Error analysis test
     num_error_input_samples = 8
@@ -409,3 +426,5 @@ if __name__ == "__main__":
                           input_range=reduced_problem.input_range,
                           output_range=reduced_problem.output_range)
             print(f"Prediction online (error_mode = False): {rb_solution.array}")
+
+
