@@ -22,8 +22,9 @@ import torch.distributed as dist
 from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
 from dlrbnicsx.activation_function.activation_function_factory \
     import Tanh
-from dlrbnicsx.dataset.custom_dataset import CustomDataset
-from dlrbnicsx.interface.wrappers import DataLoader
+from dlrbnicsx.dataset.custom_partitioned_dataset_gpu import CustomPartitionedDatasetGpu, init_gpu_process_group
+from dlrbnicsx.interface.wrappers import DataLoader, model_to_gpu, model_synchronise, load_model, save_model
+from dlrbnicsx.train_validate_test.train_validate_test_multigpu import train_nn, validate_nn, error_analysis, online_nn
 
 
 class ProblemOnDeformedDomain(abc.ABC):
@@ -279,14 +280,14 @@ if world_comm.rank == 0:
     plt.savefig("eigenvalue_decay")
 
 
-num_ann_input_samples = 15 * 15
+num_ann_input_samples = 7 * 7
 num_ann_input_samples_training = int(0.7 * num_ann_input_samples)
 num_ann_input_samples_validation = \
     num_ann_input_samples - int(0.7 * num_ann_input_samples)
 itemsize = MPI.DOUBLE.Get_size()
 
 
-def generate_ann_input_set(samples=[15, 15]):
+def generate_ann_input_set(samples=[7, 7]):
     input_set_0 = np.linspace(0.2, 0.3, samples[0])
     input_set_1 = np.linspace(-0.2, -0.4, samples[1])
     input_set = np.array(list(itertools.product(input_set_0,
@@ -296,7 +297,7 @@ def generate_ann_input_set(samples=[15, 15]):
 
 if world_comm.rank == 0:
     ann_input_samples = generate_ann_input_set()
-    np.random.shuffle(ann_input_samples)
+    # np.random.shuffle(ann_input_samples)
     nbytes_para_ann_training = num_ann_input_samples_training * \
         itemsize * para_dim
     nbytes_dofs_ann_training = num_ann_input_samples_training * itemsize * \
@@ -365,7 +366,13 @@ gpu_group0_comm = world_comm.Create_group(group0_procs)
 group1_procs = world_comm.group.Incl([4, 5, 6, 7])
 gpu_group1_comm = world_comm.Create_group(group1_procs)
 
-comm_list = [gpu_group0_comm, gpu_group1_comm]
+group2_procs = world_comm.group.Incl([8, 9, 10, 11])
+gpu_group2_comm = world_comm.Create_group(group2_procs)
+
+group3_procs = world_comm.group.Incl([12, 13, 14, 15])
+gpu_group3_comm = world_comm.Create_group(group3_procs)
+
+comm_list = [gpu_group0_comm, gpu_group1_comm, gpu_group2_comm, gpu_group3_comm]
 
 for i in range(len(comm_list)):
     if comm_list[i] != MPI.COMM_NULL:
@@ -407,173 +414,13 @@ training_communicator_procs = world_comm.group.Incl([0])
 training_communicator_comm = \
     world_comm.Create_group(training_communicator_procs)
 
-
-def train_nn(dataloader, model, loss_fn, optimizer, cuda_num):
-    # TODO scaling
-    size = len(dataloader.dataset)
-    current_size = 0
-    model.train()
-    train_loss = torch.Tensor([0.])
-    for batch, (X, y) in enumerate(dataloader):
-
-        X, y = X.to(f"cuda:{cuda_num}"), y.to(f"cuda:{cuda_num}")
-
-        pred = model(X)
-        loss = loss_fn(pred, y)
-
-        optimizer.zero_grad()
-        loss.backward()
-
-        # model.cpu()
-
-        for param in model.parameters():
-            dist.barrier()
-            '''
-            try:
-                print(f"Before: {param.grad[0][0].item()}")
-            except:
-                print(f"Before: {param.grad[0].item()}")
-            dist.all_reduce(param.grad.data, op=dist.ReduceOp.SUM)
-            try:
-                print(f"After: {param.grad[0][0].item()}")
-            except:
-                print(f"After: {param.grad[0].item()}")
-            '''
-        # model.cuda(cuda_num)
-
-        optimizer.step()
-
-        current_size += X.shape[0]
-
-        if batch % 1 == 0:
-            print(f"Loss: {loss.item()} {current_size}/{size}")
-
-        train_loss += loss.item()
-
-    return train_loss.item()
-
-
-def validate_nn(dataloader, model, loss_fn, cuda_num):
-    size = len(dataloader.dataset)
-    num_batches = len(dataloader)
-    model.eval()
-    test_loss = 0.
-
-    with torch.no_grad():
-        for X, y in dataloader:
-            X, y = X.to(f"cuda:{cuda_num}"), y.to(f"cuda:{cuda_num}")
-            pred = model(X)
-            test_loss += loss_fn(pred, y).item()
-
-    test_loss /= num_batches
-
-    print(f"Validation loss: {test_loss:>8f} {size:>5d} \n")
-    return test_loss
-
-
-def online_nn(reduced_problem, problem, online_mu, model, N, cuda_rank,
-              input_scaling_range=None, output_scaling_range=None,
-              input_range=None, output_range=None):
-
-    model.eval()
-
-    if type(input_scaling_range) == list:
-        input_scaling_range = np.array(input_scaling_range)
-    if type(output_scaling_range) == list:
-        output_scaling_range = np.array(output_scaling_range)
-    if type(input_range) == list:
-        input_range = np.array(input_range)
-    if type(output_range) == list:
-        output_range = np.array(output_range)
-
-    if (np.array(input_scaling_range) == None).any():  # noqa: E711
-        assert hasattr(reduced_problem, "input_scaling_range")
-        input_scaling_range = reduced_problem.input_scaling_range
-    else:
-        print(f"Using input scaling range = {input_scaling_range}, " +
-              "ignoring input scaling range specified in "
-              f"{reduced_problem.__class__.__name__}")
-    if (np.array(output_scaling_range) == None).any():  # noqa: E711
-        assert hasattr(reduced_problem, "output_scaling_range")
-        output_scaling_range = reduced_problem.output_scaling_range
-    else:
-        print(f"Using output scaling range = {output_scaling_range}, " +
-              "ignoring output scaling range specified in " +
-              f"{reduced_problem.__class__.__name__}")
-    if (np.array(input_range) == None).any():  # noqa: E711
-        assert hasattr(reduced_problem, "input_range")
-        input_range = reduced_problem.input_range
-    else:
-        print(f"Using input range = {input_range}, " +
-              "ignoring input range specified in " +
-              f"{reduced_problem.__class__.__name__}")
-    if (np.array(output_range) == None).any():  # noqa: E711
-        assert hasattr(reduced_problem, "output_range")
-        output_range = reduced_problem.output_range
-    else:
-        print(f"Using output range = {output_range}, " +
-              "ignoring output range specified in " +
-              f"{reduced_problem.__class__.__name__}")
-
-    online_mu_scaled = (input_scaling_range[1] - input_scaling_range[0]) * \
-        (online_mu - input_range[0, :]) / (input_range[1, :] -
-                                           input_range[0, :]) + \
-        input_scaling_range[0]
-    online_mu_scaled_torch = \
-        torch.from_numpy(online_mu_scaled).to(torch.float32)
-    online_mu_scaled_torch = online_mu_scaled_torch.to(f"cuda:{cuda_rank}")
-    with torch.no_grad():
-        pred_scaled = model(online_mu_scaled_torch)
-        pred_scaled_numpy = pred_scaled.cpu().detach().numpy()
-        pred = (pred_scaled_numpy - output_scaling_range[0]) / \
-            (output_scaling_range[1] - output_scaling_range[0]) * \
-            (output_range[1] - output_range[0]) + \
-            output_range[0]
-        solution_reduced = rbnicsx.online.create_vector(N)
-        solution_reduced.array = pred
-    return solution_reduced
-
-
-def error_analysis(reduced_problem, problem, error_analysis_mu, model, N,
-                   online_nn, cuda_rank, norm_error=None,
-                   reconstruct_solution=None, input_scaling_range=None,
-                   output_scaling_range=None, input_range=None,
-                   output_range=None, index=None):
-    model.eval()
-
-    ann_prediction = online_nn(reduced_problem, problem, error_analysis_mu,
-                               model, N, cuda_rank)
-
-    if reconstruct_solution is None:
-        ann_reconstructed_solution = \
-            reduced_problem.reconstruct_solution(ann_prediction)
-    else:
-        print(f"Using {reconstruct_solution.__name__}, " +
-              "ignoring RB to FEM solution construction specified in " +
-              f"{reduced_problem.__class__.__name__}")
-        ann_reconstructed_solution = reconstruct_solution(ann_prediction)
-    fem_solution = problem.solve(error_analysis_mu)
-    if type(fem_solution) == tuple:
-        assert index is not None
-        fem_solution = fem_solution[index]
-    if norm_error is None:
-        error = reduced_problem.norm_error(fem_solution,
-                                           ann_reconstructed_solution)
-    else:
-        print(f"Using {norm_error.__name__}, " +
-              "ignoring error norm specified in " +
-              f"{reduced_problem.__class__.__name__}")
-        error = norm_error(fem_solution, ann_reconstructed_solution)
-    return error
-
-
 if training_communicator_comm != MPI.COMM_NULL:
 
     os.environ['MASTER_ADDR'] = 'localhost'
     os.environ['MASTER_PORT'] = '29500'
 
-    dist.init_process_group("nccl", rank=training_communicator_comm.rank,
-                            world_size=training_communicator_comm.size)
+    init_gpu_process_group(training_communicator_comm)
+    print(f"World rank: {world_comm.rank}, Gpu comm rank: {training_communicator_comm.rank}")
 
     training_set_indices_gpu = \
         np.arange(training_communicator_comm.rank,
@@ -585,110 +432,131 @@ if training_communicator_comm != MPI.COMM_NULL:
                   num_ann_input_samples_validation,
                   training_communicator_comm.size)
 
-    customDataset = \
-        CustomDataset(problem_parametric, reduced_problem,
-                      len(reduced_problem._basis_functions),
-                      ann_input_samples_training[training_set_indices_gpu,
-                                                 :],
-                      ann_output_samples_training[training_set_indices_gpu,
-                                                  :])
-    train_dataloader = DataLoader(customDataset, batch_size=30,
-                                  shuffle=True)
+    cuda_rank = [0, 1, 2, 3]
 
     customDataset = \
-        CustomDataset(problem_parametric, reduced_problem,
-                      len(reduced_problem._basis_functions),
-                      ann_input_samples_validation[
-                          validation_set_indices_gpu, :],
-                      ann_output_samples_validation[
-                          validation_set_indices_gpu, :])
+        CustomPartitionedDatasetGpu(problem_parametric, reduced_problem,
+                                    len(reduced_problem._basis_functions),
+                                    ann_input_samples_training[training_set_indices_gpu,
+                                                 :],
+                                    ann_output_samples_training[training_set_indices_gpu,
+                                                  :],
+                                    training_set_indices_gpu,
+                                    cuda_rank[training_communicator_comm.rank])
+    train_dataloader = DataLoader(customDataset, batch_size=30,
+                                  shuffle=False)#True)
+
+    customDataset = \
+        CustomPartitionedDatasetGpu(problem_parametric, reduced_problem,
+                                    len(reduced_problem._basis_functions),
+                                    ann_input_samples_validation[
+                                    validation_set_indices_gpu, :],
+                                    ann_output_samples_validation[
+                                    validation_set_indices_gpu, :],
+                                    validation_set_indices_gpu,
+                                    cuda_rank[training_communicator_comm.rank])
     valid_dataloader = DataLoader(customDataset, shuffle=False)
 
     model = \
         HiddenLayersNet(ann_input_samples_training.shape[1], [30, 30],
                         len(reduced_problem._basis_functions), Tanh()
-                        ).to(f"cuda:{cuda_rank}")
-    model_save_path = "model.pth"
+                        )
 
-    loss_fn = torch.nn.MSELoss(reduction="sum")
-    optimizer = torch.optim.Adam(model.parameters(),
-                                 lr=reduced_problem.learning_rate)
-    online_mu = np.array([0.28, -0.32])
+    path = "model.pth"
+    #save_model(model, path)
 
-    print("Epochs")
-    epochs = 20000
-    for current_epoch in range(epochs):
-        print(f"Epoch {current_epoch + 1} \n -------------------")
-        train_loss = \
-            train_nn(train_dataloader, model, loss_fn, optimizer,
-                     cuda_rank)
-        valid_loss = \
-            validate_nn(valid_dataloader, model, loss_fn, cuda_rank)
-        if current_epoch == 0:
-            min_loss = valid_loss
-            for param in model.parameters():
-                print(f"Epoch {current_epoch + 1} \n {param[0]}")
-        else:
-            if min_loss > valid_loss:
-                min_loss = valid_loss
-                online_mu_torch_float = \
-                    torch.from_numpy(online_mu).to(torch.float32)
-            else:
-                print(f"Early stopping criteria, epoch {current_epoch + 1}")
-                online_mu_torch_float = \
-                    torch.from_numpy(online_mu).to(torch.float32)
-                model.load_state_dict(torch.load(model_save_path))
-                break
-        torch.save(model.state_dict(), model_save_path)
+    load_model(model, path)
 
-    error_analysis_num_para = 15 * 15
+    for param in model.parameters():
+        print(f"after loading: {param.data}")
 
-    itemsize = MPI.DOUBLE.Get_size()
+    model_to_gpu(model, cuda_rank=cuda_rank[training_communicator_comm.rank])
+    model_synchronise(model)
 
-    if training_communicator_comm.rank == 0:
-        nbytes_para = error_analysis_num_para * itemsize * para_dim
-        nbytes_error = error_analysis_num_para * itemsize
-    else:
-        nbytes_para = 0
-        nbytes_error = 0
+    training_loss = list()
+    validation_loss = list()
 
-    win6 = MPI.Win.Allocate_shared(nbytes_para, itemsize,
-                                   comm=training_communicator_comm)
-    buf6, itemsize = win6.Shared_query(0)
-    error_analysis_set = np.ndarray(buffer=buf6, dtype="d",
-                                    shape=(error_analysis_num_para,
-                                           para_dim))
+    max_epochs = 20#20000
+    min_validation_loss = None
+    for epochs in range(max_epochs):
+        print(f"Epoch: {epochs+1}/{max_epochs}")
+        current_training_loss = train_nn(reduced_problem, train_dataloader,
+                                         model)
+        training_loss.append(current_training_loss)
+        current_validation_loss = validate_nn(reduced_problem,
+                                              valid_dataloader,
+                                              model,
+                                              cuda_rank[training_communicator_comm.rank])
+        validation_loss.append(current_validation_loss)
+        # 1% safety margin against min_validation_loss before invoking
+        # early stopping criteria
+        if epochs > 0 and current_validation_loss > 1.01 * min_validation_loss \
+        and reduced_problem.regularisation == "EarlyStopping":
+            print(f"Early stopping criteria invoked at epoch: {epochs+1}")
+            break
+        min_validation_loss = min(validation_loss)
 
-    win7 = MPI.Win.Allocate_shared(nbytes_error, itemsize,
-                                   comm=training_communicator_comm)
-    buf7, itemsize = win7.Shared_query(0)
-    relative_error = np.ndarray(buffer=buf7, dtype="d",
-                                shape=(error_analysis_num_para))
+error_analysis_num_para = 5 * 5 # 15 * 15
 
-    if training_communicator_comm.rank == 0:
-        error_analysis_set[:, :] = \
-            generate_ann_input_set(samples=[15, 15])
-        relative_error[:] = np.zeros([error_analysis_num_para])
+itemsize = MPI.DOUBLE.Get_size()
 
-    training_communicator_comm.Barrier()
+if training_communicator_comm != MPI.COMM_NULL and training_communicator_comm.rank == 0:
+    nbytes_para = error_analysis_num_para * itemsize * para_dim
+    nbytes_error = error_analysis_num_para * itemsize
+else:
+    nbytes_para = 0
+    nbytes_error = 0
 
-    error_analysis_indices = np.arange(training_communicator_comm.rank,
-                                       error_analysis_set.shape[0],
-                                       training_communicator_comm.size)
+win6 = MPI.Win.Allocate_shared(nbytes_para, itemsize,
+                               comm=world_comm)
+buf6, itemsize = win6.Shared_query(0)
+error_analysis_set = np.ndarray(buffer=buf6, dtype="d",
+                                shape=(error_analysis_num_para,
+                                        para_dim))
 
-    for i in error_analysis_indices:
-        print(f"Error analysis: Parameter {i+1} of {error_analysis_set.shape[0]}")
-        relative_error[i] = error_analysis(reduced_problem, problem_parametric,
-                                           error_analysis_set[i, :], model,
-                                           len(reduced_problem._basis_functions),
-                                           online_nn, cuda_rank)
+win7 = MPI.Win.Allocate_shared(nbytes_error, itemsize,
+                                comm=world_comm)
+buf7, itemsize = win7.Shared_query(0)
+relative_error = np.ndarray(buffer=buf7, dtype="d",
+                            shape=(error_analysis_num_para))
 
+if training_communicator_comm != MPI.COMM_NULL and training_communicator_comm.rank == 0:
+    error_analysis_set[:, :] = \
+        generate_ann_input_set(samples=[5, 5]) # (samples=[15, 15])
+    relative_error[:] = np.zeros([error_analysis_num_para])
+
+world_comm.Barrier()
+
+for i in range(len(comm_list)):
+    if comm_list[i] !=  MPI.COMM_NULL:
+        error_analysis_indices_cpu = np.arange((comm_list[i]).rank,
+                                               error_analysis_set.shape[0],
+                                               (comm_list[i]).size)
+
+print(f"world comm rank: {world_comm.rank}, {error_analysis_indices_cpu}")
+
+if training_communicator_comm == MPI.COMM_NULL:
+    model = None
+    cuda_num = [None]
+else:
+    cuda_num = cuda_rank[training_communicator_comm.rank]
+
+relative_error = error_analysis(reduced_problem, problem_parametric,
+                                error_analysis_set, model,
+                                len(reduced_problem._basis_functions),
+                                online_nn, cuda_num,
+                                comm_list, training_communicator_comm,
+                                MPI.COMM_WORLD, error_analysis_indices_cpu)
+
+online_mu = np.array([0.28, -0.32])
+
+if training_communicator_comm != MPI.COMM_NULL and training_communicator_comm.rank == 0:
     solution = problem_parametric.solve(online_mu)
     solution_reduced = \
         online_nn(reduced_problem, problem_parametric,
                   online_mu, model,
                   len(reduced_problem._basis_functions),
-                  cuda_rank,
+                  cuda_rank[training_communicator_comm.rank],
                   input_scaling_range=reduced_problem.input_scaling_range,
                   output_scaling_range=reduced_problem.output_scaling_range,
                   input_range=reduced_problem.input_range,
@@ -704,7 +572,7 @@ if training_communicator_comm != MPI.COMM_NULL:
                             reset_reference=True,
                             is_deformation=True) as mesh_class:
         with dolfinx.io.XDMFFile(mesh.comm, fem_online_file,
-                                 "w") as solution_file:
+                                "w") as solution_file:
             solution_file.write_mesh(mesh)
             solution_file.write_function(fem_solution)
 
@@ -716,7 +584,7 @@ if training_communicator_comm != MPI.COMM_NULL:
                             reset_reference=True,
                             is_deformation=True) as mesh_class:
         with dolfinx.io.XDMFFile(mesh.comm, rb_online_file,
-                                 "w") as solution_file:
+                                "w") as solution_file:
             # NOTE scatter_forward not considered for online solution
             solution_file.write_mesh(mesh)
             solution_file.write_function(ann_reconstructed_solution)
@@ -732,12 +600,13 @@ if training_communicator_comm != MPI.COMM_NULL:
                             reset_reference=True,
                             is_deformation=True) as mesh_class:
         with dolfinx.io.XDMFFile(mesh.comm, fem_rb_error_file,
-                                 "w") as solution_file:
+                                "w") as solution_file:
             solution_file.write_mesh(mesh)
             solution_file.write_function(error_function)
 
     print(f"Relative error: {relative_error}")
-    print(f"Done! cuda rank {cuda_rank}")
+
+    print(f"Done! cuda rank {cuda_rank[training_communicator_comm.rank]}")
 
 
 '''

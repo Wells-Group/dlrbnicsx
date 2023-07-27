@@ -47,3 +47,9 @@ def model_synchronise(model, verbose=False):
         param.data /= dist.get_world_size()
         if verbose is True:
             print(f"Params after synchronisation: {param.data}")
+
+def load_model(model, path):
+    model.load_state_dict(torch.load(path))
+
+def save_model(model, path):
+    torch.save(model.state_dict(), path)

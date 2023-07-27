@@ -15,14 +15,14 @@ os.environ["MASTER_PORT"] = "29500"
 
 
 def init_gpu_process_group(comm):
-    dist.init_process_group("nccl", rank=comm.rank, size=comm.size)
+    dist.init_process_group("nccl", rank=comm.rank, world_size=comm.size)
 
 
 class CustomPartitionedDatasetGpu(CustomDataset):
     def __init__(self, problem, reduced_problem, N,
                  input_set, output_set, local_indices, cuda_rank,
                  input_scaling_range=None, output_scaling_range=None,
-                 input_range=None, output_range=None):
+                 input_range=None, output_range=None, verbose=False):
         '''
             local_indices: np.array 1-D of indices of the dataset
             cuda_rank: (Scalar) GPU rank
@@ -34,6 +34,7 @@ class CustomPartitionedDatasetGpu(CustomDataset):
                          input_range, output_range)
         self.local_indices = local_indices
         self.cuda_rank = cuda_rank
+        self.verbose = verbose
 
     def __len__(self):
         input_length = self.local_indices.shape[0]
@@ -50,7 +51,8 @@ class CustomPartitionedDatasetGpu(CustomDataset):
                 np.load(self.output_set)[self.local_indices[idx], :]
         else:
             output_data = self.output_set[self.local_indices[idx], :]
-        print("transferring data to cuda")
+        if self.verbose is True:
+            print("transferring data to cuda")
         return self.transform(input_data).to(f"cuda:{self.cuda_rank}"), \
             self.target_transform(output_data).to(f"cuda:{self.cuda_rank}")
 
@@ -91,8 +93,7 @@ if __name__ == "__main__":
 
     if gpu_group0_comm != MPI.COMM_NULL:
         cuda_rank = gpu_group0_comm.rank
-        dist.init_process_group("nccl", rank=gpu_group0_comm.rank,
-                                world_size=gpu_group0_comm.size)
+        init_gpu_process_group(gpu_group0_comm)
 
         local_indices = np.arange(gpu_group0_comm.rank, input_data.shape[0],
                                   gpu_group0_comm.size)

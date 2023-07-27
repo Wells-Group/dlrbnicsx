@@ -19,7 +19,8 @@ from dlrbnicsx.interface.wrappers \
 
 
 def train_nn(reduced_problem, dataloader, model, device=None,
-             learning_rate=None, loss_func=None, optimizer=None):
+             learning_rate=None, loss_func=None, optimizer=None,
+             verbose=False):
     # TODO add more loss functions including PINN
     if loss_func is None:
         if reduced_problem.loss_fn == "MSE":
@@ -78,9 +79,13 @@ def train_nn(reduced_problem, dataloader, model, device=None,
         loss.backward()
         for param in model.parameters():
             dist.barrier()
-            print(f"param before all_reduce: {param.grad.data}")
+            if verbose is True:
+                print(f"param before all_reduce: {param.grad.data}")
+
             dist.all_reduce(param.grad.data, op=dist.ReduceOp.SUM)
-            print(f"param after all_reduce: {param.grad.data}")
+
+            if verbose is True:
+                print(f"param after all_reduce: {param.grad.data}")
         optimizer.step()
         dist.barrier()
         dist.all_reduce(loss, op=dist.ReduceOp.SUM)
@@ -92,7 +97,7 @@ def train_nn(reduced_problem, dataloader, model, device=None,
 
 
 def validate_nn(reduced_problem, dataloader, model, cuda_rank,
-                loss_func=None):
+                loss_func=None, verbose=False):
     # TODO add more loss functions including PINN
     if loss_func is None:
         if reduced_problem.loss_fn == "MSE":
@@ -117,9 +122,14 @@ def validate_nn(reduced_problem, dataloader, model, cuda_rank,
             pred = model(X)
             valid_loss += loss_fn(pred, y)
     dist.barrier()
-    print(f"Validation loss before all_reduce: {valid_loss.item(): >7f}")
+    if verbose is True:
+        print(f"Validation loss before all_reduce: {valid_loss.item(): >7f}")
+
     dist.all_reduce(valid_loss, op=dist.ReduceOp.SUM)
-    print(f"Validation loss after all_reduce: {valid_loss.item(): >7f}")
+
+    if verbose is True:
+        print(f"Validation loss after all_reduce: {valid_loss.item(): >7f}")
+
     print(f"Validation loss: {valid_loss.item(): >7f}")
     return valid_loss.item()
 
@@ -199,11 +209,12 @@ def online_nn(reduced_problem, problem, online_mu, model, N, cuda_rank,
 # TODO error_analysis test and debugging
 # NOTE Here error_anaysis_set is passed instead of only error_anaysis_mu
 def error_analysis(reduced_problem, problem, error_analysis_set, model, N,
-                   online_nn, cuda_rank_list, cpu_comm_list, gpu_comm, world_comm,
-                   norm_error=None, reconstruct_solution=None,
-                   input_scaling_range=None, output_scaling_range=None,
-                   input_range=None, output_range=None, index=None):
-    model.eval()
+                   online_nn, cuda_num, cpu_comm_list, gpu_comm,
+                   world_comm, cpu_indices, norm_error=None,
+                   reconstruct_solution=None, input_scaling_range=None,
+                   output_scaling_range=None, input_range=None,
+                   output_range=None, index=None):
+
     itemsize = MPI.DOUBLE.Get_size()
     if world_comm.rank == 0:
         nbytes_rb_solution = error_analysis_set.shape[0] * itemsize * N
@@ -218,12 +229,13 @@ def error_analysis(reduced_problem, problem, error_analysis_set, model, N,
 
     # NOTE : gpu_comm is communicator not list of communicator
     if gpu_comm != MPI.COMM_NULL:
+        model.eval()
         gpu_indices = np.arange(gpu_comm.rank, error_analysis_set.shape[0],
                                 gpu_comm.size)
         rb_solution[gpu_indices, :] = \
             online_nn(reduced_problem, problem,
                       error_analysis_set[gpu_indices, :], model, N,
-                      cuda_rank_list[gpu_comm.rank], input_scaling_range,
+                      cuda_num, input_scaling_range,
                       output_scaling_range, input_range,
                       output_range, error_mode=True)
 
@@ -242,8 +254,8 @@ def error_analysis(reduced_problem, problem, error_analysis_set, model, N,
 
     for i in range(len(cpu_comm_list)):
         if cpu_comm_list[i] != MPI.COMM_NULL:
-            cpu_indices = np.arange(i, error_analysis_set.shape[0],
-                                    len(cpu_comm_list))
+            # cpu_indices = np.arange(i, error_analysis_set.shape[0],
+            #                         len(cpu_comm_list))
             for k in cpu_indices:
                 fem_solution = problem.solve(error_analysis_set[k, :])
                 if type(fem_solution) == tuple:
