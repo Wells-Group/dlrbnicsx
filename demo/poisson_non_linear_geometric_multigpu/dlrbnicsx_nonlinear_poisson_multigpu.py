@@ -502,10 +502,8 @@ itemsize = MPI.DOUBLE.Get_size()
 
 if training_communicator_comm != MPI.COMM_NULL and training_communicator_comm.rank == 0:
     nbytes_para = error_analysis_num_para * itemsize * para_dim
-    nbytes_error = error_analysis_num_para * itemsize
 else:
     nbytes_para = 0
-    nbytes_error = 0
 
 win6 = MPI.Win.Allocate_shared(nbytes_para, itemsize,
                                comm=world_comm)
@@ -514,16 +512,9 @@ error_analysis_set = np.ndarray(buffer=buf6, dtype="d",
                                 shape=(error_analysis_num_para,
                                         para_dim))
 
-win7 = MPI.Win.Allocate_shared(nbytes_error, itemsize,
-                                comm=world_comm)
-buf7, itemsize = win7.Shared_query(0)
-relative_error = np.ndarray(buffer=buf7, dtype="d",
-                            shape=(error_analysis_num_para))
-
 if training_communicator_comm != MPI.COMM_NULL and training_communicator_comm.rank == 0:
     error_analysis_set[:, :] = \
         generate_ann_input_set(samples=[5, 5]) # (samples=[15, 15])
-    relative_error[:] = np.zeros([error_analysis_num_para])
 
 world_comm.Barrier()
 

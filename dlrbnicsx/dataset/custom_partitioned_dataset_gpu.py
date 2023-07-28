@@ -1,4 +1,5 @@
 import os
+import socket
 
 import numpy as np
 from mpi4py import MPI  # noqa: F401
@@ -10,11 +11,22 @@ import torch.distributed as dist
 import torch.multiprocessing as mp  # noqa: F401
 from torch.utils.data import DataLoader
 
-os.environ["MASTER_ADDR"] = "localhost"
-os.environ["MASTER_PORT"] = "29500"
-
-
 def init_gpu_process_group(comm):
+    os.environ["MASTER_ADDR"] = "localhost"
+
+    if comm.rank == 0:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind(('', 0))
+        free_port = s.getsockname()[1]
+        s.close()
+    else:
+        free_port = None
+
+
+    free_port = comm.bcast(free_port, root=0)
+    comm.Barrier()
+
+    os.environ['MASTER_PORT'] = str(free_port)
     dist.init_process_group("nccl", rank=comm.rank, world_size=comm.size)
 
 
@@ -62,9 +74,6 @@ class CustomPartitionedDatasetGpu(CustomDataset):
 # Currently the data is trabnsferred in every __getitem__ .
 
 if __name__ == "__main__":
-
-    os.environ["MASTER_ADDR"] = "localhost"
-    os.environ["MASTER_PORT"] = "29500"
 
     world_comm = MPI.COMM_WORLD
     gpu_group0_procs = world_comm.group.Incl([0])

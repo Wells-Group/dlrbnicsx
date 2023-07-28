@@ -20,7 +20,7 @@ from dlrbnicsx.interface.wrappers \
 
 def train_nn(reduced_problem, dataloader, model, device=None,
              learning_rate=None, loss_func=None, optimizer=None,
-             verbose=False):
+             verbose=False, report=True):
     # TODO add more loss functions including PINN
     if loss_func is None:
         if reduced_problem.loss_fn == "MSE":
@@ -91,13 +91,13 @@ def train_nn(reduced_problem, dataloader, model, device=None,
         dist.all_reduce(loss, op=dist.ReduceOp.SUM)
 
         current_size += X.shape[0]
-        if batch % 1 == 0:
+        if report is True and batch % 1 == 0:
             print(f"Loss: {loss.item()} {current_size}/{dataset_size}")
     return loss.item()
 
 
 def validate_nn(reduced_problem, dataloader, model, cuda_rank,
-                loss_func=None, verbose=False):
+                loss_func=None, verbose=False, report=True):
     # TODO add more loss functions including PINN
     if loss_func is None:
         if reduced_problem.loss_fn == "MSE":
@@ -130,7 +130,8 @@ def validate_nn(reduced_problem, dataloader, model, cuda_rank,
     if verbose is True:
         print(f"Validation loss after all_reduce: {valid_loss.item(): >7f}")
 
-    print(f"Validation loss: {valid_loss.item(): >7f}")
+    if report is True:
+        print(f"Validation loss: {valid_loss.item(): >7f}")
     return valid_loss.item()
 
 
