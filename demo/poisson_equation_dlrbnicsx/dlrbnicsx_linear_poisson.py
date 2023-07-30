@@ -18,10 +18,9 @@ import matplotlib.pyplot as plt
 from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
 from dlrbnicsx.activation_function.activation_function_factory import Tanh
 from dlrbnicsx.dataset.custom_dataset import CustomDataset
-from dlrbnicsx.interface.wrappers import DataLoader
+from dlrbnicsx.interface.wrappers import DataLoader, save_model, load_model
 from dlrbnicsx.train_validate_test.train_validate_test import \
     train_nn, validate_nn, online_nn, error_analysis
-
 
 class ProblemOnDeformedDomain(abc.ABC):
     # Define FEM problem on the reference problem
@@ -295,39 +294,45 @@ def generate_ann_output_set(problem, reduced_problem, N,
 
 
 # Training dataset
-input_training_set = generate_ann_input_set(samples=[8, 8])
-output_training_set = \
+ann_input_set = generate_ann_input_set(samples=[9, 9])
+np.random.shuffle(ann_input_set)
+ann_output_set = \
     generate_ann_output_set(problem_parametric, reduced_problem,
                             len(reduced_problem._basis_functions),
-                            input_training_set, mode="Training")
+                            ann_input_set)
 
-print("\n")
+num_training_samples = int(0.7 * ann_input_set.shape[0])
+num_validation_samples = ann_input_set.shape[0] - num_training_samples
 
-reduced_problem.output_range[0] = np.min(output_training_set)
-reduced_problem.output_range[1] = np.max(output_training_set)
+reduced_problem.output_range[0] = np.min(ann_output_set)
+reduced_problem.output_range[1] = np.max(ann_output_set)
 # NOTE Output_range based on the computed values instead of user guess.
 
+input_training_set = ann_input_set[:num_training_samples, :]
+output_training_set = ann_output_set[:num_training_samples, :]
+
+input_validation_set = ann_input_set[num_training_samples:, :]
+output_validation_set = ann_output_set[num_training_samples:, :]
+
 print("\n")
 
-customDataset = CustomDataset(problem_parametric, reduced_problem,
-                              len(reduced_problem._basis_functions),
+customDataset = CustomDataset(reduced_problem,
                               input_training_set, output_training_set)
 train_dataloader = DataLoader(customDataset, batch_size=10, shuffle=True)
 
-# Validation dataset
-input_validation_set = generate_ann_input_set(samples=[4, 4])
-output_validation_set = \
-    generate_ann_output_set(problem_parametric, reduced_problem,
-                            len(reduced_problem._basis_functions),
-                            input_validation_set, mode="Validation")
-customDataset = CustomDataset(problem_parametric, reduced_problem,
-                              len(reduced_problem._basis_functions),
+customDataset = CustomDataset(reduced_problem,
                               input_validation_set, output_validation_set)
 valid_dataloader = DataLoader(customDataset, shuffle=False)
 
 # ANN model
 model = HiddenLayersNet(training_set.shape[1], [4],
                         len(reduced_problem._basis_functions), Tanh())
+
+'''
+path = "model.pth"
+save_model(model, path)
+load_model(model, path)
+'''
 
 # Training of ANN
 training_loss = list()

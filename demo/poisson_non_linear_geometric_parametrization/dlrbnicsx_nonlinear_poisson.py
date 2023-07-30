@@ -349,13 +349,11 @@ output_training_set = ann_output_set[:num_training_samples, :]
 input_validation_set = ann_input_set[num_training_samples:, :]
 output_validation_set = ann_output_set[num_training_samples:, :]
 
-customDataset = CustomDataset(problem_parametric, reduced_problem,
-                              len(reduced_problem._basis_functions),
+customDataset = CustomDataset(reduced_problem,
                               input_training_set, output_training_set)
 train_dataloader = DataLoader(customDataset, batch_size=30, shuffle=True)
 
-customDataset = CustomDataset(problem_parametric, reduced_problem,
-                              len(reduced_problem._basis_functions),
+customDataset = CustomDataset(reduced_problem,
                               input_validation_set, output_validation_set)
 valid_dataloader = DataLoader(customDataset, shuffle=False)
 
