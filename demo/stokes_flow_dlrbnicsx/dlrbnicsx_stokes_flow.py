@@ -427,7 +427,7 @@ def generate_ann_output_set(problem, reduced_problem, input_set, mode=None):
     return output_set_u, output_set_p
 
 
-ann_input_set = generate_ann_input_set(samples=(30, 30))  # (samples=[8, 8])
+ann_input_set = generate_ann_input_set(samples=(8, 8))  # (samples=[30, 30])
 np.random.shuffle(ann_input_set)
 ann_output_set_u, ann_output_set_p = \
     generate_ann_output_set(problem_parametric, reduced_problem,
@@ -450,40 +450,39 @@ reduced_problem.output_range_p[0] = np.min(ann_output_set_p)
 reduced_problem.output_range_p[1] = np.max(ann_output_set_p)
 # NOTE Output_range based on the computed values instead of user guess.
 
-customDataset = CustomDataset(problem_parametric, reduced_problem,
-                              len(reduced_problem._basis_functions_u),
-                              input_training_set, output_training_set_u,
-                              input_scaling_range=reduced_problem.input_scaling_range_u,
-                              output_scaling_range=reduced_problem.output_scaling_range_u,
-                              input_range=reduced_problem.input_range_u,
-                              output_range=reduced_problem.output_range_u)
+customDataset = \
+    CustomDataset(reduced_problem, input_training_set, output_training_set_u,
+                  input_scaling_range=reduced_problem.input_scaling_range_u,
+                  output_scaling_range=reduced_problem.output_scaling_range_u,
+                  input_range=reduced_problem.input_range_u,
+                  output_range=reduced_problem.output_range_u)
 train_dataloader_u = DataLoader(customDataset, batch_size=7, shuffle=True)
 
-customDataset = CustomDataset(problem_parametric, reduced_problem,
-                              len(reduced_problem._basis_functions_p),
-                              input_validation_set, output_validation_set_p,
-                              input_scaling_range=reduced_problem.input_scaling_range_p,
-                              output_scaling_range=reduced_problem.output_scaling_range_p,
-                              input_range=reduced_problem.input_range_p,
-                              output_range=reduced_problem.output_range_p)
+customDataset = \
+    CustomDataset(reduced_problem, input_validation_set,
+                  output_validation_set_p,
+                  input_scaling_range=reduced_problem.input_scaling_range_p,
+                  output_scaling_range=reduced_problem.output_scaling_range_p,
+                  input_range=reduced_problem.input_range_p,
+                  output_range=reduced_problem.output_range_p)
 train_dataloader_p = DataLoader(customDataset, batch_size=7, shuffle=True)
 
-customDataset = CustomDataset(problem_parametric, reduced_problem,
-                              len(reduced_problem._basis_functions_u),
-                              input_validation_set, output_validation_set_u,
-                              input_scaling_range=reduced_problem.input_scaling_range_u,
-                              output_scaling_range=reduced_problem.output_scaling_range_u,
-                              input_range=reduced_problem.input_range_u,
-                              output_range=reduced_problem.output_range_u)
+customDataset = \
+    CustomDataset(reduced_problem, input_validation_set,
+                  output_validation_set_u,
+                  input_scaling_range=reduced_problem.input_scaling_range_u,
+                  output_scaling_range=reduced_problem.output_scaling_range_u,
+                  input_range=reduced_problem.input_range_u,
+                  output_range=reduced_problem.output_range_u)
 valid_dataloader_u = DataLoader(customDataset, shuffle=False)
 
-customDataset = CustomDataset(problem_parametric, reduced_problem,
-                              len(reduced_problem._basis_functions_p),
-                              input_validation_set, output_validation_set_p,
-                              input_scaling_range=reduced_problem.input_scaling_range_p,
-                              output_scaling_range=reduced_problem.output_scaling_range_p,
-                              input_range=reduced_problem.input_range_p,
-                              output_range=reduced_problem.output_range_p)
+customDataset = \
+    CustomDataset(reduced_problem, input_validation_set,
+                  output_validation_set_p,
+                  input_scaling_range=reduced_problem.input_scaling_range_p,
+                  output_scaling_range=reduced_problem.output_scaling_range_p,
+                  input_range=reduced_problem.input_range_p,
+                  output_range=reduced_problem.output_range_p)
 valid_dataloader_p = DataLoader(customDataset, shuffle=False)
 
 # ANN model
@@ -549,7 +548,7 @@ for epochs in range(max_epochs_p):
 print("\n")
 print("Generating error analysis (only input/parameters) dataset")
 print("\n")
-error_analysis_set_u = generate_ann_input_set(samples=[15, 15])  # (samples=[3, 3])
+error_analysis_set_u = generate_ann_input_set(samples=[3, 3])  # (samples=[15, 15])
 error_numpy_u = np.zeros(error_analysis_set_u.shape[0])
 
 for i in range(error_analysis_set_u.shape[0]):
@@ -572,7 +571,7 @@ for i in range(error_analysis_set_u.shape[0]):
 print("\n")
 print("Generating error analysis (only input/parameters) dataset")
 print("\n")
-error_analysis_set_p = generate_ann_input_set(samples=[15, 15])  # (samples=[3, 3])
+error_analysis_set_p = generate_ann_input_set(samples=[3, 3])  # (samples=[15, 15])
 error_numpy_p = np.zeros(error_analysis_set_p.shape[0])
 
 for i in range(error_analysis_set_p.shape[0]):

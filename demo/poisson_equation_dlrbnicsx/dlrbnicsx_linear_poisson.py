@@ -295,7 +295,7 @@ def generate_ann_output_set(problem, reduced_problem, N,
 
 # Training dataset
 ann_input_set = generate_ann_input_set(samples=[9, 9])
-np.random.shuffle(ann_input_set)
+# np.random.shuffle(ann_input_set)
 ann_output_set = \
     generate_ann_output_set(problem_parametric, reduced_problem,
                             len(reduced_problem._basis_functions),
@@ -318,7 +318,7 @@ print("\n")
 
 customDataset = CustomDataset(reduced_problem,
                               input_training_set, output_training_set)
-train_dataloader = DataLoader(customDataset, batch_size=10, shuffle=True)
+train_dataloader = DataLoader(customDataset, batch_size=10, shuffle=False)# shuffle=True)
 
 customDataset = CustomDataset(reduced_problem,
                               input_validation_set, output_validation_set)
@@ -328,11 +328,9 @@ valid_dataloader = DataLoader(customDataset, shuffle=False)
 model = HiddenLayersNet(training_set.shape[1], [4],
                         len(reduced_problem._basis_functions), Tanh())
 
-'''
 path = "model.pth"
-save_model(model, path)
+# save_model(model, path)
 load_model(model, path)
-'''
 
 # Training of ANN
 training_loss = list()

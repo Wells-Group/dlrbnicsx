@@ -1,5 +1,8 @@
+import os
+import socket
+
 import torch
-import torch.distributed as dist  # noqa: F401
+import torch.distributed as dist
 import torch.multiprocessing as mp  # noqa: F401
 
 
@@ -63,3 +66,42 @@ def save_checkpoint(checkpoint_path, epoch, model, optimiser):
 
 def load_checkpoint(checkpoint_path):
     return torch.load(checkpoint_path)
+
+def init_cpu_process_group(comm):
+    os.environ['MASTER_ADDR'] = 'localhost'
+
+    if comm.rank == 0:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind(('', 0))
+        free_port = s.getsockname()[1]
+        s.close()
+    else:
+        free_port = None
+
+
+    free_port = comm.bcast(free_port, root=0)
+    comm.Barrier()
+
+    os.environ['MASTER_PORT'] = str(free_port)
+
+    dist.init_process_group("gloo", rank=comm.rank,
+                            world_size=comm.size)
+
+def init_gpu_process_group(comm):
+    os.environ["MASTER_ADDR"] = "localhost"
+
+    if comm.rank == 0:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind(('', 0))
+        free_port = s.getsockname()[1]
+        s.close()
+    else:
+        free_port = None
+
+
+    free_port = comm.bcast(free_port, root=0)
+    comm.Barrier()
+
+    os.environ['MASTER_PORT'] = str(free_port)
+    dist.init_process_group("nccl", rank=comm.rank,
+                            world_size=comm.size)

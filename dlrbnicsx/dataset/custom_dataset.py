@@ -9,7 +9,7 @@ class CustomDataset(Dataset):
     def __init__(self, reduced_problem, input_set,
                  output_set, input_scaling_range=None,
                  output_scaling_range=None, input_range=None,
-                 output_range=None, verbose=False):
+                 output_range=None, verbose=True):
         '''
         reduced_problem: reduced problem with attributes:
             input_scaling_range: (2,num_para) np.ndarray, row 0 are the
@@ -28,77 +28,122 @@ class CustomDataset(Dataset):
         output_set: numpy array of ACTUAL OUTPUT
         '''
         self.reduced_problem = reduced_problem
-        self.input_set = torch.from_numpy(input_set)#.to(torch.float32)
-        self.output_set = torch.from_numpy(output_set)#.to(torch.float32)
-
-        if type(input_scaling_range) == list:
-            input_scaling_range = np.array(input_scaling_range)
-        if type(output_scaling_range) == list:
-            output_scaling_range = np.array(output_scaling_range)
-        if type(input_range) == list:
-            input_range = np.array(input_range)
-        if type(output_range) == list:
-            output_range = np.array(output_range)
-
-        if (np.array(input_scaling_range) == None).any():  # noqa: E711
-            assert hasattr(self.reduced_problem, "input_scaling_range")
-            if type(self.reduced_problem.input_scaling_range) == list:
-                self.input_scaling_range = \
-                    torch.from_numpy(np.array(self.reduced_problem.input_scaling_range))#.to(torch.float32)
-            else:
-                self.input_scaling_range = \
-                    torch.from_numpy(self.reduced_problem.input_scaling_range)#.to(torch.float32)
+        self.verbose = verbose
+        if type(input_set) == np.ndarray:
+            if self.verbose is True:
+                print("Converting input set from numpy array to torch tensor")
+            self.input_set = torch.from_numpy(input_set)#.to(torch.float32)
         else:
-            print(f"Using input scaling range = {input_scaling_range}," +
-                  "ignoring input scaling range specified in " +
-                  f"{reduced_problem.__class__.__name__}")
+            self.input_set = input_set
+        if type(output_set) == np.ndarray:
+            if self.verbose is True:
+                print("Converting output set from numpy array to torch tensor")
+            self.output_set = torch.from_numpy(output_set)#.to(torch.float32)
+        else:
+            self.output_set = output_set
+
+        if isinstance(input_scaling_range, list):
+            if self.verbose is True:
+                print(f"Using input scaling range {input_scaling_range}")
             self.input_scaling_range = \
-                torch.from_numpy(input_scaling_range).to(torch.float32)
-
-        if (np.array(output_scaling_range) == None).any():  # noqa: E711
-            assert hasattr(reduced_problem, "output_scaling_range")
-            if type(self.reduced_problem.output_scaling_range) == list:
-                self.output_scaling_range = \
-                    torch.from_numpy(np.array(self.reduced_problem.output_scaling_range))#.to(torch.float32)
-            else:
-                self.output_scaling_range = \
-                    torch.from_numpy(self.reduced_problem.output_scaling_range)#.to(torch.float32)
+                torch.from_numpy(np.array(input_scaling_range))
+        elif isinstance(input_scaling_range, np.ndarray):
+            if self.verbose is True:
+                print(f"Using input scaling range {input_scaling_range}")
+            self.input_scaling_range = \
+                torch.from_numpy(input_scaling_range)
+        elif isinstance(input_scaling_range, torch.Tensor):
+            if self.verbose is True:
+                print(f"Using input scaling range {input_scaling_range}")
+            self.input_scaling_range = \
+                input_scaling_range
         else:
-            print(f"Using output scaling range = {output_scaling_range}," +
-                  "ignoring output scaling range specified in " +
-                  f"{reduced_problem.__class__.__name__}")
+            if self.verbose is True:
+                print(f"Using input scaling range {reduced_problem.input_scaling_range}")
+            if isinstance(reduced_problem.input_scaling_range, list):
+                self.input_scaling_range = \
+                    torch.from_numpy(np.array(reduced_problem.input_scaling_range))
+            elif isinstance(reduced_problem.input_scaling_range, np.ndarray):
+                self.input_scaling_range = torch.from_numpy(reduced_problem.input_scaling_range)
+            elif isinstance(reduced_problem.input_scaling_range, torch.tensor):
+                self.input_scaling_range = reduced_problem.input_scaling_range
+
+        if isinstance(output_scaling_range, list):
+            if self.verbose is True:
+                print(f"Using output scaling range {output_scaling_range}")
             self.output_scaling_range = \
-                torch.from_numpy(output_scaling_range)#.to(torch.float32)
-
-        if (np.array(input_range) == None).any():  # noqa: E711
-            assert hasattr(self.reduced_problem, "input_range")
-            if type(self.reduced_problem.input_range) == list:
-                self.input_range = \
-                    torch.from_numpy(np.array(self.reduced_problem.input_range))#.to(torch.float32)
-            else:
-                self.input_range = \
-                    torch.from_numpy(self.reduced_problem.input_range)#.to(torch.float32)
+                torch.from_numpy(np.array(output_scaling_range))
+        elif isinstance(output_scaling_range, np.ndarray):
+            if self.verbose is True:
+                print(f"Using output scaling range {output_scaling_range}")
+            self.output_scaling_range = \
+                torch.from_numpy(output_scaling_range)
+        elif isinstance(output_scaling_range, torch.Tensor):
+            if self.verbose is True:
+                print(f"Using output scaling range {output_scaling_range}")
+            self.output_scaling_range = \
+                output_scaling_range
         else:
-            print(f"Using input range = {input_range}," +
-                  "ignoring input range specified in " +
-                  f"{reduced_problem.__class__.__name__}")
+            if self.verbose is True:
+                print(f"Using output scaling range {reduced_problem.output_scaling_range}")
+            if isinstance(reduced_problem.output_scaling_range, list):
+                self.output_scaling_range = \
+                    torch.from_numpy(np.array(reduced_problem.output_scaling_range))
+            elif isinstance(reduced_problem.output_scaling_range, np.ndarray):
+                self.output_scaling_range = torch.from_numpy(reduced_problem.output_scaling_range)
+            elif isinstance(reduced_problem.output_scaling_range, torch.tensor):
+                self.output_scaling_range = reduced_problem.output_scaling_range
+
+        if isinstance(input_range, list):
+            if self.verbose is True:
+                print(f"Using input range {input_range}")
             self.input_range = \
-                torch.from_numpy(input_range).to(torch.float32)
-
-        if (np.array(output_range) == None).any():  # noqa: E711
-            assert hasattr(self.reduced_problem, "output_range")
-            if type(self.reduced_problem.output_range) == list:
-                self.output_range = \
-                    torch.from_numpy(np.array(self.reduced_problem.output_range))#.to(torch.float32)
-            else:
-                self.output_range = \
-                    torch.from_numpy(self.reduced_problem.output_range)#.to(torch.float32)
+                torch.from_numpy(np.array(input_range))
+        elif isinstance(input_range, np.ndarray):
+            if self.verbose is True:
+                print(f"Using input range {input_range}")
+            self.input_range = \
+                torch.from_numpy(input_range)
+        elif isinstance(input_range, torch.Tensor):
+            if self.verbose is True:
+                print(f"Using input range {input_range}")
+            self.input_range = input_range
         else:
-            print(f"Using output range = {output_range}, " +
-                  "ignoring output range specified in " +
-                  f"{reduced_problem.__class__.__name__}")
+            if self.verbose is True:
+                print(f"Using input range {reduced_problem.input_range}")
+            if isinstance(reduced_problem.input_range, list):
+                self.input_range = \
+                    torch.from_numpy(np.array(reduced_problem.input_range))
+            elif isinstance(reduced_problem.input_range, np.ndarray):
+                self.input_range = torch.from_numpy(reduced_problem.input_range)
+            elif isinstance(reduced_problem.input_range, torch.tensor):
+                self.input_range = reduced_problem.input_range
+
+        if isinstance(output_range, list):
+            if self.verbose is True:
+                print(f"Output range {output_range}")
             self.output_range = \
-                torch.from_numpy(output_range)#.to(torch.float32)
+                torch.from_numpy(np.array(output_range))
+        elif isinstance(output_range, np.ndarray):
+            if self.verbose is True:
+                print(f"Output range {output_range}")
+            self.output_range = \
+                torch.from_numpy(output_range)
+        elif isinstance(output_range, torch.Tensor):
+            if self.verbose is True:
+                print(f"Output range {output_range}")
+            self.output_range = output_range
+        else:
+            if self.verbose is True:
+                print(f"Output range {reduced_problem.output_range}")
+            if isinstance(reduced_problem.output_range, list):
+                self.output_range = \
+                    torch.from_numpy(np.array(reduced_problem.output_range))
+            elif isinstance(reduced_problem.output_range, np.ndarray):
+                self.output_range = torch.from_numpy(reduced_problem.output_range)
+            elif isinstance(reduced_problem.output_range, torch.tensor):
+                self.output_range = reduced_problem.output_range
+
 
     def __len__(self):
         input_length = self.input_set.shape[0]
@@ -162,8 +207,6 @@ if __name__ == "__main__":
 
     reduced_problem = ReducedProblem(input_data.shape[1])
 
-    # With numpy array as input-output
-    print("\n With numpy array as input-output \n")
     customDataset = CustomDataset(reduced_problem,
                                   input_data, output_data)
 
