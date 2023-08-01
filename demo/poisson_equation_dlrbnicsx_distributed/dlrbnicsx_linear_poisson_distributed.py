@@ -20,11 +20,10 @@ from dlrbnicsx.activation_function.activation_function_factory \
     import Tanh
 from dlrbnicsx.dataset.custom_partitioned_dataset \
     import CustomPartitionedDataset
-from dlrbnicsx.interface.wrappers import DataLoader
+from dlrbnicsx.interface.wrappers import DataLoader, save_model, \
+    load_model, model_synchronise, init_cpu_process_group
 from dlrbnicsx.train_validate_test.train_validate_test_distributed \
     import train_nn, validate_nn, online_nn, error_analysis
-import torch.distributed as dist  # TODO
-
 
 class ProblemOnDeformedDomain(abc.ABC):
     # Define FEM problem on the reference problem
@@ -194,45 +193,47 @@ problem_parametric = ProblemOnDeformedDomain(mesh, cell_tags, facet_tags,
                                              HarmonicMeshMotion)
 solution_mu = problem_parametric.solve(mu)
 
+itemsize = MPI.DOUBLE.Get_size()
+para_dim = 2
+num_dofs = solution_mu.x.array.shape[0]
+num_snapshots = 8 * 8
+nbytes_para = itemsize * num_snapshots * para_dim
+nbytes_dofs = itemsize * num_snapshots * num_dofs
+
 # ### POD starts ###
 
-
 def generate_training_set(samples=[8, 8]):
-    # Select input samples for POD
-    training_set_0 = np.linspace(0.5, 1., samples[0])
-    training_set_1 = np.linspace(0.5, 1., samples[1])
-    training_set = \
-        np.array(list(itertools.product(training_set_0, training_set_1)))
+    # Select samples from the parameter space for ANN
+    training_set_0 = np.linspace(0.5, 1.5, samples[0])
+    training_set_1 = np.linspace(0.5, 1.5, samples[1])
+    training_set = np.array(list(itertools.product(training_set_0,
+                                                   training_set_1)))
     return training_set
 
+win0 = MPI.Win.Allocate_shared(nbytes_para, itemsize, comm=MPI.COMM_WORLD)
+buf0, itemsize = win0.Shared_query(0)
+training_set = np.ndarray(buffer=buf0, dtype="d", shape=(num_snapshots, para_dim))
 
-# Generate samples on rank 0 and Bcast to other processes
-if rank == 0:
-    training_set = generate_training_set()
-else:
-    training_set = np.zeros_like(generate_training_set())
+if world_comm.rank == 0:
+    training_set[:, :] = generate_training_set()
 
-world_comm.Bcast(training_set, root=0)
-
-training_set_indices = np.arange(rank, training_set.shape[0], size)
-
-training_set_solutions = \
-    np.zeros([training_set.shape[0], solution_mu.x.array.shape[0]])
-
-for mu_index in training_set_indices:
-    print(rbnicsx.io.TextLine(str(mu_index+1) + f"/{training_set.shape[0]}",
-                              fill="#"))
-    print(f"High fidelity solve for mu = {training_set[mu_index,:]}")
-    training_set_solutions[mu_index, :] = \
-        problem_parametric.solve(training_set[mu_index, :]).x.array
-
-
-training_set_solutions_recv = np.zeros_like(training_set_solutions)
 world_comm.Barrier()
-world_comm.Allreduce(training_set_solutions, training_set_solutions_recv,
-                     op=MPI.SUM)
 
-Nmax = 10
+win1 = MPI.Win.Allocate_shared(nbytes_dofs, itemsize, comm=MPI.COMM_WORLD)
+buf1, itemsize = win1.Shared_query(0)
+training_set_solution = np.ndarray(buffer=buf1, dtype="d", shape=(num_snapshots, num_dofs))
+
+# Solution manifold
+indices = np.arange(world_comm.rank, num_snapshots, world_comm.size)
+
+for i in indices:
+    print(f"Solving FEM problem {i+1}/{num_snapshots}")
+    training_set_solution[i, :] = (problem_parametric.solve(training_set[i, :])).x.array
+
+world_comm.Barrier()
+
+# Maximum RB size
+Nmax = 30
 
 print(rbnicsx.io.TextBox("POD offline phase begins", fill="="))
 print("")
@@ -240,23 +241,17 @@ print("")
 print("Set up snapshots matrix")
 snapshots_matrix = rbnicsx.backends.FunctionsList(problem_parametric._V)
 
+for i in range(num_snapshots):
+    snapshot = dolfinx.fem.Function(problem_parametric._V)
+    snapshot.x.array[:] = training_set_solution[i, :]
+
+    print(f"Update snapshots matrix: {i+1}/{num_snapshots}")
+    snapshots_matrix.append(snapshot)
+
 print("Set up reduced problem")
 reduced_problem = PODANNReducedProblem(problem_parametric)
 
 print("")
-
-# TODO why training_set_solutions_recv? use training set.
-for (mu_index, mu) in enumerate(training_set_solutions_recv):
-    print(rbnicsx.io.TextLine
-          (f"{mu_index+1} / {training_set_solutions_recv.shape[0]}",
-           fill="#"))
-    snapshot = dolfinx.fem.Function(problem_parametric._V)
-    snapshot.x.array[:] = training_set_solutions_recv[mu_index, :]
-
-    print("Update snapshots matrix")
-    snapshots_matrix.append(snapshot)
-
-    print("")
 
 print(rbnicsx.io.TextLine("Perform POD", fill="#"))
 eigenvalues, modes, _ = \
@@ -273,14 +268,12 @@ print(rbnicsx.io.TextBox("POD-Galerkin offline phase ends", fill="="))
 positive_eigenvalues = np.where(eigenvalues > 0., eigenvalues, np.nan)
 singular_values = np.sqrt(positive_eigenvalues)
 
-print(f"Rank {rank}, Positive eigenvalues: {positive_eigenvalues}")
-
-if rank == 0:
+if world_comm.rank == 0:
     plt.figure(figsize=[8, 10])
     xint = list()
     yval = list()
 
-    for x, y in enumerate(eigenvalues[:reduced_size]):
+    for x, y in enumerate(eigenvalues[:len(reduced_problem._basis_functions)]):
         yval.append(y)
         xint.append(x+1)
 
@@ -293,11 +286,9 @@ if rank == 0:
     plt.tight_layout()
     plt.savefig("eigenvalue_decay")
 
-# ### POD ends ###
+# ### POD Ends ###
 
 # ### ANN implementation ###
-
-
 def generate_ann_input_set(samples=[4, 4]):
     # Select samples from the parameter space for ANN
     training_set_0 = np.linspace(0.5, 1.5, samples[0])
@@ -308,98 +299,133 @@ def generate_ann_input_set(samples=[4, 4]):
     return training_set
 
 
-def generate_ann_output_set(problem, reduced_problem, N,
-                            input_set, indices, mode=None):
+def generate_ann_output_set(problem, reduced_problem, input_set,
+                            output_set, indices, mode=None):
     # Solve the FE problem at given input_sets and
     # project on the RB space
-    output_set = np.zeros([input_set.shape[0], N])
+    rb_size = len(reduced_problem._basis_functions)
     for i in indices:
         if mode is None:
-            print(f"Parameter number {i+1} of {input_set.shape[0]}")
-            print(f"Parameter: {input_set[i,:]}")
+            print(f"Parameter {i+1}/{input_set.shape[0]}")
         else:
-            print(f"{mode} parameter number {i+1} of {input_set.shape[0]}")
-            print(f"Parameter: {input_set[i,:]}")
-        output_set[i, :] = \
-            reduced_problem.project_snapshot(problem.solve(input_set[i, :]),
-                                             N).array.astype("f")
-    return output_set
+            print(f"{mode} parameter number {i+1}/{input_set.shape[0]}")
+        solution = problem.solve(input_set[i, :])
+        output_set[i, :] = reduced_problem.project_snapshot(solution,
+                                                            rb_size).array
 
+num_ann_input_samples = 10 * 10
+num_training_samples = int(0.7 * num_ann_input_samples)
+num_validation_samples = num_ann_input_samples - int(0.7 * num_ann_input_samples)
+itemsize = MPI.DOUBLE.Get_size()
 
-# Generate ANN input TRAINING samples on the rank 0 and Bcast to other processes
-if rank == 0:
-    input_training_set = generate_ann_input_set(samples=[8, 8])
+if world_comm.rank == 0:
+    ann_input_set = generate_ann_input_set(samples=[10, 10])
+    # np.random.shuffle(ann_input_samples)
+    nbytes_para_ann_training = num_training_samples * itemsize * para_dim
+    nbytes_dofs_ann_training = num_training_samples * itemsize * \
+        len(reduced_problem._basis_functions)
+    nbytes_para_ann_validation = num_validation_samples * itemsize * para_dim
+    nbytes_dofs_ann_validation = num_validation_samples * itemsize * \
+        len(reduced_problem._basis_functions)
 else:
-    input_training_set = \
-        np.zeros_like(generate_ann_input_set(samples=[8, 8]))
+    nbytes_para_ann_training = 0
+    nbytes_dofs_ann_training = 0
+    nbytes_para_ann_validation = 0
+    nbytes_dofs_ann_validation = 0
 
-world_comm.Bcast(input_training_set, root=0)
+world_comm.barrier()
 
-indices = np.arange(rank, input_training_set.shape[0], size)
+win2 = MPI.Win.Allocate_shared(nbytes_para_ann_training, itemsize,
+                               comm=MPI.COMM_WORLD)
+buf2, itemsize = win2.Shared_query(0)
+input_training_set = \
+    np.ndarray(buffer=buf2, dtype="d",
+               shape=(num_training_samples, para_dim))
 
-# Generate ANN output samples
+win3 = MPI.Win.Allocate_shared(nbytes_para_ann_validation, itemsize,
+                               comm=MPI.COMM_WORLD)
+buf3, itemsize = win3.Shared_query(0)
+input_validation_set = \
+    np.ndarray(buffer=buf3, dtype="d",
+               shape=(num_validation_samples, para_dim))
 
-# ### The input data is available in all processes but output data uses
-# only a chunk of the data as specified in the indices ###
+win4 = MPI.Win.Allocate_shared(nbytes_dofs_ann_training, itemsize,
+                               comm=MPI.COMM_WORLD)
+buf4, itemsize = win4.Shared_query(0)
 output_training_set = \
-    generate_ann_output_set(problem_parametric, reduced_problem,
-                            len(reduced_problem._basis_functions),
-                            input_training_set, indices, mode="Training")
+    np.ndarray(buffer=buf4, dtype="d",
+               shape=(num_training_samples,
+                      len(reduced_problem._basis_functions)))
 
-
-output_training_set_recv = np.zeros_like(output_training_set)
-world_comm.Barrier()
-world_comm.Allreduce(output_training_set, output_training_set_recv, op=MPI.SUM)
-
-print("\n")
-
-reduced_problem.output_range[0] = np.min(output_training_set_recv)
-reduced_problem.output_range[1] = np.max(output_training_set_recv)
-# NOTE Output_range based on the computed values instead of user guess.
-
-print("\n")
-
-customDataset = CustomPartitionedDataset(problem_parametric, reduced_problem, reduced_size,
-                                         input_training_set, output_training_set_recv)
-train_dataloader = DataLoader(customDataset, batch_size=15, shuffle=True)
-
-# Generate ANN input VALIDATION samples on the rank 0 and Bcast to other processes
-if rank == 0:
-    input_validation_set = generate_ann_input_set(samples=[4, 4])
-else:
-    input_validation_set = \
-        np.zeros_like(generate_ann_input_set(samples=[4, 4]))
-
-world_comm.Bcast(input_validation_set, root=0)
-
-indices = np.arange(rank, input_validation_set.shape[0], size)
-
+win5 = MPI.Win.Allocate_shared(nbytes_dofs_ann_validation, itemsize,
+                               comm=MPI.COMM_WORLD)
+buf5, itemsize = win5.Shared_query(0)
 output_validation_set = \
-    generate_ann_output_set(problem_parametric, reduced_problem,
-                            len(reduced_problem._basis_functions),
-                            input_validation_set, indices, mode="Training")
+    np.ndarray(buffer=buf5, dtype="d",
+               shape=(num_validation_samples,
+                      len(reduced_problem._basis_functions)))
 
+if world_comm.rank == 0:
+    input_training_set[:, :] = \
+        ann_input_set[:num_training_samples, :]
+    input_validation_set[:, :] = \
+        ann_input_set[num_training_samples:, :]
+    output_training_set[:, :] = \
+        np.zeros([num_training_samples,
+                  len(reduced_problem._basis_functions)])
+    output_validation_set[:, :] = \
+        np.zeros([num_validation_samples,
+                  len(reduced_problem._basis_functions)])
 
-output_validation_set_recv = np.zeros_like(output_validation_set)
 world_comm.Barrier()
-world_comm.Allreduce(output_validation_set, output_validation_set_recv, op=MPI.SUM)
 
-customDataset = CustomPartitionedDataset(problem_parametric, reduced_problem, reduced_size,
-                                         input_validation_set, output_validation_set_recv)
+training_set_indices = np.arange(world_comm.rank,
+                                 input_training_set.shape[0],
+                                 world_comm.size)
+
+validation_set_indices = np.arange(world_comm.rank,
+                                   input_validation_set.shape[0],
+                                   world_comm.size)
+
+world_comm.Barrier()
+
+# Training dataset
+generate_ann_output_set(problem_parametric, reduced_problem,
+                        input_training_set, output_training_set,
+                        training_set_indices, mode="Training")
+
+generate_ann_output_set(problem_parametric, reduced_problem,
+                        input_validation_set, output_validation_set,
+                        validation_set_indices, mode="Validation")
+
+world_comm.Barrier()
+
+reduced_problem.output_range[0] = min(np.min(output_training_set), np.min(output_validation_set))
+reduced_problem.output_range[1] = max(np.max(output_training_set), np.max(output_validation_set))
+
+print("\n")
+
+init_cpu_process_group(world_comm)
+
+customDataset = CustomPartitionedDataset(reduced_problem, input_training_set,
+                                         output_training_set, training_set_indices)
+train_dataloader = DataLoader(customDataset, batch_size=5, shuffle=False) # shuffle=True)
+
+customDataset = CustomPartitionedDataset(reduced_problem, input_validation_set,
+                                         output_validation_set, validation_set_indices)
 valid_dataloader = DataLoader(customDataset, shuffle=False)
 
 # ANN model
 model = HiddenLayersNet(training_set.shape[1], [4],
                         len(reduced_problem._basis_functions), Tanh())
 
+path = "model.pth"
+# save_model(model, path)
+load_model(model, path)
 
-for param in model.parameters():
-    print(f"Rank {rank} \n Params before all_reduce: {param.data}")
-    # NOTE This ensures that models in all processes start with same weights and biases
-    dist.all_reduce(param.data, op=dist.ReduceOp.SUM)
-    param.data /= dist.get_world_size()
-    print(f"Rank {rank} \n Params after all_reduce: {param.data}")
+model_synchronise(model, verbose=True)
 
+# Training of ANN
 training_loss = list()
 validation_loss = list()
 
@@ -407,49 +433,73 @@ max_epochs = 20000
 min_validation_loss = None
 for epochs in range(max_epochs):
     print(f"Epoch: {epochs+1}/{max_epochs}")
-    current_training_loss = train_nn(reduced_problem, train_dataloader, model)
+    current_training_loss = train_nn(reduced_problem,
+                                     train_dataloader,
+                                     model)
     training_loss.append(current_training_loss)
-    current_validation_loss = validate_nn(reduced_problem, valid_dataloader, model)
+    current_validation_loss = validate_nn(reduced_problem,
+                                          valid_dataloader,
+                                          model)
     validation_loss.append(current_validation_loss)
-    # 1% safety margin against min_validation_loss before invoking
-    # early stopping criteria
-    if epochs > 0 and current_validation_loss > 1.01 * min_validation_loss \
+    if epochs > 0 and current_validation_loss > min_validation_loss \
        and reduced_problem.regularisation == "EarlyStopping":
+        # 1% safety margin against min_validation_loss
+        # before invoking early stopping criteria
         print(f"Early stopping criteria invoked at epoch: {epochs+1}")
         break
     min_validation_loss = min(validation_loss)
 
-
 # Error analysis dataset
-
 print("\n")
 print("Generating error analysis (only input/parameters) dataset")
 print("\n")
-# Generate error analysis set on rank 0 and Bcast to other processes
-if rank == 0:
-    error_analysis_set = generate_ann_input_set(samples=[5, 5])
-else:
-    error_analysis_set = np.zeros_like(generate_ann_input_set(samples=[5, 5]))
 
-world_comm.Bcast(error_analysis_set, root=0)
+error_analysis_num_para = 5 * 5
+itemsize = MPI.DOUBLE.Get_size()
+
+if world_comm.rank == 0:
+    nbytes_para = error_analysis_num_para * itemsize * para_dim
+    nbytes_error = error_analysis_num_para * itemsize
+else:
+    nbytes_para = 0
+    nbytes_error = 0
+
+win6 = MPI.Win.Allocate_shared(nbytes_para, itemsize,
+                                comm=world_comm)
+buf6, itemsize = win6.Shared_query(0)
+error_analysis_set = \
+    np.ndarray(buffer=buf6, dtype="d",
+               shape=(error_analysis_num_para,
+                      para_dim))
+
+win7 = MPI.Win.Allocate_shared(nbytes_error, itemsize,
+                               comm=world_comm)
+buf7, itemsize = win7.Shared_query(0)
+error_numpy = np.ndarray(buffer=buf7, dtype="d",
+                         shape=(error_analysis_num_para))
+
+if world_comm.rank == 0:
+    error_analysis_set[:, :] = generate_ann_input_set(samples=[5, 5])
 
 world_comm.Barrier()
-error_numpy = np.zeros(error_analysis_set.shape[0])
-error_numpy_recv = np.zeros(error_analysis_set.shape[0])
-indices = np.arange(rank, error_analysis_set.shape[0], size)
 
-for i in indices:
-    print(f"Error analysis parameter number {i+1} of {error_analysis_set.shape[0]}: {error_analysis_set[i,:]}")
-    error_numpy[i] = error_analysis(reduced_problem, problem_parametric, error_analysis_set[i, :],
-                                    model, reduced_size, online_nn, device=None)
+error_analysis_indices = np.arange(world_comm.rank,
+                                   error_analysis_set.shape[0],
+                                   world_comm.size)
+
+for i in error_analysis_indices:
+    print(f"Error analysis {i+1} of {error_analysis_set.shape[0]}")
+    error_numpy[i] = error_analysis(reduced_problem, problem_parametric,
+                                    error_analysis_set[i, :], model,
+                                    len(reduced_problem._basis_functions),
+                                    online_nn, device=None)
     print(f"Error: {error_numpy[i]}")
 
 world_comm.Barrier()
-world_comm.Allreduce(error_numpy, error_numpy_recv, op=MPI.SUM)
 
-# ### Online phase ###
+# Online phase at parameter online_mu
 
-if rank == 0:
+if world_comm.rank == 0:
     # Online phase at parameter online_mu
     online_mu = np.array([0.7, 1.])
     fem_solution = problem_parametric.solve(online_mu)
@@ -458,7 +508,8 @@ if rank == 0:
     rb_solution = \
         reduced_problem.reconstruct_solution(
             online_nn(reduced_problem, problem_parametric, online_mu, model,
-                      reduced_size, device=None))
+                      len(reduced_problem._basis_functions), device=None))
+
 
     # Post processing
     fem_online_file \
@@ -468,7 +519,7 @@ if rank == 0:
                             problem_parametric._bcs_geometric,
                             reset_reference=True) as mesh_class:
         with dolfinx.io.XDMFFile(mesh.comm, fem_online_file,
-                                 "w") as solution_file:
+                                "w") as solution_file:
             solution_file.write_mesh(mesh)
             solution_file.write_function(fem_solution)
 
@@ -479,7 +530,7 @@ if rank == 0:
                             problem_parametric._bcs_geometric,
                             reset_reference=True) as mesh_class:
         with dolfinx.io.XDMFFile(mesh.comm, rb_online_file,
-                                 "w") as solution_file:
+                                "w") as solution_file:
             # NOTE scatter_forward not considered for online solution
             solution_file.write_mesh(mesh)
             solution_file.write_function(rb_solution)
@@ -494,6 +545,6 @@ if rank == 0:
                             problem_parametric._bcs_geometric,
                             reset_reference=True) as mesh_class:
         with dolfinx.io.XDMFFile(mesh.comm, fem_rb_error_file,
-                                 "w") as solution_file:
+                                "w") as solution_file:
             solution_file.write_mesh(mesh)
             solution_file.write_function(error_function)

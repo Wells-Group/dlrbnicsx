@@ -72,7 +72,7 @@ if __name__ == "__main__":
         reduced_problem = ReducedProblem(input_para_dim)
         custom_partitioned_dataset = \
             CustomPartitionedDataset(reduced_problem, input_data,
-                                    output_data, indices)
+                                    output_data, indices, verbose=False)
         dataloader = torch.utils.data.DataLoader(custom_partitioned_dataset,
                                                 batch_size=2, shuffle=False)
 

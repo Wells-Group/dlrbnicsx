@@ -294,7 +294,7 @@ def generate_ann_output_set(problem, reduced_problem, N,
 
 
 # Training dataset
-ann_input_set = generate_ann_input_set(samples=[9, 9])
+ann_input_set = generate_ann_input_set(samples=[10, 10])
 # np.random.shuffle(ann_input_set)
 ann_output_set = \
     generate_ann_output_set(problem_parametric, reduced_problem,
