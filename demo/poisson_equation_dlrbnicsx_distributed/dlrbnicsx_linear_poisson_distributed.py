@@ -14,6 +14,7 @@ import numpy as np
 import itertools
 import abc
 import matplotlib.pyplot as plt
+import os
 
 from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
 from dlrbnicsx.activation_function.activation_function_factory \
@@ -21,8 +22,8 @@ from dlrbnicsx.activation_function.activation_function_factory \
 from dlrbnicsx.dataset.custom_partitioned_dataset \
     import CustomPartitionedDataset
 from dlrbnicsx.interface.wrappers import DataLoader, save_model, \
-    load_model, model_synchronise, init_cpu_process_group, \
-    get_optimiser, get_loss_func
+    load_model, save_checkpoint, load_checkpoint, model_synchronise, \
+    init_cpu_process_group, get_optimiser, get_loss_func
 from dlrbnicsx.train_validate_test.train_validate_test_distributed \
     import train_nn, validate_nn, online_nn, error_analysis
 
@@ -403,7 +404,7 @@ reduced_problem.output_range[1] = max(np.max(output_training_set), np.max(output
 
 print("\n")
 
-cpu_group0_procs = world_comm.group.Incl([0, 1])
+cpu_group0_procs = world_comm.group.Incl([0])
 cpu_group0_comm = world_comm.Create_group(cpu_group0_procs)
 
 if cpu_group0_comm != MPI.COMM_NULL:
@@ -418,7 +419,7 @@ if cpu_group0_comm != MPI.COMM_NULL:
 
     customDataset = CustomPartitionedDataset(reduced_problem, input_training_set,
                                              output_training_set, training_set_indices_cpu)
-    train_dataloader = DataLoader(customDataset, batch_size=5, shuffle=False) # shuffle=True)
+    train_dataloader = DataLoader(customDataset, batch_size=10, shuffle=False) # shuffle=True)
 
     customDataset = CustomPartitionedDataset(reduced_problem, input_validation_set,
                                             output_validation_set, validation_set_indices_cpu)
@@ -428,9 +429,9 @@ if cpu_group0_comm != MPI.COMM_NULL:
     model = HiddenLayersNet(training_set.shape[1], [4],
                             len(reduced_problem._basis_functions), Tanh())
 
-    path = "model.pth"
+    # path = "model.pth"
     # save_model(model, path)
-    load_model(model, path)
+    # load_model(model, path)
 
     model_synchronise(model, verbose=True)
 
@@ -438,13 +439,24 @@ if cpu_group0_comm != MPI.COMM_NULL:
     training_loss = list()
     validation_loss = list()
 
+    max_epochs = 100 # 20000
+    min_validation_loss = None
+    start_epoch = 0
+    checkpoint_path = "checkpoint"
+    checkpoint_epoch = 10
+
     learning_rate = 1e-4
     optimiser = get_optimiser(model, "Adam", learning_rate)
     loss_fn = get_loss_func("MSE", reduction="sum")
 
-    max_epochs = 20000
-    min_validation_loss = None
-    for epochs in range(max_epochs):
+    if os.path.exists(checkpoint_path):
+        start_epoch, min_validation_loss = \
+            load_checkpoint(checkpoint_path, model, optimiser)
+
+    for epochs in range(start_epoch, max_epochs):
+        if epochs > 0 and epochs % checkpoint_epoch == 0:
+            save_checkpoint(checkpoint_path, epochs, model, optimiser,
+                            min_validation_loss)
         print(f"Epoch: {epochs+1}/{max_epochs}")
         current_training_loss = train_nn(reduced_problem,
                                          train_dataloader,
@@ -461,6 +473,8 @@ if cpu_group0_comm != MPI.COMM_NULL:
             print(f"Early stopping criteria invoked at epoch: {epochs+1}")
             break
         min_validation_loss = min(validation_loss)
+
+    os.system(f"rm {checkpoint_path}")
 exit()
 
 # Error analysis dataset
