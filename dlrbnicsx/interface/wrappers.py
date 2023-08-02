@@ -105,3 +105,17 @@ def init_gpu_process_group(comm):
     os.environ['MASTER_PORT'] = str(free_port)
     dist.init_process_group("nccl", rank=comm.rank,
                             world_size=comm.size)
+
+def save_checkpoint(checkpoint_path, current_epoch, model, optimiser):
+    checkpoint = {}
+    checkpoint["current_epoch"] = current_epoch
+    checkpoint["model_state_dict"] = model.state_dict()
+    checkpoint["optimizer_state_dict"] = optimizer.state_dict()
+    torch.save(checkpoint, checkpoint_path)
+
+def load_checkpoint(checkpoint_path, model, optimiser):
+    checkpoint = torch.load(checkpoint_path)
+    current_epoch = checkpoint["current_epoch"] 
+    model.load_state_dict(checkpoint["model_state_dict"])
+    optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+    return current_epoch
