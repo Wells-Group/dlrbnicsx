@@ -122,3 +122,19 @@ def load_checkpoint(checkpoint_path, model, optimiser):
     optimiser.load_state_dict(checkpoint["optimizer_state_dict"])
     min_validation_loss = checkpoint["min_validation_loss"]
     return current_epoch, min_validation_loss
+
+def get_optimiser(model, optim_name, learning_rate):
+    if optim_name == "Adam":
+        optimiser = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    elif optim_name == "SGD":
+        optimiser = torch.optim.SGD(model.parameters(), lr=learning_rate)
+    else:
+        raise NotImplementedError(f"Optimiser {optim_name} not implemented")
+    return optimiser
+
+def get_loss_func(loss_name, reduction="sum"):
+    if loss_name == "MSE":
+        loss_func = torch.nn.MSELoss(reduction=reduction)
+    else:
+        raise NotImplementedError(f"Loss function {lss_name} not implemented")
+    return loss_func

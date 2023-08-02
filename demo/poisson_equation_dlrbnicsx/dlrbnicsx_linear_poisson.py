@@ -20,7 +20,7 @@ from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
 from dlrbnicsx.activation_function.activation_function_factory import Tanh
 from dlrbnicsx.dataset.custom_dataset import CustomDataset
 from dlrbnicsx.interface.wrappers import DataLoader, save_model, load_model, \
-    save_checkpoint, load_checkpoint
+    save_checkpoint, load_checkpoint, get_optimiser, get_loss_func
 from dlrbnicsx.train_validate_test.train_validate_test import \
     train_nn, validate_nn, online_nn, error_analysis
 
@@ -294,7 +294,7 @@ def generate_ann_output_set(problem, reduced_problem, N,
 
 # Training dataset
 ann_input_set = generate_ann_input_set(samples=[10, 10])
-np.random.shuffle(ann_input_set)
+# np.random.shuffle(ann_input_set)
 ann_output_set = \
     generate_ann_output_set(problem_parametric, reduced_problem,
                             len(reduced_problem._basis_functions),
@@ -317,7 +317,7 @@ print("\n")
 
 customDataset = CustomDataset(reduced_problem,
                               input_training_set, output_training_set)
-train_dataloader = DataLoader(customDataset, batch_size=10, shuffle=True)
+train_dataloader = DataLoader(customDataset, batch_size=10, shuffle=False)# shuffle=True)
 
 customDataset = CustomDataset(reduced_problem,
                               input_validation_set, output_validation_set)
@@ -327,9 +327,9 @@ valid_dataloader = DataLoader(customDataset, shuffle=False)
 model = HiddenLayersNet(training_set.shape[1], [10, 10],
                         len(reduced_problem._basis_functions), Tanh())
 
-# path = "model.pth"
+path = "model.pth"
 # save_model(model, path)
-# load_model(model, path)
+load_model(model, path)
 
 # Training of ANN
 training_loss = list()
@@ -341,12 +341,9 @@ start_epoch = 0
 checkpoint_path = "checkpoint"
 checkpoint_epoch = 10
 
-learning_rate = 1e-2
-
-import torch
-loss_fn = torch.nn.MSELoss(reduction="sum")
-optimiser = torch.optim.Adam(model.parameters(), lr=learning_rate)
-# optimiser = torch.optim.SGD(model.parameters(), lr=learning_rate)
+learning_rate = 1e-4
+optimiser = get_optimiser(model, "Adam", learning_rate)
+loss_fn = get_loss_func("MSE", reduction="sum")
 
 if os.path.exists(checkpoint_path):
     start_epoch, min_validation_loss = \
@@ -369,6 +366,8 @@ for epochs in range(start_epoch, max_epochs):
         print(f"Early stopping criteria invoked at epoch: {epochs+1}")
         break
     min_validation_loss = min(validation_loss)
+
+os.system(f"rm {checkpoint_path}")
 
 # Error analysis dataset
 print("\n")

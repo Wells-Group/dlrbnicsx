@@ -21,7 +21,8 @@ from dlrbnicsx.activation_function.activation_function_factory \
 from dlrbnicsx.dataset.custom_partitioned_dataset \
     import CustomPartitionedDataset
 from dlrbnicsx.interface.wrappers import DataLoader, save_model, \
-    load_model, model_synchronise, init_cpu_process_group
+    load_model, model_synchronise, init_cpu_process_group, \
+    get_optimiser, get_loss_func
 from dlrbnicsx.train_validate_test.train_validate_test_distributed \
     import train_nn, validate_nn, online_nn, error_analysis
 
@@ -131,9 +132,6 @@ class PODANNReducedProblem(abc.ABC):
         self.input_range = \
             np.array([[0.8, 0.8], [1.1, 1.2]])
         self.output_range = [None, None]
-        self.loss_fn = "MSE"
-        self.learning_rate = 1e-4
-        self.optimizer = "Adam"
         self.regularisation = "EarlyStopping"
 
     def reconstruct_solution(self, reduced_solution):
@@ -416,7 +414,7 @@ customDataset = CustomPartitionedDataset(reduced_problem, input_validation_set,
 valid_dataloader = DataLoader(customDataset, shuffle=False)
 
 # ANN model
-model = HiddenLayersNet(training_set.shape[1], [4],
+model = HiddenLayersNet(training_set.shape[1], [10, 10],
                         len(reduced_problem._basis_functions), Tanh())
 
 path = "model.pth"
@@ -429,17 +427,21 @@ model_synchronise(model, verbose=True)
 training_loss = list()
 validation_loss = list()
 
+learning_rate = 1e-4
+optimiser = get_optimiser(model, "Adam", learning_rate)
+loss_fn = get_loss_func("MSE", reduction="sum")
+
 max_epochs = 20000
 min_validation_loss = None
 for epochs in range(max_epochs):
     print(f"Epoch: {epochs+1}/{max_epochs}")
     current_training_loss = train_nn(reduced_problem,
                                      train_dataloader,
-                                     model)
+                                     model, loss_fn, optimiser)
     training_loss.append(current_training_loss)
     current_validation_loss = validate_nn(reduced_problem,
                                           valid_dataloader,
-                                          model)
+                                          model, loss_fn)
     validation_loss.append(current_validation_loss)
     if epochs > 0 and current_validation_loss > min_validation_loss \
        and reduced_problem.regularisation == "EarlyStopping":

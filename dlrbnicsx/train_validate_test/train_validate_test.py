@@ -7,7 +7,8 @@ from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
 from dlrbnicsx.activation_function.activation_function_factory import Tanh
 
 
-def train_nn(reduced_problem, dataloader, model, loss_fn, optimizer):
+def train_nn(reduced_problem, dataloader, model, loss_fn, optimizer,
+             report=True):
     '''
     Training of the Artificial Neural Network
     Inputs:
@@ -27,6 +28,7 @@ def train_nn(reduced_problem, dataloader, model, loss_fn, optimizer):
     # TODO add more optimizers
     # TODO add L1/L2 and more rgularisations WITHOUT weight decay
     dataset_size = len(dataloader.dataset)
+    current_size = 0
     model.train()  # NOTE
     for batch, (X, y) in enumerate(dataloader):
         pred = model(X)
@@ -35,10 +37,9 @@ def train_nn(reduced_problem, dataloader, model, loss_fn, optimizer):
         optimizer.step()
         optimizer.zero_grad()
 
-        if batch % 1 == 0:
-            current = (batch+1) * len(X)
-            print(f"Training loss: {loss.item(): >7f} " +
-                  f"[{current:>5d}]/[{dataset_size:>5d}]")
+        current_size += X.shape[0]
+        if report is True and batch % 1 == 0:
+            print(f"Loss: {loss.item()} {current_size}/{dataset_size}")
     return loss.item()
 
 
