@@ -324,7 +324,10 @@ customDataset = CustomDataset(reduced_problem,
 valid_dataloader = DataLoader(customDataset, shuffle=False)
 
 # ANN model
-model = HiddenLayersNet(training_set.shape[1], [10, 10],
+# model = HiddenLayersNet(training_set.shape[1], [10, 10],
+#                         len(reduced_problem._basis_functions), Tanh())
+
+model = HiddenLayersNet(training_set.shape[1], [4],
                         len(reduced_problem._basis_functions), Tanh())
 
 path = "model.pth"
@@ -335,7 +338,7 @@ load_model(model, path)
 training_loss = list()
 validation_loss = list()
 
-max_epochs = 20000
+max_epochs = 10 # 20000
 min_validation_loss = None
 start_epoch = 0
 checkpoint_path = "checkpoint"

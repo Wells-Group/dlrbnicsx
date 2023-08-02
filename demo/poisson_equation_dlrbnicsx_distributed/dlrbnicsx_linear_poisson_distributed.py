@@ -403,53 +403,65 @@ reduced_problem.output_range[1] = max(np.max(output_training_set), np.max(output
 
 print("\n")
 
-init_cpu_process_group(world_comm)
+cpu_group0_procs = world_comm.group.Incl([0, 1])
+cpu_group0_comm = world_comm.Create_group(cpu_group0_procs)
 
-customDataset = CustomPartitionedDataset(reduced_problem, input_training_set,
-                                         output_training_set, training_set_indices)
-train_dataloader = DataLoader(customDataset, batch_size=5, shuffle=False) # shuffle=True)
+if cpu_group0_comm != MPI.COMM_NULL:
+    init_cpu_process_group(cpu_group0_comm)
 
-customDataset = CustomPartitionedDataset(reduced_problem, input_validation_set,
-                                         output_validation_set, validation_set_indices)
-valid_dataloader = DataLoader(customDataset, shuffle=False)
+    training_set_indices_cpu = np.arange(cpu_group0_comm.rank,
+                                         input_training_set.shape[0],
+                                         cpu_group0_comm.size)
+    validation_set_indices_cpu = np.arange(cpu_group0_comm.rank,
+                                           input_validation_set.shape[0],
+                                           cpu_group0_comm.size)
 
-# ANN model
-model = HiddenLayersNet(training_set.shape[1], [10, 10],
-                        len(reduced_problem._basis_functions), Tanh())
+    customDataset = CustomPartitionedDataset(reduced_problem, input_training_set,
+                                             output_training_set, training_set_indices_cpu)
+    train_dataloader = DataLoader(customDataset, batch_size=5, shuffle=False) # shuffle=True)
 
-path = "model.pth"
-# save_model(model, path)
-load_model(model, path)
+    customDataset = CustomPartitionedDataset(reduced_problem, input_validation_set,
+                                            output_validation_set, validation_set_indices_cpu)
+    valid_dataloader = DataLoader(customDataset, shuffle=False)
 
-model_synchronise(model, verbose=True)
+    # ANN model
+    model = HiddenLayersNet(training_set.shape[1], [4],
+                            len(reduced_problem._basis_functions), Tanh())
 
-# Training of ANN
-training_loss = list()
-validation_loss = list()
+    path = "model.pth"
+    # save_model(model, path)
+    load_model(model, path)
 
-learning_rate = 1e-4
-optimiser = get_optimiser(model, "Adam", learning_rate)
-loss_fn = get_loss_func("MSE", reduction="sum")
+    model_synchronise(model, verbose=True)
 
-max_epochs = 20000
-min_validation_loss = None
-for epochs in range(max_epochs):
-    print(f"Epoch: {epochs+1}/{max_epochs}")
-    current_training_loss = train_nn(reduced_problem,
-                                     train_dataloader,
-                                     model, loss_fn, optimiser)
-    training_loss.append(current_training_loss)
-    current_validation_loss = validate_nn(reduced_problem,
-                                          valid_dataloader,
-                                          model, loss_fn)
-    validation_loss.append(current_validation_loss)
-    if epochs > 0 and current_validation_loss > min_validation_loss \
-       and reduced_problem.regularisation == "EarlyStopping":
-        # 1% safety margin against min_validation_loss
-        # before invoking early stopping criteria
-        print(f"Early stopping criteria invoked at epoch: {epochs+1}")
-        break
-    min_validation_loss = min(validation_loss)
+    # Training of ANN
+    training_loss = list()
+    validation_loss = list()
+
+    learning_rate = 1e-4
+    optimiser = get_optimiser(model, "Adam", learning_rate)
+    loss_fn = get_loss_func("MSE", reduction="sum")
+
+    max_epochs = 20000
+    min_validation_loss = None
+    for epochs in range(max_epochs):
+        print(f"Epoch: {epochs+1}/{max_epochs}")
+        current_training_loss = train_nn(reduced_problem,
+                                         train_dataloader,
+                                         model, loss_fn, optimiser)
+        training_loss.append(current_training_loss)
+        current_validation_loss = validate_nn(reduced_problem,
+                                              valid_dataloader,
+                                              model, loss_fn)
+        validation_loss.append(current_validation_loss)
+        if epochs > 0 and current_validation_loss > min_validation_loss \
+        and reduced_problem.regularisation == "EarlyStopping":
+            # 1% safety margin against min_validation_loss
+            # before invoking early stopping criteria
+            print(f"Early stopping criteria invoked at epoch: {epochs+1}")
+            break
+        min_validation_loss = min(validation_loss)
+exit()
 
 # Error analysis dataset
 print("\n")

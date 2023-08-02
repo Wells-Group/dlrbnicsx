@@ -10,8 +10,8 @@ from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
 from dlrbnicsx.activation_function.activation_function_factory import Tanh
 
 
-def train_nn(reduced_problem, dataloader, model, device=None,
-             learning_rate=None, loss_func=None, optimizer=None):
+def train_nn(reduced_problem, dataloader, model, loss_fn,
+             optimizer, report=True, verbose=False):
     '''
     Training of the Artificial Neural Network
     Inputs:
@@ -27,81 +27,36 @@ def train_nn(reduced_problem, dataloader, model, device=None,
     Output:
         loss: float, loss measured with loss_fn using given optimizer
     '''
-    if device is None:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
     # TODO add more loss functions including PINN
-    if loss_func is None:
-        if reduced_problem.loss_fn == "MSE":
-            loss_fn = torch.nn.MSELoss(reduction="sum")
-        else:
-            NotImplementedError(f"Loss function {reduced_problem.loss_fn}" +
-                                "is not implemented")
-    else:
-        print(f"Using training loss function = {loss_func}," +
-              "ignoring loss function specified in " +
-              f"{reduced_problem.__class__.__name__}")
-        if loss_func == "MSE":
-            loss_fn = torch.nn.MSELoss(reduction="sum")
-        else:
-            NotImplementedError(f"Loss function {loss_fn} " +
-                                "is not implemented")
     # TODO add more optimizers
-    if learning_rate is None:
-        lr = reduced_problem.learning_rate
-    else:
-        print(f"Using learning_rate = {learning_rate}," +
-              "ignoring learning rate specified in " +
-              f"{reduced_problem.__class__.__name__}")
-        lr = learning_rate
-    if optimizer is None:
-        if reduced_problem.optimizer == "Adam":
-            optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-        elif reduced_problem.optimizer == "SGD":
-            optimizer = torch.optim.SGD(model.parameters(), lr=lr)
-            # TODO also add momentum argument
-        else:
-            NotImplementedError(f"Optimizer {reduced_problem.optimizer} " +
-                                "is not implemented")
-    else:
-        print(f"Using optimizer = {optimizer}, " +
-              "ignoring optimizer specified in " +
-              f"{reduced_problem.__class__.__name__}")
-        if optimizer == "Adam":
-            optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-        elif optimizer == "SGD":
-            optimizer = torch.optim.SGD(model.parameters(), lr=lr)
-            # TODO also add momentum argument
-        else:
-            NotImplementedError(f"Optimizer {optimizer} " +
-                                "is not implemented")
     # TODO add L1/L2 and more rgularisations WITHOUT weight decay
     dataset_size = len(dataloader.dataset)
+    current_size = 0
     model.train()  # NOTE
     for batch, (X, y) in enumerate(dataloader):
-        # X,y = X.to(device), y.to(device) # TODO
         pred = model(X)
         loss = loss_fn(pred, y)
-
-        optimizer.zero_grad()
         loss.backward()
         for param in model.parameters():
             dist.barrier()
-            # print(f"param before all_reduce: {param.grad.data}")
+            if verbose is True:
+                print(f"param before all_reduce: {param.grad.data}")
             dist.all_reduce(param.grad.data, op=dist.ReduceOp.SUM)
-            # print(f"param after all_reduce: {param.grad.data}")
+            if verbose is True:
+                print(f"param after all_reduce: {param.grad.data}")
         optimizer.step()
         dist.barrier()
         dist.all_reduce(loss, op=dist.ReduceOp.SUM)
+        optimizer.zero_grad()
 
-        if batch % 1 == 0:
-            current = (batch+1) * len(X)
-            print(f"Training loss: {loss.item(): >7f} " +
-                  f"[{current:>5d}]/[{dataset_size:>5d}]")
+        current_size += X.shape[0]
+        if report is True and batch % 1 == 0:
+            print(f"Loss: {loss.item()} {current_size}/{dataset_size}")
     return loss.item()
 
 
-def validate_nn(reduced_problem, dataloader, model, device=None,
-                loss_func=None):
+def validate_nn(reduced_problem, dataloader, model, loss_fn,
+                report=True, verbose=False):
     '''
     Validation of the Artificial Neural Network
     Inputs:
@@ -115,36 +70,20 @@ def validate_nn(reduced_problem, dataloader, model, device=None,
     Output:
         loss: float, loss measured with loss_fn using given optimizer
     '''
-    if device is None:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
     # TODO add more loss functions including PINN
-    if loss_func is None:
-        if reduced_problem.loss_fn == "MSE":
-            loss_fn = torch.nn.MSELoss(reduction="sum")
-        else:
-            NotImplementedError(f"Loss function {reduced_problem.loss_fn} " +
-                                "is not implemented")
-    else:
-        print(f"Using validation loss function = {loss_func}," +
-              "ignoring loss function specified in " +
-              f"{reduced_problem.__class__.__name__}")
-        if loss_func == "MSE":
-            loss_fn = torch.nn.MSELoss(reduction="sum")
-        else:
-            NotImplementedError(f"Loss function {loss_func} " +
-                                "is not implemented")
-    # num_batches = len(dataloader)
     model.eval()  # NOTE
     valid_loss = torch.tensor([0.])
     with torch.no_grad():
         for X, y in dataloader:
-            # X,y = X.to(device), y.to(device) # TODO
             pred = model(X)
             valid_loss += loss_fn(pred, y)
-    # print(f"Validation loss before all_reduce: {valid_loss: >7f}")
+    if verbose is True:
+        print(f"Validation loss before all_reduce: {valid_loss: >7f}")
     dist.all_reduce(valid_loss, op=dist.ReduceOp.SUM)
-    # print(f"Validation loss after all_reduce: {valid_loss: >7f}")
-    print(f"Validation loss: {valid_loss.item(): >7f}")
+    if verbose is True:
+        print(f"Validation loss after all_reduce: {valid_loss: >7f}")
+    if report is True:
+        print(f"Validation loss: {valid_loss.item(): >7f}")
     return valid_loss.item()
 
 

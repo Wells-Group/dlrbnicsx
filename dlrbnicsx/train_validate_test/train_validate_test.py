@@ -43,7 +43,7 @@ def train_nn(reduced_problem, dataloader, model, loss_fn, optimizer,
     return loss.item()
 
 
-def validate_nn(reduced_problem, dataloader, model, loss_fn):
+def validate_nn(reduced_problem, dataloader, model, loss_fn, report=True):
     '''
     Validation of the Artificial Neural Network
     Inputs:
@@ -64,7 +64,8 @@ def validate_nn(reduced_problem, dataloader, model, loss_fn):
         for X, y in dataloader:
             pred = model(X)
             valid_loss += loss_fn(pred, y).item()
-    print(f"Validation loss: {valid_loss.item(): >7f}")
+    if report is True:
+        print(f"Validation loss: {valid_loss.item(): >7f}")
     return valid_loss
 
 
