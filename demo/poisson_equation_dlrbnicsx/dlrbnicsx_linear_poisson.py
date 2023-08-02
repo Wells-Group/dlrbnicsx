@@ -14,11 +14,13 @@ import numpy as np
 import itertools
 import abc
 import matplotlib.pyplot as plt
+import os
 
 from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
 from dlrbnicsx.activation_function.activation_function_factory import Tanh
 from dlrbnicsx.dataset.custom_dataset import CustomDataset
-from dlrbnicsx.interface.wrappers import DataLoader, save_model, load_model
+from dlrbnicsx.interface.wrappers import DataLoader, save_model, load_model, \
+    save_checkpoint, load_checkpoint
 from dlrbnicsx.train_validate_test.train_validate_test import \
     train_nn, validate_nn, online_nn, error_analysis
 
@@ -128,9 +130,6 @@ class PODANNReducedProblem(abc.ABC):
         self.input_range = \
             np.array([[0.8, 0.8], [1.1, 1.2]])
         self.output_range = [None, None]
-        self.loss_fn = "MSE"
-        self.learning_rate = 1e-4
-        self.optimizer = "Adam"
         self.regularisation = "EarlyStopping"
 
     def reconstruct_solution(self, reduced_solution):
@@ -295,7 +294,7 @@ def generate_ann_output_set(problem, reduced_problem, N,
 
 # Training dataset
 ann_input_set = generate_ann_input_set(samples=[10, 10])
-# np.random.shuffle(ann_input_set)
+np.random.shuffle(ann_input_set)
 ann_output_set = \
     generate_ann_output_set(problem_parametric, reduced_problem,
                             len(reduced_problem._basis_functions),
@@ -318,19 +317,19 @@ print("\n")
 
 customDataset = CustomDataset(reduced_problem,
                               input_training_set, output_training_set)
-train_dataloader = DataLoader(customDataset, batch_size=10, shuffle=False)# shuffle=True)
+train_dataloader = DataLoader(customDataset, batch_size=10, shuffle=True)
 
 customDataset = CustomDataset(reduced_problem,
                               input_validation_set, output_validation_set)
 valid_dataloader = DataLoader(customDataset, shuffle=False)
 
 # ANN model
-model = HiddenLayersNet(training_set.shape[1], [4],
+model = HiddenLayersNet(training_set.shape[1], [10, 10],
                         len(reduced_problem._basis_functions), Tanh())
 
-path = "model.pth"
+# path = "model.pth"
 # save_model(model, path)
-load_model(model, path)
+# load_model(model, path)
 
 # Training of ANN
 training_loss = list()
@@ -338,13 +337,32 @@ validation_loss = list()
 
 max_epochs = 20000
 min_validation_loss = None
-for epochs in range(max_epochs):
+start_epoch = 0
+checkpoint_path = "checkpoint"
+checkpoint_epoch = 10
+
+learning_rate = 1e-2
+
+import torch
+loss_fn = torch.nn.MSELoss(reduction="sum")
+optimiser = torch.optim.Adam(model.parameters(), lr=learning_rate)
+# optimiser = torch.optim.SGD(model.parameters(), lr=learning_rate)
+
+if os.path.exists(checkpoint_path):
+    start_epoch, min_validation_loss = \
+        load_checkpoint(checkpoint_path, model, optimiser)
+
+for epochs in range(start_epoch, max_epochs):
+    if epochs > 0 and epochs % checkpoint_epoch == 0:
+        save_checkpoint(checkpoint_path, epochs, model, optimiser,
+                        min_validation_loss)
     print(f"Epoch: {epochs+1}/{max_epochs}")
+
     current_training_loss = train_nn(reduced_problem, train_dataloader,
-                                     model)
+                                     model, loss_fn, optimiser)
     training_loss.append(current_training_loss)
     current_validation_loss = validate_nn(reduced_problem, valid_dataloader,
-                                          model)
+                                          model, loss_fn)
     validation_loss.append(current_validation_loss)
     if epochs > 0 and current_validation_loss > min_validation_loss \
        and reduced_problem.regularisation == "EarlyStopping":
@@ -364,8 +382,7 @@ for i in range(error_analysis_set.shape[0]):
     print(f"Parameter: : {error_analysis_set[i,:]}")
     error_numpy[i] = error_analysis(reduced_problem, problem_parametric,
                                     error_analysis_set[i, :], model,
-                                    len(reduced_problem._basis_functions),
-                                    online_nn, device=None)
+                                    online_nn)
     print(f"Error: {error_numpy[i]}")
 
 # Online phase at parameter online_mu
@@ -375,8 +392,7 @@ fem_solution = problem_parametric.solve(online_mu)
 # Next this solution is reconstructed on FE space
 rb_solution = \
     reduced_problem.reconstruct_solution(
-        online_nn(reduced_problem, problem_parametric, online_mu, model,
-                  len(reduced_problem._basis_functions), device=None))
+        online_nn(reduced_problem, problem_parametric, online_mu, model))
 
 
 # Post processing

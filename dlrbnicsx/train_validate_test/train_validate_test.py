@@ -7,8 +7,7 @@ from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
 from dlrbnicsx.activation_function.activation_function_factory import Tanh
 
 
-def train_nn(reduced_problem, dataloader, model, device=None,
-             learning_rate=None, loss_func=None, optimizer=None):
+def train_nn(reduced_problem, dataloader, model, loss_fn, optimizer):
     '''
     Training of the Artificial Neural Network
     Inputs:
@@ -24,60 +23,17 @@ def train_nn(reduced_problem, dataloader, model, device=None,
     Output:
         loss: float, loss measured with loss_fn using given optimizer
     '''
-    if device is None:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
     # TODO add more loss functions including PINN
-    if loss_func is None:
-        if reduced_problem.loss_fn == "MSE":
-            loss_fn = torch.nn.MSELoss(reduction="sum")
-        else:
-            NotImplementedError(f"Loss function {reduced_problem.loss_fn}" +
-                                "is not implemented")
-    else:
-        print(f"Using training loss function = {loss_func}," +
-              "ignoring loss function specified in" +
-              f"{reduced_problem.__class__.__name__}")
-        if loss_func == "MSE":
-            loss_fn = torch.nn.MSELoss(reduction="sum")
-        else:
-            NotImplementedError(f"Loss function {loss_fn} is not implemented")
     # TODO add more optimizers
-    if learning_rate is None:
-        lr = reduced_problem.learning_rate
-    else:
-        print(f"Using learning_rate = {learning_rate}," +
-              "ignoring learning rate specified in" +
-              f"{reduced_problem.__class__.__name__}")
-        lr = learning_rate
-    if optimizer is None:
-        if reduced_problem.optimizer == "Adam":
-            optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-        elif reduced_problem.optimizer == "SGD":
-            optimizer = torch.optim.SGD(model.parameters(), lr=lr)
-            # TODO also add momentum argument
-        else:
-            NotImplementedError(f"Optimizer {reduced_problem.optimizer} " +
-                                "is not implemented")
-    else:
-        print(f"Using optimizer = {optimizer}, ignoring optimizer " +
-              f"specified in {reduced_problem.__class__.__name__}")
-        if optimizer == "Adam":
-            optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-        elif optimizer == "SGD":
-            optimizer = torch.optim.SGD(model.parameters(), lr=lr)
-            # TODO also add momentum argument
-        else:
-            NotImplementedError(f"Optimizer {optimizer} is not implemented")
     # TODO add L1/L2 and more rgularisations WITHOUT weight decay
     dataset_size = len(dataloader.dataset)
     model.train()  # NOTE
     for batch, (X, y) in enumerate(dataloader):
-        # X,y = X.to(device), y.to(device) # TODO
         pred = model(X)
         loss = loss_fn(pred, y)
-        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+        optimizer.zero_grad()
 
         if batch % 1 == 0:
             current = (batch+1) * len(X)
@@ -86,8 +42,7 @@ def train_nn(reduced_problem, dataloader, model, device=None,
     return loss.item()
 
 
-def validate_nn(reduced_problem, dataloader, model,
-                device=None, loss_func=None):
+def validate_nn(reduced_problem, dataloader, model, loss_fn):
     '''
     Validation of the Artificial Neural Network
     Inputs:
@@ -101,37 +56,18 @@ def validate_nn(reduced_problem, dataloader, model,
     Output:
         loss: float, loss measured with loss_fn using given optimizer
     '''
-    if device is None:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
     # TODO add more loss functions including PINN
-    if loss_func is None:
-        if reduced_problem.loss_fn == "MSE":
-            loss_fn = torch.nn.MSELoss(reduction="sum")
-        else:
-            NotImplementedError(f"Loss function {reduced_problem.loss_fn} " +
-                                "is not implemented")
-    else:
-        print(f"Using validation loss function = {loss_func}," +
-              "ignoring loss function specified in "
-              "{reduced_problem.__class__.__name__}")
-        if loss_func == "MSE":
-            loss_fn = torch.nn.MSELoss(reduction="sum")
-        else:
-            NotImplementedError(f"Loss function {loss_func} " +
-                                "is not implemented")
-    # num_batches = len(dataloader)
     model.eval()  # NOTE
     valid_loss = torch.tensor([0.])
     with torch.no_grad():
         for X, y in dataloader:
-            # X,y = X.to(device), y.to(device) # TODO
             pred = model(X)
             valid_loss += loss_fn(pred, y).item()
     print(f"Validation loss: {valid_loss.item(): >7f}")
     return valid_loss
 
 
-def online_nn(reduced_problem, problem, online_mu, model, N, device=None,
+def online_nn(reduced_problem, problem, online_mu, model,
               input_scaling_range=None, output_scaling_range=None,
               input_range=None, output_range=None):
     '''
@@ -155,8 +91,7 @@ def online_nn(reduced_problem, problem, online_mu, model, N, device=None,
     Output:
         solution_reduced: rbnicsx.online.create_vector, online solution
     '''
-    if device is None:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
+    N = len(reduced_problem._basis_functions)
     model.eval()
 
     if type(input_scaling_range) == list:
@@ -206,7 +141,6 @@ def online_nn(reduced_problem, problem, online_mu, model, N, device=None,
         torch.from_numpy(online_mu_scaled).to(torch.float32)
     with torch.no_grad():
         X = online_mu_scaled_torch
-        # X = X.to(device) # TODO
         pred_scaled = model(X)
         pred_scaled_numpy = pred_scaled.detach().numpy()
         pred = (pred_scaled_numpy - output_scaling_range[0]) * \
@@ -219,8 +153,8 @@ def online_nn(reduced_problem, problem, online_mu, model, N, device=None,
     return solution_reduced
 
 
-def error_analysis(reduced_problem, problem, error_analysis_mu, model, N,
-                   online_nn, device=None, norm_error=None,
+def error_analysis(reduced_problem, problem, error_analysis_mu, model,
+                   online_nn, norm_error=None,
                    reconstruct_solution=None, input_scaling_range=None,
                    output_scaling_range=None, input_range=None,
                    output_range=None, index=None):
@@ -252,11 +186,10 @@ def error_analysis(reduced_problem, problem, error_analysis_mu, model, N,
         error: float, Error computed with norm_error between FEM
             and RB solution
     '''
-    if device is None:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
+    N = len(reduced_problem._basis_functions)
     model.eval()
     ann_prediction = online_nn(reduced_problem, problem, error_analysis_mu,
-                               model, N, device, input_scaling_range,
+                               model, input_scaling_range,
                                output_scaling_range, input_range,
                                output_range)
     if reconstruct_solution is None:
