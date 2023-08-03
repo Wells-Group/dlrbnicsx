@@ -404,7 +404,7 @@ reduced_problem.output_range[1] = max(np.max(output_training_set), np.max(output
 
 print("\n")
 
-cpu_group0_procs = world_comm.group.Incl([0])
+cpu_group0_procs = world_comm.group.Incl([0, 1])
 cpu_group0_comm = world_comm.Create_group(cpu_group0_procs)
 
 if cpu_group0_comm != MPI.COMM_NULL:
@@ -419,7 +419,7 @@ if cpu_group0_comm != MPI.COMM_NULL:
 
     customDataset = CustomPartitionedDataset(reduced_problem, input_training_set,
                                              output_training_set, training_set_indices_cpu)
-    train_dataloader = DataLoader(customDataset, batch_size=10, shuffle=False) # shuffle=True)
+    train_dataloader = DataLoader(customDataset, batch_size=5, shuffle=False) # shuffle=True)
 
     customDataset = CustomPartitionedDataset(reduced_problem, input_validation_set,
                                             output_validation_set, validation_set_indices_cpu)
@@ -429,9 +429,9 @@ if cpu_group0_comm != MPI.COMM_NULL:
     model = HiddenLayersNet(training_set.shape[1], [4],
                             len(reduced_problem._basis_functions), Tanh())
 
-    path = "model.pth"
+    # path = "model.pth"
     # save_model(model, path)
-    load_model(model, path)
+    # load_model(model, path)
 
     model_synchronise(model, verbose=True)
 
@@ -439,7 +439,7 @@ if cpu_group0_comm != MPI.COMM_NULL:
     training_loss = list()
     validation_loss = list()
 
-    max_epochs = 20000
+    max_epochs = 100 # 20000
     min_validation_loss = None
     start_epoch = 0
     checkpoint_path = "checkpoint"
