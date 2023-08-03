@@ -18,55 +18,10 @@ from dlrbnicsx.interface.wrappers \
     import model_to_gpu, data_to_gpu, model_synchronise  # noqa: F401
 
 
-def train_nn(reduced_problem, dataloader, model, device=None,
-             learning_rate=None, loss_func=None, optimizer=None,
-             verbose=False, report=True):
+def train_nn(reduced_problem, dataloader, model, loss_fn,
+             optimizer, verbose=False, report=True):
     # TODO add more loss functions including PINN
-    if loss_func is None:
-        if reduced_problem.loss_fn == "MSE":
-            loss_fn = torch.nn.MSELoss(reduction="sum")
-        else:
-            NotImplementedError(f"Loss function {reduced_problem.loss_fn}" +
-                                "is not implemented")
-    else:
-        print(f"Using training loss function = {loss_func}," +
-              "ignoring loss function specified in " +
-              f"{reduced_problem.__class__.__name__}")
-        if loss_func == "MSE":
-            loss_fn = torch.nn.MSELoss(reduction="sum")
-        else:
-            NotImplementedError(f"Loss function {loss_fn} " +
-                                "is not implemented")
     # TODO add more optimizers
-    if learning_rate is None:
-        lr = reduced_problem.learning_rate
-    else:
-        print(f"Using learning_rate = {learning_rate}," +
-              "ignoring learning rate specified in " +
-              f"{reduced_problem.__class__.__name__}")
-        lr = learning_rate
-    if optimizer is None:
-        if reduced_problem.optimizer == "Adam":
-            optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-        elif reduced_problem.optimizer == "SGD":
-            optimizer = torch.optim.SGD(model.parameters(), lr=lr)
-            # TODO also add momentum argument
-        else:
-            NotImplementedError(f"Optimizer {reduced_problem.optimizer} " +
-                                "is not implemented")
-    else:
-        print(f"Using optimizer = {optimizer}, " +
-              "ignoring optimizer specified in " +
-              f"{reduced_problem.__class__.__name__}")
-        if optimizer == "Adam":
-            optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-        elif optimizer == "SGD":
-            optimizer = torch.optim.SGD(model.parameters(), lr=lr)
-            # TODO also add momentum argument
-        else:
-            NotImplementedError(f"Optimizer {optimizer} " +
-                                "is not implemented")
-
     # TODO add L1/L2 and more rgularisations WITHOUT weight decay
     dataset_size = len(dataloader.dataset)
     current_size = 0
@@ -74,8 +29,6 @@ def train_nn(reduced_problem, dataloader, model, device=None,
     for batch, (X, y) in enumerate(dataloader):
         pred = model(X)
         loss = loss_fn(pred, y)
-
-        optimizer.zero_grad()
         loss.backward()
         for param in model.parameters():
             dist.barrier()
@@ -89,6 +42,7 @@ def train_nn(reduced_problem, dataloader, model, device=None,
         optimizer.step()
         dist.barrier()
         dist.all_reduce(loss, op=dist.ReduceOp.SUM)
+        optimizer.zero_grad()
 
         current_size += X.shape[0]
         if report is True and batch % 1 == 0:
@@ -97,23 +51,8 @@ def train_nn(reduced_problem, dataloader, model, device=None,
 
 
 def validate_nn(reduced_problem, dataloader, model, cuda_rank,
-                loss_func=None, verbose=False, report=True):
+                loss_fn, verbose=False, report=True):
     # TODO add more loss functions including PINN
-    if loss_func is None:
-        if reduced_problem.loss_fn == "MSE":
-            loss_fn = torch.nn.MSELoss(reduction="sum")
-        else:
-            NotImplementedError(f"Loss function {reduced_problem.loss_fn} " +
-                                "is not implemented")
-    else:
-        print(f"Using validation loss function = {loss_func}," +
-              "ignoring loss function specified in " +
-              f"{reduced_problem.__class__.__name__}")
-        if loss_func == "MSE":
-            loss_fn = torch.nn.MSELoss(reduction="sum")
-        else:
-            NotImplementedError(f"Loss function {loss_func} " +
-                                "is not implemented")
     # dataset_size = len(dataloader.dataset)
     model.eval()  # NOTE
     valid_loss = torch.tensor([0.]).to(f"cuda:{cuda_rank}")

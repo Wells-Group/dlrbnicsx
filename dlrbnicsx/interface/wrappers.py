@@ -136,5 +136,5 @@ def get_loss_func(loss_name, reduction="sum"):
     if loss_name == "MSE":
         loss_func = torch.nn.MSELoss(reduction=reduction)
     else:
-        raise NotImplementedError(f"Loss function {lss_name} not implemented")
+        raise NotImplementedError(f"Loss function {loss_name} not implemented")
     return loss_func

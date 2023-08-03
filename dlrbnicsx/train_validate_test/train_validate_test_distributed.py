@@ -41,9 +41,12 @@ def train_nn(reduced_problem, dataloader, model, loss_fn,
             dist.barrier()
             if verbose is True:
                 print(f"param before all_reduce: {param.grad.data}")
+
             dist.all_reduce(param.grad.data, op=dist.ReduceOp.SUM)
+
             if verbose is True:
                 print(f"param after all_reduce: {param.grad.data}")
+
         optimizer.step()
         dist.barrier()
         dist.all_reduce(loss, op=dist.ReduceOp.SUM)
@@ -77,11 +80,16 @@ def validate_nn(reduced_problem, dataloader, model, loss_fn,
         for X, y in dataloader:
             pred = model(X)
             valid_loss += loss_fn(pred, y)
+    dist.barrier()
+
     if verbose is True:
         print(f"Validation loss before all_reduce: {valid_loss: >7f}")
+
     dist.all_reduce(valid_loss, op=dist.ReduceOp.SUM)
+
     if verbose is True:
         print(f"Validation loss after all_reduce: {valid_loss: >7f}")
+
     if report is True:
         print(f"Validation loss: {valid_loss.item(): >7f}")
     return valid_loss.item()

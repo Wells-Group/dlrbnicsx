@@ -429,9 +429,9 @@ if cpu_group0_comm != MPI.COMM_NULL:
     model = HiddenLayersNet(training_set.shape[1], [4],
                             len(reduced_problem._basis_functions), Tanh())
 
-    # path = "model.pth"
+    path = "model.pth"
     # save_model(model, path)
-    # load_model(model, path)
+    load_model(model, path)
 
     model_synchronise(model, verbose=True)
 
@@ -439,7 +439,7 @@ if cpu_group0_comm != MPI.COMM_NULL:
     training_loss = list()
     validation_loss = list()
 
-    max_epochs = 100 # 20000
+    max_epochs = 20000
     min_validation_loss = None
     start_epoch = 0
     checkpoint_path = "checkpoint"

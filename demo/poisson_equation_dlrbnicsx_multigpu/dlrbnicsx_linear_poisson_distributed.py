@@ -14,6 +14,7 @@ import numpy as np
 import itertools
 import abc
 import matplotlib.pyplot as plt
+import os
 
 from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
 from dlrbnicsx.activation_function.activation_function_factory \
@@ -22,7 +23,8 @@ from dlrbnicsx.dataset.custom_partitioned_dataset_gpu \
     import CustomPartitionedDatasetGpu
 from dlrbnicsx.interface.wrappers import DataLoader, save_model, \
     load_model, model_synchronise, init_gpu_process_group, model_to_gpu, \
-    model_to_cpu
+    model_to_cpu, save_checkpoint, load_checkpoint, get_optimiser, \
+    get_loss_func
 from dlrbnicsx.train_validate_test.train_validate_test_multigpu \
     import train_nn, validate_nn, online_nn, error_analysis
 
@@ -450,16 +452,31 @@ if gpu_group0_comm != MPI.COMM_NULL:
 
     max_epochs = 20000
     min_validation_loss = None
+    start_epoch = 0
+    checkpoint_path = "checkpoint"
+    checkpoint_epoch = 10
 
-    for epochs in range(max_epochs):
+    learning_rate = 1e-4
+    optimiser = get_optimiser(model, "Adam", learning_rate)
+    loss_fn = get_loss_func("MSE", reduction="sum")
+
+    if os.path.exists(checkpoint_path):
+        start_epoch, min_validation_loss = \
+            load_checkpoint(checkpoint_path, model, optimiser)
+
+    for epochs in range(start_epoch, max_epochs):
+        if epochs > 0 and epochs % checkpoint_epoch == 0:
+            save_checkpoint(checkpoint_path, epochs, model, optimiser,
+                            min_validation_loss)
         print(f"Epoch: {epochs+1}/{max_epochs}")
         current_training_loss = train_nn(reduced_problem,
                                          train_dataloader,
-                                         model)
+                                         model, loss_fn, optimiser)
         training_loss.append(current_training_loss)
         current_validation_loss = validate_nn(reduced_problem,
                                               valid_dataloader,
-                                              model, cuda_rank_list[gpu_group0_comm.rank])
+                                              model, cuda_rank_list[gpu_group0_comm.rank],
+                                              loss_fn)
         validation_loss.append(current_validation_loss)
         if epochs > 0 and current_validation_loss > min_validation_loss \
         and reduced_problem.regularisation == "EarlyStopping":
@@ -470,54 +487,57 @@ if gpu_group0_comm != MPI.COMM_NULL:
         min_validation_loss = min(validation_loss)
 
     model_to_cpu(model)
+    os.system(f"rm {checkpoint_path}")
 
-    # Error analysis dataset
-    print("\n")
-    print("Generating error analysis (only input/parameters) dataset")
-    print("\n")
+exit()
 
-    error_analysis_num_para = 5 * 5
-    itemsize = MPI.DOUBLE.Get_size()
+# Error analysis dataset
+print("\n")
+print("Generating error analysis (only input/parameters) dataset")
+print("\n")
 
-    if gpu_group0_comm.rank == 0:
-        nbytes_para = error_analysis_num_para * itemsize * para_dim
-        nbytes_error = error_analysis_num_para * itemsize
-    else:
-        nbytes_para = 0
-        nbytes_error = 0
+error_analysis_num_para = 5 * 5
+itemsize = MPI.DOUBLE.Get_size()
 
-    win6 = MPI.Win.Allocate_shared(nbytes_para, itemsize,
-                                    comm=gpu_group0_comm)
-    buf6, itemsize = win6.Shared_query(0)
-    error_analysis_set = \
-        np.ndarray(buffer=buf6, dtype="d",
-                shape=(error_analysis_num_para,
-                        para_dim))
+if gpu_group0_comm.rank == 0:
+    nbytes_para = error_analysis_num_para * itemsize * para_dim
+    nbytes_error = error_analysis_num_para * itemsize
+else:
+    nbytes_para = 0
+    nbytes_error = 0
 
-    win7 = MPI.Win.Allocate_shared(nbytes_error, itemsize,
-                                   comm=gpu_group0_comm)
-    buf7, itemsize = win7.Shared_query(0)
-    error_numpy = np.ndarray(buffer=buf7, dtype="d",
-                            shape=(error_analysis_num_para))
+win6 = MPI.Win.Allocate_shared(nbytes_para, itemsize,
+                                comm=gpu_group0_comm)
+buf6, itemsize = win6.Shared_query(0)
+error_analysis_set = \
+    np.ndarray(buffer=buf6, dtype="d",
+            shape=(error_analysis_num_para,
+                    para_dim))
 
-    if gpu_group0_comm.rank == 0:
-        error_analysis_set[:, :] = generate_ann_input_set(samples=[5, 5])
+win7 = MPI.Win.Allocate_shared(nbytes_error, itemsize,
+                                comm=gpu_group0_comm)
+buf7, itemsize = win7.Shared_query(0)
+error_numpy = np.ndarray(buffer=buf7, dtype="d",
+                        shape=(error_analysis_num_para))
 
-    world_comm.Barrier()
+if gpu_group0_comm.rank == 0:
+    error_analysis_set[:, :] = generate_ann_input_set(samples=[5, 5])
 
-    error_analysis_indices = np.arange(world_comm.rank,
-                                    error_analysis_set.shape[0],
-                                    world_comm.size)
+world_comm.Barrier()
 
-    for i in error_analysis_indices:
-        print(f"Error analysis {i+1} of {error_analysis_set.shape[0]}")
-        error_numpy[i] = error_analysis(reduced_problem, problem_parametric,
-                                        error_analysis_set[i, :], model,
-                                        len(reduced_problem._basis_functions),
-                                        online_nn, device=None)
-        print(f"Error: {error_numpy[i]}")
+error_analysis_indices = np.arange(world_comm.rank,
+                                error_analysis_set.shape[0],
+                                world_comm.size)
 
-    world_comm.Barrier()
+for i in error_analysis_indices:
+    print(f"Error analysis {i+1} of {error_analysis_set.shape[0]}")
+    error_numpy[i] = error_analysis(reduced_problem, problem_parametric,
+                                    error_analysis_set[i, :], model,
+                                    len(reduced_problem._basis_functions),
+                                    online_nn, device=None)
+    print(f"Error: {error_numpy[i]}")
+
+world_comm.Barrier()
 
 # Online phase at parameter online_mu
 
@@ -530,7 +550,7 @@ if world_comm.rank == 0:
     rb_solution = \
         reduced_problem.reconstruct_solution(
             online_nn(reduced_problem, problem_parametric, online_mu, model,
-                      len(reduced_problem._basis_functions), device=None))
+                        len(reduced_problem._basis_functions), device=None))
 
 
     # Post processing

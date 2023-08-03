@@ -159,7 +159,7 @@ def error_analysis(reduced_problem, problem, error_analysis_mu, model,
                    online_nn, norm_error=None,
                    reconstruct_solution=None, input_scaling_range=None,
                    output_scaling_range=None, input_range=None,
-                   output_range=None, index=None):
+                   output_range=None, index=None, verbose=False):
     '''
     Inputs:
         error_analysis_mu: np.ndarray of size [1,num_para] representing
@@ -188,7 +188,7 @@ def error_analysis(reduced_problem, problem, error_analysis_mu, model,
         error: float, Error computed with norm_error between FEM
             and RB solution
     '''
-    N = len(reduced_problem._basis_functions)
+    # N = len(reduced_problem._basis_functions)
     model.eval()
     ann_prediction = online_nn(reduced_problem, problem, error_analysis_mu,
                                model, input_scaling_range,
@@ -198,9 +198,10 @@ def error_analysis(reduced_problem, problem, error_analysis_mu, model,
         ann_reconstructed_solution = \
             reduced_problem.reconstruct_solution(ann_prediction)
     else:
-        print(f"Using {reconstruct_solution.__name__}," +
-              "ignoring RB to FEM solution construction specified in " +
-              f"{reduced_problem.__class__.__name__}")
+        if verbose is True:
+            print(f"Using {reconstruct_solution.__name__}," +
+                "ignoring RB to FEM solution construction specified in " +
+                f"{reduced_problem.__class__.__name__}")
         ann_reconstructed_solution = reconstruct_solution(ann_prediction)
     fem_solution = problem.solve(error_analysis_mu)
     if type(fem_solution) == tuple:
@@ -210,8 +211,9 @@ def error_analysis(reduced_problem, problem, error_analysis_mu, model,
         error = reduced_problem.norm_error(fem_solution,
                                            ann_reconstructed_solution)
     else:
-        print(f"Using {norm_error.__name__}, ignoring error norm " +
-              f"specified in {reduced_problem.__class__.__name__}")
+        if verbose is True:
+            print(f"Using {norm_error.__name__}, ignoring error norm " +
+                f"specified in {reduced_problem.__class__.__name__}")
         error = norm_error(fem_solution, ann_reconstructed_solution)
     return error
 
