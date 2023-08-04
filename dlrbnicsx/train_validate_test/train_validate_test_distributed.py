@@ -95,9 +95,9 @@ def validate_nn(reduced_problem, dataloader, model, loss_fn,
     return valid_loss.item()
 
 
-def online_nn(reduced_problem, problem, online_mu, model, N, device=None,
+def online_nn(reduced_problem, problem, online_mu, model,
               input_scaling_range=None, output_scaling_range=None,
-              input_range=None, output_range=None):
+              input_range=None, output_range=None, verbose=False):
     '''
     Online phase
     Inputs:
@@ -116,8 +116,7 @@ def online_nn(reduced_problem, problem, online_mu, model, N, device=None,
     Output:
         solution_reduced: rbnicsx.online.create_vector, online solution
     '''
-    if device is None:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
+    N = len(reduced_problem._basis_functions)
     model.eval()
 
     if type(input_scaling_range) == list:
@@ -133,30 +132,34 @@ def online_nn(reduced_problem, problem, online_mu, model, N, device=None,
         assert hasattr(reduced_problem, "input_scaling_range")
         input_scaling_range = reduced_problem.input_scaling_range
     else:
-        print(f"Using input scaling range = {input_scaling_range}, " +
-              "ignoring input scaling range specified in "
-              f"{reduced_problem.__class__.__name__}")
+        if verbose is True:
+            print(f"Using input scaling range = {input_scaling_range}, " +
+                "ignoring input scaling range specified in "
+                f"{reduced_problem.__class__.__name__}")
     if (np.array(output_scaling_range) == None).any():  # noqa: E711
         assert hasattr(reduced_problem, "output_scaling_range")
         output_scaling_range = reduced_problem.output_scaling_range
     else:
-        print(f"Using output scaling range = {output_scaling_range}, " +
-              "ignoring output scaling range specified in " +
-              f"{reduced_problem.__class__.__name__}")
+        if verbose is True:
+            print(f"Using output scaling range = {output_scaling_range}, " +
+                "ignoring output scaling range specified in " +
+                f"{reduced_problem.__class__.__name__}")
     if (np.array(input_range) == None).any():  # noqa: E711
         assert hasattr(reduced_problem, "input_range")
         input_range = reduced_problem.input_range
     else:
-        print(f"Using input range = {input_range}, " +
-              "ignoring input range specified in " +
-              f"{reduced_problem.__class__.__name__}")
+        if verbose is True:
+            print(f"Using input range = {input_range}, " +
+                "ignoring input range specified in " +
+                f"{reduced_problem.__class__.__name__}")
     if (np.array(output_range) == None).any():  # noqa: E711
         assert hasattr(reduced_problem, "output_range")
         output_range = reduced_problem.output_range
     else:
-        print(f"Using output range = {output_range}, " +
-              "ignoring output range specified in " +
-              f"{reduced_problem.__class__.__name__}")
+        if verbose is True:
+            print(f"Using output range = {output_range}, " +
+                "ignoring output range specified in " +
+                f"{reduced_problem.__class__.__name__}")
 
     online_mu_scaled = (input_scaling_range[1] - input_scaling_range[0]) * \
                        (online_mu - input_range[0, :]) / \
@@ -166,7 +169,6 @@ def online_nn(reduced_problem, problem, online_mu, model, N, device=None,
         torch.from_numpy(online_mu_scaled).to(torch.float32)
     with torch.no_grad():
         X = online_mu_scaled_torch
-        # X = X.to(device) # TODO
         pred_scaled = model(X)
         pred_scaled_numpy = pred_scaled.detach().numpy()
         pred = (pred_scaled_numpy - output_scaling_range[0]) * \
@@ -174,17 +176,16 @@ def online_nn(reduced_problem, problem, online_mu, model, N, device=None,
                (output_scaling_range[1] - output_scaling_range[0]) + \
             output_range[0]
     # TODO Use reverse_target_transform from dataloader
-    # NOTE If error occurs after flake8 corrections, check this line
         solution_reduced = rbnicsx.online.create_vector(N)
         solution_reduced.array = pred
     return solution_reduced
 
 
-def error_analysis(reduced_problem, problem, error_analysis_mu, model, N,
-                   online_nn, device=None, norm_error=None,
+def error_analysis(reduced_problem, problem, error_analysis_mu, model,
+                   online_nn, norm_error=None,
                    reconstruct_solution=None, input_scaling_range=None,
                    output_scaling_range=None, input_range=None,
-                   output_range=None, index=None):
+                   output_range=None, index=None, verbose=False):
     '''
     Inputs:
         error_analysis_mu: np.ndarray of size [1,num_para] representing
@@ -211,20 +212,19 @@ def error_analysis(reduced_problem, problem, error_analysis_mu, model, N,
         error: float, Error computed with norm_error between FEM
             and RB solution
     '''
-    if device is None:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
     model.eval()
     ann_prediction = online_nn(reduced_problem, problem, error_analysis_mu,
-                               model, N, device, input_scaling_range,
+                               model, input_scaling_range,
                                output_scaling_range, input_range,
                                output_range)
     if reconstruct_solution is None:
         ann_reconstructed_solution = \
             reduced_problem.reconstruct_solution(ann_prediction)
     else:
-        print(f"Using {reconstruct_solution.__name__}, " +
-              "ignoring RB to FEM solution construction specified in " +
-              f"{reduced_problem.__class__.__name__}")
+        if verbose is True:
+            print(f"Using {reconstruct_solution.__name__}, " +
+                "ignoring RB to FEM solution construction specified in " +
+                f"{reduced_problem.__class__.__name__}")
         ann_reconstructed_solution = reconstruct_solution(ann_prediction)
     fem_solution = problem.solve(error_analysis_mu)
     if type(fem_solution) == tuple:
@@ -234,9 +234,10 @@ def error_analysis(reduced_problem, problem, error_analysis_mu, model, N,
         error = reduced_problem.norm_error(fem_solution,
                                            ann_reconstructed_solution)
     else:
-        print(f"Using {norm_error.__name__}, " +
-              "ignoring error norm specified in " +
-              f"{reduced_problem.__class__.__name__}")
+        if verbose is True:
+            print(f"Using {norm_error.__name__}, " +
+                "ignoring error norm specified in " +
+                f"{reduced_problem.__class__.__name__}")
         error = norm_error(fem_solution, ann_reconstructed_solution)
     return error
 

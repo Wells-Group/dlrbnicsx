@@ -138,3 +138,11 @@ def get_loss_func(loss_name, reduction="sum"):
     else:
         raise NotImplementedError(f"Loss function {loss_name} not implemented")
     return loss_func
+
+def share_model(model, comm, comm_root_process, verbose=False):
+    for param in model.parameters():
+        if verbose is True:
+            print(f"Rank: {world_comm.rank}, Before: {param.data.numpy()[0]}")
+        comm.Bcast(param.data.numpy(), root=comm_root_process)
+        if verbose is True:
+            print(f"Rank: {world_comm.rank}, after: {param.data.numpy()[0]}")

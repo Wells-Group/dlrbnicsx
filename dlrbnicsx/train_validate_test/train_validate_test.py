@@ -71,7 +71,7 @@ def validate_nn(reduced_problem, dataloader, model, loss_fn, report=True):
 
 def online_nn(reduced_problem, problem, online_mu, model,
               input_scaling_range=None, output_scaling_range=None,
-              input_range=None, output_range=None):
+              input_range=None, output_range=None, verbose=False):
     '''
     Online phase
     Inputs:
@@ -109,30 +109,34 @@ def online_nn(reduced_problem, problem, online_mu, model,
         assert hasattr(reduced_problem, "input_scaling_range")
         input_scaling_range = reduced_problem.input_scaling_range
     else:
-        print(f"Using input scaling range = {input_scaling_range}," +
-              "ignoring input scaling range specified in"
-              f"{reduced_problem.__class__.__name__}")
+        if verbose is True:
+            print(f"Using input scaling range = {input_scaling_range}," +
+                "ignoring input scaling range specified in"
+                f"{reduced_problem.__class__.__name__}")
     if (np.array(output_scaling_range) == None).any():  # noqa: E711
         assert hasattr(reduced_problem, "output_scaling_range")
         output_scaling_range = reduced_problem.output_scaling_range
     else:
-        print(f"Using output scaling range = {output_scaling_range}," +
-              "ignoring output scaling range specified in" +
-              f"{reduced_problem.__class__.__name__}")
+        if verbose is True:
+            print(f"Using output scaling range = {output_scaling_range}," +
+                "ignoring output scaling range specified in" +
+                f"{reduced_problem.__class__.__name__}")
     if (np.array(input_range) == None).any():  # noqa: E711
         assert hasattr(reduced_problem, "input_range")
         input_range = reduced_problem.input_range
     else:
-        print(f"Using input range = {input_range},"
-              "ignoring input range specified in"
-              f"{reduced_problem.__class__.__name__}")
+        if verbose is True:
+            print(f"Using input range = {input_range},"
+                "ignoring input range specified in"
+                f"{reduced_problem.__class__.__name__}")
     if (np.array(output_range) == None).any():  # noqa: E711
         assert hasattr(reduced_problem, "output_range")
         output_range = reduced_problem.output_range
     else:
-        print(f"Using output range = {output_range}," +
-              "ignoring output range specified in" +
-              f"{reduced_problem.__class__.__name__}")
+        if verbose is True:
+            print(f"Using output range = {output_range}," +
+                "ignoring output range specified in" +
+                f"{reduced_problem.__class__.__name__}")
     online_mu_scaled = \
         (input_scaling_range[1] - input_scaling_range[0]) * \
         (online_mu - input_range[0, :]) / (input_range[1, :] -

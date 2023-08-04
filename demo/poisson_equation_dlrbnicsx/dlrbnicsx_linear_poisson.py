@@ -352,6 +352,8 @@ if os.path.exists(checkpoint_path):
     start_epoch, min_validation_loss = \
         load_checkpoint(checkpoint_path, model, optimiser)
 
+import time
+start_time = time.time()
 for epochs in range(start_epoch, max_epochs):
     if epochs > 0 and epochs % checkpoint_epoch == 0:
         save_checkpoint(checkpoint_path, epochs, model, optimiser,
@@ -369,6 +371,8 @@ for epochs in range(start_epoch, max_epochs):
         print(f"Early stopping criteria invoked at epoch: {epochs+1}")
         break
     min_validation_loss = min(validation_loss)
+end_time = time.time()
+elapsed_time = end_time - start_time
 
 os.system(f"rm {checkpoint_path}")
 
@@ -434,3 +438,5 @@ with HarmonicMeshMotion(mesh, facet_tags,
                              "w") as solution_file:
         solution_file.write_mesh(mesh)
         solution_file.write_function(error_function)
+
+print(f"Training time: {elapsed_time}")
