@@ -24,9 +24,12 @@ from dlrbnicsx.dataset.custom_partitioned_dataset_gpu \
 from dlrbnicsx.interface.wrappers import DataLoader, save_model, \
     load_model, model_synchronise, init_gpu_process_group, model_to_gpu, \
     model_to_cpu, save_checkpoint, load_checkpoint, get_optimiser, \
-    get_loss_func
+    get_loss_func, share_model
 from dlrbnicsx.train_validate_test.train_validate_test_multigpu \
-    import train_nn, validate_nn, online_nn, error_analysis
+    import train_nn, validate_nn
+
+from dlrbnicsx.train_validate_test.train_validate_test_distributed \
+    import online_nn, error_analysis
 
 class ProblemOnDeformedDomain(abc.ABC):
     # Define FEM problem on the reference problem
@@ -412,6 +415,10 @@ gpu_group0_procs = world_comm.group.Incl([0])
 # gpu_group0_procs = world_comm.group.Incl([0, 1, 2, 3])
 gpu_group0_comm = world_comm.Create_group(gpu_group0_procs)
 
+# ANN model
+model = HiddenLayersNet(training_set.shape[1], [4],
+                        len(reduced_problem._basis_functions), Tanh())
+
 if gpu_group0_comm != MPI.COMM_NULL:
 
     cuda_rank_list = [0, 1, 2, 3]
@@ -436,15 +443,13 @@ if gpu_group0_comm != MPI.COMM_NULL:
     valid_dataloader = DataLoader(customDataset, shuffle=False)
 
     # ANN model
-    model = HiddenLayersNet(training_set.shape[1], [4],
-                            len(reduced_problem._basis_functions), Tanh())
     model_to_gpu(model, cuda_rank=cuda_rank_list[gpu_group0_comm.rank])
+
+    model_synchronise(model, verbose=True)
 
     path = "model.pth"
     # save_model(model, path)
     load_model(model, path)
-
-    model_synchronise(model, verbose=True)
 
     # Training of ANN
     training_loss = list()
@@ -463,6 +468,9 @@ if gpu_group0_comm != MPI.COMM_NULL:
     if os.path.exists(checkpoint_path):
         start_epoch, min_validation_loss = \
             load_checkpoint(checkpoint_path, model, optimiser)
+
+    import time
+    start_time = time.time()
 
     for epochs in range(start_epoch, max_epochs):
         if epochs > 0 and epochs % checkpoint_epoch == 0:
@@ -486,10 +494,13 @@ if gpu_group0_comm != MPI.COMM_NULL:
             break
         min_validation_loss = min(validation_loss)
 
+    end_time = time.time()
+    elapsed_time = end_time - start_time
     model_to_cpu(model)
     os.system(f"rm {checkpoint_path}")
 
-exit()
+model_root_process = 0
+share_model(model, world_comm, model_root_process)
 
 # Error analysis dataset
 print("\n")
@@ -499,7 +510,7 @@ print("\n")
 error_analysis_num_para = 5 * 5
 itemsize = MPI.DOUBLE.Get_size()
 
-if gpu_group0_comm.rank == 0:
+if world_comm.rank == 0:
     nbytes_para = error_analysis_num_para * itemsize * para_dim
     nbytes_error = error_analysis_num_para * itemsize
 else:
@@ -507,37 +518,36 @@ else:
     nbytes_error = 0
 
 win6 = MPI.Win.Allocate_shared(nbytes_para, itemsize,
-                                comm=gpu_group0_comm)
+                                comm=world_comm)
 buf6, itemsize = win6.Shared_query(0)
 error_analysis_set = \
     np.ndarray(buffer=buf6, dtype="d",
             shape=(error_analysis_num_para,
-                    para_dim))
+                   para_dim))
 
 win7 = MPI.Win.Allocate_shared(nbytes_error, itemsize,
-                                comm=gpu_group0_comm)
+                                comm=world_comm)
 buf7, itemsize = win7.Shared_query(0)
 error_numpy = np.ndarray(buffer=buf7, dtype="d",
-                        shape=(error_analysis_num_para))
+                         shape=(error_analysis_num_para))
 
-if gpu_group0_comm.rank == 0:
+if world_comm.rank == 0:
     error_analysis_set[:, :] = generate_ann_input_set(samples=[5, 5])
 
 world_comm.Barrier()
 
 error_analysis_indices = np.arange(world_comm.rank,
-                                error_analysis_set.shape[0],
-                                world_comm.size)
+                                   error_analysis_set.shape[0],
+                                   world_comm.size)
 
 for i in error_analysis_indices:
-    print(f"Error analysis {i+1} of {error_analysis_set.shape[0]}")
     error_numpy[i] = error_analysis(reduced_problem, problem_parametric,
                                     error_analysis_set[i, :], model,
-                                    len(reduced_problem._basis_functions),
-                                    online_nn, device=None)
-    print(f"Error: {error_numpy[i]}")
+                                    online_nn)
+    print(f"Error analysis {i+1} of {error_analysis_set.shape[0]}, Error: {error_numpy[i]}")
 
-world_comm.Barrier()
+if gpu_group0_comm != MPI.COMM_NULL:
+    print(f"Rank {gpu_group0_comm.rank}, Training time: {elapsed_time}")
 
 # Online phase at parameter online_mu
 
@@ -549,8 +559,7 @@ if world_comm.rank == 0:
     # Next this solution is reconstructed on FE space
     rb_solution = \
         reduced_problem.reconstruct_solution(
-            online_nn(reduced_problem, problem_parametric, online_mu, model,
-                        len(reduced_problem._basis_functions), device=None))
+            online_nn(reduced_problem, problem_parametric, online_mu, model))
 
 
     # Post processing

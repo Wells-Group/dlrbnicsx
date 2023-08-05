@@ -404,7 +404,7 @@ reduced_problem.output_range[1] = max(np.max(output_training_set), np.max(output
 
 print("\n")
 
-cpu_group0_procs = world_comm.group.Incl([0, 1])
+cpu_group0_procs = world_comm.group.Incl([0])
 cpu_group0_comm = world_comm.Create_group(cpu_group0_procs)
 
 # ANN model
@@ -423,7 +423,7 @@ if cpu_group0_comm != MPI.COMM_NULL:
 
     customDataset = CustomPartitionedDataset(reduced_problem, input_training_set,
                                              output_training_set, training_set_indices_cpu)
-    train_dataloader = DataLoader(customDataset, batch_size=5, shuffle=False) # shuffle=True)
+    train_dataloader = DataLoader(customDataset, batch_size=10, shuffle=False) # shuffle=True)
 
     customDataset = CustomPartitionedDataset(reduced_problem, input_validation_set,
                                             output_validation_set, validation_set_indices_cpu)
