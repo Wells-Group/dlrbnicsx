@@ -1,30 +1,28 @@
-import abc
-import itertools
-# import typing
-from mpi4py import MPI
-from petsc4py import PETSc
-import numpy as np
-
-import ufl
 import dolfinx
-# import mdfenicsx
-
-from mdfenicsx.mesh_motion_classes import HarmonicMeshMotion
+import ufl
 
 import rbnicsx
 import rbnicsx.backends
 import rbnicsx.online
 
-# import dlrbnicsx
+from mdfenicsx.mesh_motion_classes import HarmonicMeshMotion
+
+from mpi4py import MPI
+from petsc4py import PETSc
+
+import numpy as np
+import itertools
+import abc
+import matplotlib.pyplot as plt
+import os
 
 from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
-from dlrbnicsx.activation_function.activation_function_factory import Tanh
+from dlrbnicsx.activation_function.activation_function_factory import Tanh, Sigmoid
 from dlrbnicsx.dataset.custom_dataset import CustomDataset
-from dlrbnicsx.interface.wrappers import DataLoader
+from dlrbnicsx.interface.wrappers import DataLoader, save_model, load_model, \
+    save_checkpoint, load_checkpoint, get_optimiser, get_loss_func
 from dlrbnicsx.train_validate_test.train_validate_test import \
     train_nn, validate_nn, online_nn, error_analysis
-
-import matplotlib.pyplot as plt
 
 
 # Mesh deformation class (from MDFEniCSx)
@@ -101,8 +99,6 @@ class ProblemOnDeformedDomain(abc.ABC):
         return problemNonlinear
 
     def solve(self, mu):
-        print(f"mu: {mu}")
-        # self._solution.x.array[:] = 0.
         self._bcs_geometric = \
             [lambda x: (0.*x[1], mu[0]*np.sin(x[0]*np.pi)),
              lambda x: (0.*x[0], 0.*x[1]),
@@ -269,7 +265,7 @@ eigenvalues, modes, _ = \
     rbnicsx.backends.\
     proper_orthogonal_decomposition(snapshots_matrix,
                                     reduced_problem._inner_product_action,
-                                    N=Nmax, tol=1.e-6)
+                                    N=Nmax, tol=1.e-10)
 reduced_problem._basis_functions.extend(modes)
 reduced_size = len(reduced_problem._basis_functions)
 print("")
@@ -301,7 +297,7 @@ plt.tight_layout()
 # 5. ANN implementation
 
 
-def generate_ann_input_set(samples=[4, 4, 4]):
+def generate_ann_input_set(samples=[6, 6, 7]):
     """Generate an equispaced training set using numpy."""
     training_set_0 = np.linspace(0.2, 0.3, samples[0])
     training_set_1 = np.linspace(-0.2, -0.4, samples[1])
@@ -313,9 +309,10 @@ def generate_ann_input_set(samples=[4, 4, 4]):
     return training_set
 
 
-def generate_ann_output_set(problem, reduced_problem, N,
+def generate_ann_output_set(problem, reduced_problem,
                             input_set, mode=None):
-    output_set = np.zeros([input_set.shape[0], N])
+    output_set = np.zeros([input_set.shape[0],
+                           len(reduced_problem._basis_functions)])
     for i in range(input_set.shape[0]):
         if mode is None:
             print(f"Parameter number {i+1} of {input_set.shape[0]}")
@@ -325,7 +322,7 @@ def generate_ann_output_set(problem, reduced_problem, N,
             print(f"Parameter: {input_set[i,:]}")
         output_set[i, :] = \
             reduced_problem.project_snapshot(problem.solve(input_set[i, :]),
-                                             N).array.astype("f")
+                                             len(reduced_problem._basis_functions)).array.astype("f")
     return output_set
 
 
@@ -333,7 +330,6 @@ def generate_ann_output_set(problem, reduced_problem, N,
 ann_input_set = generate_ann_input_set(samples=[6, 6, 7])
 np.random.shuffle(ann_input_set)
 ann_output_set = generate_ann_output_set(problem_parametric, reduced_problem,
-                                         len(reduced_problem._basis_functions),
                                          ann_input_set, mode="Training")
 
 num_training_samples = int(0.7 * ann_input_set.shape[0])
@@ -351,29 +347,52 @@ output_validation_set = ann_output_set[num_training_samples:, :]
 
 customDataset = CustomDataset(reduced_problem,
                               input_training_set, output_training_set)
-train_dataloader = DataLoader(customDataset, batch_size=30, shuffle=True)
+train_dataloader = DataLoader(customDataset, batch_size=10, shuffle=True)
 
 customDataset = CustomDataset(reduced_problem,
                               input_validation_set, output_validation_set)
 valid_dataloader = DataLoader(customDataset, shuffle=False)
 
 # ANN model
-model = HiddenLayersNet(training_set.shape[1], [30, 30],
-                        len(reduced_problem._basis_functions), Tanh())
+model = HiddenLayersNet(training_set.shape[1], [35, 35],
+                        len(reduced_problem._basis_functions), Sigmoid())#Tanh())
+
+'''
+path = "model.pth"
+# save_model(model, path)
+load_model(model, path)
+'''
 
 # Training of ANN
 training_loss = list()
 validation_loss = list()
 
-max_epochs = 20000
+max_epochs = 40000 # 20000
 min_validation_loss = None
+start_epoch = 0
+checkpoint_path = "checkpoint"
+checkpoint_epoch = 10
+
+learning_rate = 5.e-6
+optimiser = get_optimiser(model, "Adam", learning_rate)
+loss_fn = get_loss_func("MSE", reduction="sum")
+
+if os.path.exists(checkpoint_path):
+    start_epoch, min_validation_loss = \
+        load_checkpoint(checkpoint_path, model, optimiser)
+
+import time
+start_time = time.time()
 for epochs in range(max_epochs):
+    if epochs > 0 and epochs % checkpoint_epoch == 0:
+        save_checkpoint(checkpoint_path, epochs, model, optimiser,
+                        min_validation_loss)
     print(f"Epoch: {epochs+1}/{max_epochs}")
     current_training_loss = train_nn(reduced_problem, train_dataloader,
-                                     model)
+                                     model, loss_fn, optimiser)
     training_loss.append(current_training_loss)
     current_validation_loss = validate_nn(reduced_problem, valid_dataloader,
-                                          model)
+                                          model, loss_fn)
     validation_loss.append(current_validation_loss)
     if epochs > 0 and current_validation_loss > 1.01 * min_validation_loss \
        and reduced_problem.regularisation == "EarlyStopping":
@@ -382,12 +401,16 @@ for epochs in range(max_epochs):
         print(f"Early stopping criteria invoked at epoch: {epochs+1}")
         break
     min_validation_loss = min(validation_loss)
+end_time = time.time()
+elapsed_time = end_time - start_time
+
+os.system(f"rm {checkpoint_path}")
 
 # Error analysis dataset
 print("\n")
 print("Generating error analysis (only input/parameters) dataset")
 print("\n")
-error_analysis_set = generate_ann_input_set(samples=[3, 3, 3])
+error_analysis_set = generate_ann_input_set(samples=[5, 5, 5])
 error_numpy = np.zeros(error_analysis_set.shape[0])
 
 for i in range(error_analysis_set.shape[0]):
@@ -395,8 +418,7 @@ for i in range(error_analysis_set.shape[0]):
     print(f"Parameter: : {error_analysis_set[i,:]}")
     error_numpy[i] = error_analysis(reduced_problem, problem_parametric,
                                     error_analysis_set[i, :], model,
-                                    len(reduced_problem._basis_functions),
-                                    online_nn, device=None)
+                                    online_nn)
     print(f"Error: {error_numpy[i]}")
 
 # Online phase at parameter online_mu
@@ -404,8 +426,8 @@ online_mu = np.array([0.25, -0.3, 2.5])
 fem_solution = problem_parametric.solve(online_mu)
 rb_solution = \
     reduced_problem.reconstruct_solution(
-        online_nn(reduced_problem, problem_parametric, online_mu, model,
-                  len(reduced_problem._basis_functions), device=None))
+        online_nn(reduced_problem, problem_parametric, online_mu, model))
+
 
 fem_online_file \
     = "dlrbnicsx_solution_nonlinear_poisson/fem_online_mu_computed.xdmf"
@@ -457,3 +479,5 @@ with CustomMeshDeformation(mesh, facet_tags,
 
 print(reduced_problem.norm_error(fem_solution, rb_solution))
 print(reduced_problem.compute_norm(error_function))
+
+print(f"Training time: {elapsed_time}")
