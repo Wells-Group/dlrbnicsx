@@ -355,7 +355,7 @@ valid_dataloader = DataLoader(customDataset, shuffle=False)
 
 # ANN model
 model = HiddenLayersNet(training_set.shape[1], [35, 35],
-                        len(reduced_problem._basis_functions), Sigmoid())#Tanh())
+                        len(reduced_problem._basis_functions), Tanh())
 
 '''
 path = "model.pth"

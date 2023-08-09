@@ -319,7 +319,7 @@ itemsize = MPI.DOUBLE.Get_size()
 
 if world_comm.rank == 0:
     ann_input_set = generate_ann_input_set(samples=[10, 10])
-    # np.random.shuffle(ann_input_samples)
+    # np.random.shuffle(ann_input_set)
     nbytes_para_ann_training = num_training_samples * itemsize * para_dim
     nbytes_dofs_ann_training = num_training_samples * itemsize * \
         len(reduced_problem._basis_functions)
