@@ -1,11 +1,11 @@
 import dolfinx
 import ufl
 
-from mdfenicsx.mesh_motion_classes import HarmonicMeshMotion
-
 import rbnicsx
-import rbnicsx.online
 import rbnicsx.backends
+import rbnicsx.online
+
+from mdfenicsx.mesh_motion_classes import HarmonicMeshMotion
 
 from mpi4py import MPI
 from petsc4py import PETSc
@@ -14,14 +14,15 @@ import numpy as np
 import itertools
 import abc
 import matplotlib.pyplot as plt
+import os
 
 from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
-from dlrbnicsx.activation_function.activation_function_factory import Tanh
+from dlrbnicsx.activation_function.activation_function_factory import Tanh, Sigmoid
 from dlrbnicsx.dataset.custom_dataset import CustomDataset
-from dlrbnicsx.interface.wrappers import DataLoader
+from dlrbnicsx.interface.wrappers import DataLoader, save_model, load_model, \
+    save_checkpoint, load_checkpoint, get_optimiser, get_loss_func
 from dlrbnicsx.train_validate_test.train_validate_test import \
     train_nn, validate_nn, online_nn, error_analysis
-
 
 class ProblemOnDeformedDomain(abc.ABC):
     # Define FEM problem on the reference problem
@@ -288,16 +289,42 @@ mesh, cell_tags, facet_tags = \
 
 # Mesh deformation parameters
 mu = np.array([0.93, 1.03])
+pod_samples = [3, 3]
+ann_samples = [3, 4]
+error_analysis_samples = [4, 3]
 
 # FEM solve
 problem_parametric = ProblemOnDeformedDomain(mesh, cell_tags, facet_tags,
                                              HarmonicMeshMotion)
 solution_vel_mu, solution_pre_mu = problem_parametric.solve(mu)
 
+computed_file_velocity = "dlrbnicsx_solution_stokes_equation/solution_computed_velocity.xdmf"
+computed_file_pressure = "dlrbnicsx_solution_stokes_equation/solution_computed_pressure.xdmf"
+
+with HarmonicMeshMotion(mesh, facet_tags,
+                        problem_parametric._boundary_markers,
+                        problem_parametric._bcs_geometric,
+                        reset_reference=True,
+                        is_deformation=True) as mesh_class:
+    with dolfinx.io.XDMFFile(mesh.comm, computed_file_velocity,
+                             "w") as solution_file:
+        solution_file.write_mesh(mesh)
+        solution_file.write_function(solution_vel_mu)
+
+with HarmonicMeshMotion(mesh, facet_tags,
+                        problem_parametric._boundary_markers,
+                        problem_parametric._bcs_geometric,
+                        reset_reference=True,
+                        is_deformation=True) as mesh_class:
+    with dolfinx.io.XDMFFile(mesh.comm, computed_file_pressure,
+                             "w") as solution_file:
+        solution_file.write_mesh(mesh)
+        solution_file.write_function(solution_pre_mu)
+
 # POD Starts ###
 
 
-def generate_training_set(samples=[6, 6]):
+def generate_training_set(samples=pod_samples):
     # Select input samples for POD
     training_set_0 = np.linspace(0.5, 1., samples[0])
     training_set_1 = np.linspace(0.5, 1., samples[1])
@@ -402,7 +429,7 @@ print(f"Pressure reduced basis size: {len(reduced_problem._basis_functions_p)}")
 # Creating dataset
 
 
-def generate_ann_input_set(samples=[6, 6]):
+def generate_ann_input_set(samples=ann_samples):
     # Select samples from the parameter space for ANN
     training_set_0 = np.linspace(0.5, 1., samples[0])
     training_set_1 = np.linspace(0.5, 1., samples[1])
@@ -427,7 +454,7 @@ def generate_ann_output_set(problem, reduced_problem, input_set, mode=None):
     return output_set_u, output_set_p
 
 
-ann_input_set = generate_ann_input_set(samples=(8, 8))  # (samples=[30, 30])
+ann_input_set = generate_ann_input_set(samples=ann_samples)
 np.random.shuffle(ann_input_set)
 ann_output_set_u, ann_output_set_p = \
     generate_ann_output_set(problem_parametric, reduced_problem,
@@ -450,30 +477,20 @@ reduced_problem.output_range_p[0] = np.min(ann_output_set_p)
 reduced_problem.output_range_p[1] = np.max(ann_output_set_p)
 # NOTE Output_range based on the computed values instead of user guess.
 
-customDataset = \
-    CustomDataset(reduced_problem, input_training_set, output_training_set_u,
-                  input_scaling_range=reduced_problem.input_scaling_range_u,
-                  output_scaling_range=reduced_problem.output_scaling_range_u,
-                  input_range=reduced_problem.input_range_u,
-                  output_range=reduced_problem.output_range_u)
-train_dataloader_u = DataLoader(customDataset, batch_size=7, shuffle=True)
+customDataset = CustomDataset(reduced_problem, input_training_set,
+                              output_training_set_u,
+                              input_scaling_range=reduced_problem.input_scaling_range_u,
+                              output_scaling_range=reduced_problem.output_scaling_range_u,
+                              input_range=reduced_problem.input_range_u,
+                              output_range=reduced_problem.output_range_u, verbose=True)
+train_dataloader_u = DataLoader(customDataset, batch_size=10, shuffle=True)
 
-customDataset = \
-    CustomDataset(reduced_problem, input_validation_set,
-                  output_validation_set_p,
-                  input_scaling_range=reduced_problem.input_scaling_range_p,
-                  output_scaling_range=reduced_problem.output_scaling_range_p,
-                  input_range=reduced_problem.input_range_p,
-                  output_range=reduced_problem.output_range_p)
-train_dataloader_p = DataLoader(customDataset, batch_size=7, shuffle=True)
-
-customDataset = \
-    CustomDataset(reduced_problem, input_validation_set,
-                  output_validation_set_u,
-                  input_scaling_range=reduced_problem.input_scaling_range_u,
-                  output_scaling_range=reduced_problem.output_scaling_range_u,
-                  input_range=reduced_problem.input_range_u,
-                  output_range=reduced_problem.output_range_u)
+customDataset = CustomDataset(reduced_problem, input_validation_set,
+                              output_validation_set_u,
+                              input_scaling_range=reduced_problem.input_scaling_range_u,
+                              output_scaling_range=reduced_problem.output_scaling_range_u,
+                              input_range=reduced_problem.input_range_u,
+                              output_range=reduced_problem.output_range_u, verbose=True)
 valid_dataloader_u = DataLoader(customDataset, shuffle=False)
 
 customDataset = \
@@ -482,7 +499,16 @@ customDataset = \
                   input_scaling_range=reduced_problem.input_scaling_range_p,
                   output_scaling_range=reduced_problem.output_scaling_range_p,
                   input_range=reduced_problem.input_range_p,
-                  output_range=reduced_problem.output_range_p)
+                  output_range=reduced_problem.output_range_p, verbose=True)
+train_dataloader_p = DataLoader(customDataset, batch_size=7, shuffle=True)
+
+customDataset = \
+    CustomDataset(reduced_problem, input_validation_set,
+                  output_validation_set_p,
+                  input_scaling_range=reduced_problem.input_scaling_range_p,
+                  output_scaling_range=reduced_problem.output_scaling_range_p,
+                  input_range=reduced_problem.input_range_p,
+                  output_range=reduced_problem.output_range_p, verbose=True)
 valid_dataloader_p = DataLoader(customDataset, shuffle=False)
 
 # ANN model
@@ -492,63 +518,113 @@ model_p = HiddenLayersNet(input_training_set.shape[1], [15, 15],
                           len(reduced_problem._basis_functions_p), Tanh())
 
 # Start of training (Velocity)
+
+'''
+path = "model_u.pth"
+save_model(model_u, path)
+load_model(model_u, path)
+'''
+
 training_loss_u = list()
 validation_loss_u = list()
 
-max_epochs_u = 10000
+max_epochs_u = 40 # 20000
 min_validation_loss_u = None
-for epochs in range(max_epochs_u):
+start_epoch_u = 0
+checkpoint_path_u = "checkpoint_u"
+checkpoint_epoch_u = 10
+
+learning_rate_u = 5.e-6
+optimiser_u = get_optimiser(model_u, "Adam", learning_rate_u)
+loss_fn_u = get_loss_func("MSE", reduction="sum")
+
+if os.path.exists(checkpoint_path_u):
+    start_epoch_u, min_validation_loss_u = \
+        load_checkpoint(checkpoint_path_u, model_u, optimiser_u)
+
+import time
+start_time = time.time()
+for epochs in range(start_epoch_u, max_epochs_u):
+    if epochs > 0 and epochs % checkpoint_epoch_u == 0:
+        save_checkpoint(checkpoint_path_u, epochs, model_u, optimiser_u,
+                        min_validation_loss_u)
     print(f"Epoch: {epochs+1}/{max_epochs_u}")
-    current_training_loss = train_nn(reduced_problem,
-                                     train_dataloader_u,
-                                     model_u,
-                                     learning_rate=1e-4,
-                                     loss_func="MSE",
-                                     optimizer="Adam")
+    current_training_loss = train_nn(reduced_problem, train_dataloader_u,
+                                     model_u, loss_fn_u, optimiser_u)
     training_loss_u.append(current_training_loss)
-    current_validation_loss = validate_nn(reduced_problem,
-                                          valid_dataloader_u,
-                                          model_u, loss_func="MSE")
+    current_validation_loss = validate_nn(reduced_problem, valid_dataloader_u,
+                                          model_u, loss_fn_u)
     validation_loss_u.append(current_validation_loss)
-    # 1% safety margin against min_validation_loss
-    # before invoking eraly stopping criteria
     if epochs > 0 and current_validation_loss > 1.01 * min_validation_loss_u \
        and reduced_problem.regularisation_u == "EarlyStopping":
+        # 1% safety margin against min_validation_loss
+        # before invoking early stopping criteria
         print(f"Early stopping criteria invoked at epoch: {epochs+1}")
         break
     min_validation_loss_u = min(validation_loss_u)
+end_time = time.time()
+elapsed_time = end_time - start_time
 
 # Start of training (Pressure)
+
+'''
+path = "model_p.pth"
+save_model(model_p, path)
+load_model(model_p, path)
+'''
+
 training_loss_p = list()
 validation_loss_p = list()
 
-max_epochs_p = 10000
+max_epochs_p = 40 # 20000
 min_validation_loss_p = None
-for epochs in range(max_epochs_p):
+start_epoch_p = 0
+checkpoint_path_p = "checkpoint_p"
+checkpoint_epoch_p = 10
+
+learning_rate_p = 5.e-6
+optimiser_p = get_optimiser(model_p, "Adam", learning_rate_p)
+loss_fn_p = get_loss_func("MSE", reduction="sum")
+
+if os.path.exists(checkpoint_path_p):
+    start_epoch_p, min_validation_loss_p = \
+        load_checkpoint(checkpoint_path_p, model_p, optimiser_p)
+
+import time
+start_time = time.time()
+for epochs in range(start_epoch_p, max_epochs_p):
+    if epochs > 0 and epochs % checkpoint_epoch_p == 0:
+        save_checkpoint(checkpoint_path_p, epochs, model_p, optimiser_p,
+                        min_validation_loss_p)
     print(f"Epoch: {epochs+1}/{max_epochs_p}")
-    current_training_loss = train_nn(reduced_problem,
-                                     train_dataloader_p,
-                                     model_p,
-                                     learning_rate=1e-4,
-                                     loss_func="MSE",
-                                     optimizer="Adam")
+    current_training_loss = train_nn(reduced_problem, train_dataloader_p,
+                                     model_p, loss_fn_p, optimiser_p)
     training_loss_p.append(current_training_loss)
-    current_validation_loss = validate_nn(reduced_problem,
-                                          valid_dataloader_p,
-                                          model_p, loss_func="MSE")
+    current_validation_loss = validate_nn(reduced_problem, valid_dataloader_p,
+                                          model_p, loss_fn_p)
     validation_loss_p.append(current_validation_loss)
-    # 1% safety margin against min_validation_loss before invoking eraly stopping criteria
     if epochs > 0 and current_validation_loss > 1.01 * min_validation_loss_p \
        and reduced_problem.regularisation_p == "EarlyStopping":
+        # 1% safety margin against min_validation_loss
+        # before invoking early stopping criteria
         print(f"Early stopping criteria invoked at epoch: {epochs+1}")
         break
     min_validation_loss_p = min(validation_loss_p)
+end_time = time.time()
+elapsed_time = end_time - start_time
+
+
+os.system(f"rm {checkpoint_path_u}")
+os.system(f"rm {checkpoint_path_p}")
+
+exit()
+# TODO fix online_nn and error_analysis as N != reduced_problem._basis_functions but reduced_problem._basis_functions_p or reduced_problem._basis_functions_u
 
 # Error analysis dataset
 print("\n")
 print("Generating error analysis (only input/parameters) dataset")
 print("\n")
-error_analysis_set_u = generate_ann_input_set(samples=[3, 3])  # (samples=[15, 15])
+error_analysis_set_u = generate_ann_input_set(samples=error_analysis_samples)
 error_numpy_u = np.zeros(error_analysis_set_u.shape[0])
 
 for i in range(error_analysis_set_u.shape[0]):
@@ -556,22 +632,21 @@ for i in range(error_analysis_set_u.shape[0]):
     print(f"{error_analysis_set_u.shape[0]}: {error_analysis_set_u[i,:]}")
     error_numpy_u[i] = error_analysis(reduced_problem, problem_parametric,
                                       error_analysis_set_u[i, :], model_u,
-                                      len(reduced_problem._basis_functions_u),
-                                      online_nn, device=None,
+                                      online_nn,
                                       norm_error=reduced_problem.norm_error_u,
                                       reconstruct_solution=reduced_problem.reconstruct_solution_u,
                                       input_scaling_range=reduced_problem.input_scaling_range_u,
                                       output_scaling_range=reduced_problem.output_scaling_range_u,
                                       input_range=reduced_problem.input_range_u,
                                       output_range=reduced_problem.output_range_u,
-                                      index=0)
+                                      index=0, verbose=True)
     print(f"Error: {error_numpy_u[i]}")
 
 # Error analysis dataset
 print("\n")
 print("Generating error analysis (only input/parameters) dataset")
 print("\n")
-error_analysis_set_p = generate_ann_input_set(samples=[3, 3])  # (samples=[15, 15])
+error_analysis_set_p = generate_ann_input_set(samples=error_analysis_samples)
 error_numpy_p = np.zeros(error_analysis_set_p.shape[0])
 
 for i in range(error_analysis_set_p.shape[0]):
@@ -579,15 +654,14 @@ for i in range(error_analysis_set_p.shape[0]):
     print(f"{error_analysis_set_p.shape[0]}: {error_analysis_set_p[i,:]}")
     error_numpy_p[i] = error_analysis(reduced_problem, problem_parametric,
                                       error_analysis_set_p[i, :], model_p,
-                                      len(reduced_problem._basis_functions_p),
-                                      online_nn, device=None,
+                                      online_nn,
                                       norm_error=reduced_problem.norm_error_p,
                                       reconstruct_solution=reduced_problem.reconstruct_solution_p,
                                       input_scaling_range=reduced_problem.input_scaling_range_p,
                                       output_scaling_range=reduced_problem.output_scaling_range_p,
                                       input_range=reduced_problem.input_range_p,
                                       output_range=reduced_problem.output_range_p,
-                                      index=1)
+                                      index=1, verbose=True)
     print(f"Error: {error_numpy_p[i]}")
 
 print(f"Velocity error: {error_numpy_u}")

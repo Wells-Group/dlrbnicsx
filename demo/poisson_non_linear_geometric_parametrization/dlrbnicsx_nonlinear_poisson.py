@@ -383,7 +383,7 @@ if os.path.exists(checkpoint_path):
 
 import time
 start_time = time.time()
-for epochs in range(max_epochs):
+for epochs in range(max_epochs): # TODO start_epoch, max_epochs
     if epochs > 0 and epochs % checkpoint_epoch == 0:
         save_checkpoint(checkpoint_path, epochs, model, optimiser,
                         min_validation_loss)
