@@ -221,8 +221,8 @@ itemsize = MPI.DOUBLE.Get_size()
 para_dim = 3
 num_dofs = solution_mu.x.array.shape[0]
 pod_samples = [3, 3, 3] # [4, 4, 4]
-ann_samples = [3, 3, 3] # [6, 6, 7]
-error_analysis_samples = [3, 3, 3] # [5, 5, 5]
+ann_samples = [6, 6, 7]
+error_analysis_samples = [5, 5, 5]
 num_snapshots = np.product(pod_samples)
 nbytes_para = itemsize * num_snapshots * para_dim
 nbytes_dofs = itemsize * num_snapshots * num_dofs
@@ -245,6 +245,7 @@ training_set = np.ndarray(buffer=buf0, dtype="d", shape=(num_snapshots, para_dim
 
 if world_comm.rank == 0:
     training_set[:, :] = generate_training_set(samples=pod_samples)
+
 
 world_comm.Barrier()
 
@@ -352,7 +353,7 @@ itemsize = MPI.DOUBLE.Get_size()
 
 if world_comm.rank == 0:
     ann_input_set = generate_ann_input_set(samples=ann_samples)
-    np.random.shuffle(ann_input_set)
+    # np.random.shuffle(ann_input_set)
     nbytes_para_ann_training = num_training_samples * itemsize * para_dim
     nbytes_dofs_ann_training = num_training_samples * itemsize * \
         len(reduced_problem._basis_functions)
@@ -456,17 +457,15 @@ if cpu_group0_comm != MPI.COMM_NULL:
 
     customDataset = CustomPartitionedDataset(reduced_problem, input_training_set,
                                              output_training_set, training_set_indices_cpu)
-    train_dataloader = DataLoader(customDataset, batch_size=10, shuffle=True)
+    train_dataloader = DataLoader(customDataset, batch_size=10, shuffle=False)# shuffle=True)
 
     customDataset = CustomPartitionedDataset(reduced_problem, input_validation_set,
                                             output_validation_set, validation_set_indices_cpu)
     valid_dataloader = DataLoader(customDataset, shuffle=False)
 
-    '''
     path = "model.pth"
-    save_model(model, path)
+    # save_model(model, path)
     load_model(model, path)
-    '''
 
     model_synchronise(model, verbose=True)
 
@@ -559,6 +558,7 @@ error_analysis_indices = np.arange(world_comm.rank,
 for i in error_analysis_indices:
     error_numpy[i] = error_analysis(reduced_problem, problem_parametric,
                                     error_analysis_set[i, :], model,
+                                    len(reduced_problem._basis_functions),
                                     online_nn)
     print(f"Error analysis {i+1} of {error_analysis_set.shape[0]}, Error: {error_numpy[i]}")
 
@@ -574,7 +574,8 @@ if world_comm.rank == 0:
     # Next this solution is reconstructed on FE space
     rb_solution = \
         reduced_problem.reconstruct_solution(
-            online_nn(reduced_problem, problem_parametric, online_mu, model))
+            online_nn(reduced_problem, problem_parametric, online_mu, model,
+                      len(reduced_problem._basis_functions)))
 
 
     # Post processing

@@ -223,7 +223,7 @@ with CustomMeshDeformation(mesh, facet_tags,
 # POD Starts ###
 
 
-def generate_training_set(samples=[4, 4, 4]):
+def generate_training_set(samples=[3, 3, 3]):#(samples=[4, 4, 4]):
     training_set_0 = np.linspace(0.2, 0.3, samples[0])
     training_set_1 = np.linspace(-0.2, -0.4, samples[1])
     training_set_2 = np.linspace(1., 4., samples[2])
@@ -328,7 +328,7 @@ def generate_ann_output_set(problem, reduced_problem,
 
 # Training dataset
 ann_input_set = generate_ann_input_set(samples=[6, 6, 7])
-np.random.shuffle(ann_input_set)
+# np.random.shuffle(ann_input_set)
 ann_output_set = generate_ann_output_set(problem_parametric, reduced_problem,
                                          ann_input_set, mode="Training")
 
@@ -347,7 +347,7 @@ output_validation_set = ann_output_set[num_training_samples:, :]
 
 customDataset = CustomDataset(reduced_problem,
                               input_training_set, output_training_set)
-train_dataloader = DataLoader(customDataset, batch_size=10, shuffle=True)
+train_dataloader = DataLoader(customDataset, batch_size=40, shuffle=False)# shuffle=True)
 
 customDataset = CustomDataset(reduced_problem,
                               input_validation_set, output_validation_set)
@@ -357,23 +357,22 @@ valid_dataloader = DataLoader(customDataset, shuffle=False)
 model = HiddenLayersNet(training_set.shape[1], [35, 35],
                         len(reduced_problem._basis_functions), Tanh())
 
-'''
 path = "model.pth"
 # save_model(model, path)
 load_model(model, path)
-'''
+
 
 # Training of ANN
 training_loss = list()
 validation_loss = list()
 
-max_epochs = 40000 # 20000
+max_epochs = 20000
 min_validation_loss = None
 start_epoch = 0
 checkpoint_path = "checkpoint"
 checkpoint_epoch = 10
 
-learning_rate = 5.e-6
+learning_rate = 1e-4
 optimiser = get_optimiser(model, "Adam", learning_rate)
 loss_fn = get_loss_func("MSE", reduction="sum")
 
@@ -383,7 +382,7 @@ if os.path.exists(checkpoint_path):
 
 import time
 start_time = time.time()
-for epochs in range(max_epochs): # TODO start_epoch, max_epochs
+for epochs in range(start_epoch, max_epochs):
     if epochs > 0 and epochs % checkpoint_epoch == 0:
         save_checkpoint(checkpoint_path, epochs, model, optimiser,
                         min_validation_loss)
@@ -418,6 +417,7 @@ for i in range(error_analysis_set.shape[0]):
     print(f"Parameter: : {error_analysis_set[i,:]}")
     error_numpy[i] = error_analysis(reduced_problem, problem_parametric,
                                     error_analysis_set[i, :], model,
+                                    len(reduced_problem._basis_functions),
                                     online_nn)
     print(f"Error: {error_numpy[i]}")
 
@@ -426,7 +426,8 @@ online_mu = np.array([0.25, -0.3, 2.5])
 fem_solution = problem_parametric.solve(online_mu)
 rb_solution = \
     reduced_problem.reconstruct_solution(
-        online_nn(reduced_problem, problem_parametric, online_mu, model))
+        online_nn(reduced_problem, problem_parametric, online_mu, model,
+                  len(reduced_problem._basis_functions)))
 
 
 fem_online_file \

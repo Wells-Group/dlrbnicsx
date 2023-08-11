@@ -223,7 +223,7 @@ solution_mu = problem_parametric.solve(mu)
 itemsize = MPI.DOUBLE.Get_size()
 para_dim = 3
 num_dofs = solution_mu.x.array.shape[0]
-pod_samples = [4, 4, 4]
+pod_samples = [3, 3, 3] # [4, 4, 4]
 ann_samples = [6, 6, 7]
 error_analysis_samples = [5, 5, 5]
 num_snapshots = np.product(pod_samples)
@@ -355,7 +355,7 @@ itemsize = MPI.DOUBLE.Get_size()
 
 if world_comm.rank == 0:
     ann_input_set = generate_ann_input_set(samples=ann_samples)
-    np.random.shuffle(ann_input_set)
+    # np.random.shuffle(ann_input_set)
     nbytes_para_ann_training = num_training_samples * itemsize * para_dim
     nbytes_dofs_ann_training = num_training_samples * itemsize * \
         len(reduced_problem._basis_functions)
@@ -464,7 +464,7 @@ if gpu_group0_comm != MPI.COMM_NULL:
     customDataset = CustomPartitionedDatasetGpu(reduced_problem, input_training_set,
                                                 output_training_set, training_set_indices_gpu,
                                                 cuda_rank_list[gpu_group0_comm.rank])
-    train_dataloader = DataLoader(customDataset, batch_size=10, shuffle=True)
+    train_dataloader = DataLoader(customDataset, batch_size=40, shuffle=False)#shuffle=True)
 
     customDataset = CustomPartitionedDatasetGpu(reduced_problem, input_validation_set,
                                                 output_validation_set, validation_set_indices_gpu,
@@ -472,15 +472,13 @@ if gpu_group0_comm != MPI.COMM_NULL:
     valid_dataloader = DataLoader(customDataset, shuffle=False)
 
     # ANN model
+    path = "model.pth"
+    # save_model(model, path)
+    load_model(model, path)
+
     model_to_gpu(model, cuda_rank=cuda_rank_list[gpu_group0_comm.rank])
 
     model_synchronise(model, verbose=True)
-
-    '''
-    path = "model.pth"
-    save_model(model, path)
-    load_model(model, path)
-    '''
 
     # Training of ANN
     training_loss = list()
@@ -492,7 +490,7 @@ if gpu_group0_comm != MPI.COMM_NULL:
     checkpoint_path = "checkpoint"
     checkpoint_epoch = 10
 
-    learning_rate = 1e-6
+    learning_rate = 1e-4
     optimiser = get_optimiser(model, "Adam", learning_rate)
     loss_fn = get_loss_func("MSE", reduction="sum")
 
@@ -574,6 +572,7 @@ error_analysis_indices = np.arange(world_comm.rank,
 for i in error_analysis_indices:
     error_numpy[i] = error_analysis(reduced_problem, problem_parametric,
                                     error_analysis_set[i, :], model,
+                                    len(reduced_problem._basis_functions),
                                     online_nn)
     print(f"Error analysis {i+1} of {error_analysis_set.shape[0]}, Error: {error_numpy[i]}")
 
@@ -592,7 +591,8 @@ if world_comm.rank == 0:
     # Next this solution is reconstructed on FE space
     rb_solution = \
         reduced_problem.reconstruct_solution(
-            online_nn(reduced_problem, problem_parametric, online_mu, model))
+            online_nn(reduced_problem, problem_parametric, online_mu, model,
+                      len(reduced_problem._basis_functions)))
 
 
     # Post processing

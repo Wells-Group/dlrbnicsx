@@ -69,7 +69,7 @@ def validate_nn(reduced_problem, dataloader, model, loss_fn, report=True):
     return valid_loss
 
 
-def online_nn(reduced_problem, problem, online_mu, model,
+def online_nn(reduced_problem, problem, online_mu, model, rb_size,
               input_scaling_range=None, output_scaling_range=None,
               input_range=None, output_range=None, verbose=False):
     '''
@@ -93,7 +93,6 @@ def online_nn(reduced_problem, problem, online_mu, model,
     Output:
         solution_reduced: rbnicsx.online.create_vector, online solution
     '''
-    N = len(reduced_problem._basis_functions)
     model.eval()
 
     if type(input_scaling_range) == list:
@@ -154,13 +153,13 @@ def online_nn(reduced_problem, problem, online_mu, model,
                                                    output_scaling_range[0]) \
             + output_range[0]
         # TODO Use reverse_target_transform from dataloader
-        solution_reduced = rbnicsx.online.create_vector(N)
+        solution_reduced = rbnicsx.online.create_vector(rb_size)
         solution_reduced.array = pred
     return solution_reduced
 
 
 def error_analysis(reduced_problem, problem, error_analysis_mu, model,
-                   online_nn, norm_error=None,
+                   rb_size, online_nn, norm_error=None,
                    reconstruct_solution=None, input_scaling_range=None,
                    output_scaling_range=None, input_range=None,
                    output_range=None, index=None, verbose=False):
@@ -192,10 +191,9 @@ def error_analysis(reduced_problem, problem, error_analysis_mu, model,
         error: float, Error computed with norm_error between FEM
             and RB solution
     '''
-    # N = len(reduced_problem._basis_functions)
     model.eval()
     ann_prediction = online_nn(reduced_problem, problem, error_analysis_mu,
-                               model, input_scaling_range,
+                               model, rb_size, input_scaling_range,
                                output_scaling_range, input_range,
                                output_range)
     if reconstruct_solution is None:

@@ -359,8 +359,6 @@ for (mu_index, mu) in enumerate(training_set):
     print("Parameter number ", (mu_index+1), "of", training_set.shape[0])
     print("High fidelity solve for mu =", mu)
     (snapshot_u, snapshot_p) = problem_parametric.solve(mu)
-    print(f"Velocity solution array: {snapshot_u.x.array}")
-    print(f"Pressure solution array: {snapshot_p.x.array}")
 
     print("Update snapshots matrix")
     snapshots_matrix_u.append(snapshot_u)
@@ -386,6 +384,9 @@ print(rbnicsx.io.TextBox("POD-Galerkin offline phase ends", fill="="))
 
 positive_eigenvalues_u = np.where(eigenvalues_u > 0., eigenvalues_u, np.nan)
 singular_values_u = np.sqrt(positive_eigenvalues_u)
+
+positive_eigenvalues_p = np.where(eigenvalues_p > 0., eigenvalues_p, np.nan)
+singular_values_p = np.sqrt(positive_eigenvalues_p)
 
 plt.figure(figsize=[8, 10])
 xint = list()
@@ -421,9 +422,13 @@ plt.title("Eigenvalue decay", fontsize=24)
 plt.tight_layout()
 plt.savefig("eigenvalue_decay_p")
 
-print(f"Velocity reduced basis size: {len(reduced_problem._basis_functions_u)}")
-print(f"Pressure reduced basis size: {len(reduced_problem._basis_functions_p)}")
+print(f"Velocity eigenvalues: {positive_eigenvalues_u}")
+print(f"Pressure eigenvalues: {positive_eigenvalues_p}")
 
+for i in range(training_set.shape[0]):
+    print(f"Index {i}, \n Velocity array: {(snapshots_matrix_u[i]).x.array}, \n Pressure array: {(snapshots_matrix_p[i]).x.array}")
+
+exit()
 # POD Ends ###
 
 # Creating dataset
@@ -455,7 +460,7 @@ def generate_ann_output_set(problem, reduced_problem, input_set, mode=None):
 
 
 ann_input_set = generate_ann_input_set(samples=ann_samples)
-np.random.shuffle(ann_input_set)
+# np.random.shuffle(ann_input_set)
 ann_output_set_u, ann_output_set_p = \
     generate_ann_output_set(problem_parametric, reduced_problem,
                             ann_input_set, mode="Training")
@@ -483,7 +488,7 @@ customDataset = CustomDataset(reduced_problem, input_training_set,
                               output_scaling_range=reduced_problem.output_scaling_range_u,
                               input_range=reduced_problem.input_range_u,
                               output_range=reduced_problem.output_range_u, verbose=True)
-train_dataloader_u = DataLoader(customDataset, batch_size=10, shuffle=True)
+train_dataloader_u = DataLoader(customDataset, batch_size=6, shuffle=False) # shuffle=True)
 
 customDataset = CustomDataset(reduced_problem, input_validation_set,
                               output_validation_set_u,
@@ -500,7 +505,7 @@ customDataset = \
                   output_scaling_range=reduced_problem.output_scaling_range_p,
                   input_range=reduced_problem.input_range_p,
                   output_range=reduced_problem.output_range_p, verbose=True)
-train_dataloader_p = DataLoader(customDataset, batch_size=7, shuffle=True)
+train_dataloader_p = DataLoader(customDataset, batch_size=6, shuffle=False) # shuffle=True)
 
 customDataset = \
     CustomDataset(reduced_problem, input_validation_set,
@@ -519,16 +524,14 @@ model_p = HiddenLayersNet(input_training_set.shape[1], [15, 15],
 
 # Start of training (Velocity)
 
-'''
 path = "model_u.pth"
-save_model(model_u, path)
+# save_model(model_u, path)
 load_model(model_u, path)
-'''
 
 training_loss_u = list()
 validation_loss_u = list()
 
-max_epochs_u = 40 # 20000
+max_epochs_u = 50 # 20000
 min_validation_loss_u = None
 start_epoch_u = 0
 checkpoint_path_u = "checkpoint_u"
@@ -567,16 +570,14 @@ elapsed_time = end_time - start_time
 
 # Start of training (Pressure)
 
-'''
 path = "model_p.pth"
-save_model(model_p, path)
+# save_model(model_p, path)
 load_model(model_p, path)
-'''
 
 training_loss_p = list()
 validation_loss_p = list()
 
-max_epochs_p = 40 # 20000
+max_epochs_p = 50 # 20000
 min_validation_loss_p = None
 start_epoch_p = 0
 checkpoint_path_p = "checkpoint_p"
@@ -617,7 +618,6 @@ elapsed_time = end_time - start_time
 os.system(f"rm {checkpoint_path_u}")
 os.system(f"rm {checkpoint_path_p}")
 
-exit()
 # TODO fix online_nn and error_analysis as N != reduced_problem._basis_functions but reduced_problem._basis_functions_p or reduced_problem._basis_functions_u
 
 # Error analysis dataset
@@ -632,7 +632,7 @@ for i in range(error_analysis_set_u.shape[0]):
     print(f"{error_analysis_set_u.shape[0]}: {error_analysis_set_u[i,:]}")
     error_numpy_u[i] = error_analysis(reduced_problem, problem_parametric,
                                       error_analysis_set_u[i, :], model_u,
-                                      online_nn,
+                                      len(reduced_problem._basis_functions_u), online_nn,
                                       norm_error=reduced_problem.norm_error_u,
                                       reconstruct_solution=reduced_problem.reconstruct_solution_u,
                                       input_scaling_range=reduced_problem.input_scaling_range_u,
@@ -654,6 +654,7 @@ for i in range(error_analysis_set_p.shape[0]):
     print(f"{error_analysis_set_p.shape[0]}: {error_analysis_set_p[i,:]}")
     error_numpy_p[i] = error_analysis(reduced_problem, problem_parametric,
                                       error_analysis_set_p[i, :], model_p,
+                                      len(reduced_problem._basis_functions_p),
                                       online_nn,
                                       norm_error=reduced_problem.norm_error_p,
                                       reconstruct_solution=reduced_problem.reconstruct_solution_p,
@@ -680,7 +681,6 @@ rb_solution_u = \
                                                      problem_parametric,
                                                      online_mu, model_u,
                                                      len(reduced_problem._basis_functions_u),
-                                                     device=None,
                                                      input_scaling_range=reduced_problem.input_scaling_range_u,
                                                      output_scaling_range=reduced_problem.output_scaling_range_u,
                                                      input_range=reduced_problem.input_range_u,
@@ -690,7 +690,6 @@ rb_solution_p = \
                                                      problem_parametric,
                                                      online_mu, model_p,
                                                      len(reduced_problem._basis_functions_p),
-                                                     device=None,
                                                      input_scaling_range=reduced_problem.input_scaling_range_p,
                                                      output_scaling_range=reduced_problem.output_scaling_range_p,
                                                      input_range=reduced_problem.input_range_p,

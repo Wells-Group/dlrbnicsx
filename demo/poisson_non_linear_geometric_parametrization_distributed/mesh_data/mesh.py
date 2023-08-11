@@ -6,7 +6,7 @@ import dolfinx
 
 gmsh.initialize('', False)
 
-lc = 0.01
+lc = 0.04
 gdim = 2
 
 gmsh.model.geo.addPoint(0., 0., 0., lc, 1)

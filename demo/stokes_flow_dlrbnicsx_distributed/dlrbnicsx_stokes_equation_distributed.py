@@ -307,6 +307,7 @@ itemsize = MPI.DOUBLE.Get_size()
 para_dim = 2
 num_dofs_u = solution_vel_mu.x.array.shape[0]
 num_dofs_p = solution_pre_mu.x.array.shape[0]
+
 pod_samples = [3, 3]
 ann_samples = [3, 4]
 error_analysis_samples = [4, 3]
@@ -350,6 +351,8 @@ indices = np.arange(world_comm.rank, num_snapshots, world_comm.size)
 for i in indices:
     print(f"Solving FEM problem {i+1}/{num_snapshots}")
     sol_u, sol_p = problem_parametric.solve(training_set[i, :])
+    print(sol_u.x.array)
+    print(sol_p.x.array)
     training_set_solution_u[i, :] = sol_u.x.array
     training_set_solution_p[i, :] = sol_p.x.array
 
@@ -367,8 +370,12 @@ Q, _ = problem_parametric._W.sub(1).collapse()
 snapshots_matrix_u = rbnicsx.backends.FunctionsList(V)
 snapshots_matrix_p = rbnicsx.backends.FunctionsList(Q)
 
+print("Set up reduced problem")
+reduced_problem = PODANNReducedProblem(problem_parametric)
+
 for i in range(num_snapshots):
     snapshot_u = dolfinx.fem.Function(V)
+    print(i, training_set_solution_u[i,:])
     snapshot_u.x.array[:] = training_set_solution_u[i, :]
 
     print(f"Update snapshots matrix: {i+1}/{num_snapshots}")
@@ -379,9 +386,6 @@ for i in range(num_snapshots):
 
     print(f"Update snapshots matrix: {i+1}/{num_snapshots}")
     snapshots_matrix_p.append(snapshot_p)
-
-print("Set up reduced problem")
-reduced_problem = PODANNReducedProblem(problem_parametric)
 
 print("")
 
@@ -444,7 +448,12 @@ if world_comm.rank == 0:
 
 print(f"Velocity eigenvalues: {positive_eigenvalues_u}")
 print(f"Pressure eigenvalues: {positive_eigenvalues_p}")
+print(indices)
 
+for i in range(len(snapshots_matrix_p)):
+    print(f"Index {i}, \n Velocity array: {(snapshots_matrix_u[i]).x.array}, \n Pressure array: {(snapshots_matrix_p[i]).x.array}")
+
+exit()
 # ### POD Ends ###
 
 # Creating dataset
@@ -627,7 +636,7 @@ if cpu_group0_comm != MPI.COMM_NULL:
                                              output_scaling_range=reduced_problem.output_scaling_range_u,
                                              input_range=reduced_problem.input_range_u,
                                              output_range=reduced_problem.output_range_u, verbose=True)
-    train_dataloader_u = DataLoader(customDataset, batch_size=10, shuffle=True)
+    train_dataloader_u = DataLoader(customDataset, batch_size=3, shuffle=False)# shuffle=True)
 
     customDataset = CustomPartitionedDataset(reduced_problem, input_validation_set,
                                              output_validation_set_u, validation_set_indices_cpu_u,
@@ -637,11 +646,9 @@ if cpu_group0_comm != MPI.COMM_NULL:
                                              output_range=reduced_problem.output_range_u, verbose=True)
     valid_dataloader_u = DataLoader(customDataset, shuffle=False)
 
-    '''
     path = "model_u.pth"
-    save_model(model_u, path)
+    # save_model(model_u, path)
     load_model(model_u, path)
-    '''
 
     model_synchronise(model_u, verbose=True)
 
@@ -649,13 +656,13 @@ if cpu_group0_comm != MPI.COMM_NULL:
     training_loss_u = list()
     validation_loss_u = list()
 
-    max_epochs_u = 20 # 20000
+    max_epochs_u = 50 # 20000
     min_validation_loss_u = None
     start_epoch = 0
     checkpoint_path_u = "checkpoint_u"
     checkpoint_epoch_u = 10
 
-    learning_rate_u = 1e-4
+    learning_rate_u = 5.e-6
     optimiser_u = get_optimiser(model_u, "Adam", learning_rate_u)
     loss_fn_u = get_loss_func("MSE", reduction="sum")
 
@@ -708,7 +715,7 @@ if cpu_group1_comm != MPI.COMM_NULL:
                                              output_scaling_range=reduced_problem.output_scaling_range_p,
                                              input_range=reduced_problem.input_range_p,
                                              output_range=reduced_problem.output_range_p, verbose=True)
-    train_dataloader_p = DataLoader(customDataset, batch_size=10, shuffle=True)
+    train_dataloader_p = DataLoader(customDataset, batch_size=3, shuffle=False)# shuffle=True)
 
     customDataset = CustomPartitionedDataset(reduced_problem, input_validation_set,
                                              output_validation_set_p, validation_set_indices_cpu_p,
@@ -718,11 +725,9 @@ if cpu_group1_comm != MPI.COMM_NULL:
                                              output_range=reduced_problem.output_range_p, verbose=True)
     valid_dataloader_p = DataLoader(customDataset, shuffle=False)
 
-    '''
     path = "model_p.pth"
-    save_model(model_p, path)
+    # save_model(model_p, path)
     load_model(model_p, path)
-    '''
 
     model_synchronise(model_p, verbose=True)
 
@@ -730,13 +735,13 @@ if cpu_group1_comm != MPI.COMM_NULL:
     training_loss_p = list()
     validation_loss_p = list()
 
-    max_epochs_p = 20 # 20000
+    max_epochs_p = 50 # 20000
     min_validation_loss_p = None
     start_epoch = 0
     checkpoint_path_p = "checkpoint_p"
     checkpoint_epoch_p = 10
 
-    learning_rate_p = 1e-4
+    learning_rate_p = 5.e-6
     optimiser_p = get_optimiser(model_p, "Adam", learning_rate_p)
     loss_fn_p = get_loss_func("MSE", reduction="sum")
 
@@ -779,8 +784,6 @@ if cpu_group0_comm != MPI.COMM_NULL:
 if cpu_group1_comm != MPI.COMM_NULL:
     os.system(f"rm {checkpoint_path_p}")
 
-exit()
-
 # TODO online_nn and error_analysis adaptation
 
 
@@ -807,7 +810,7 @@ for i in indices:
     error_numpy_u[i] = error_analysis(reduced_problem, problem_parametric,
                                       error_analysis_set_u[i, :], model_u,
                                       len(reduced_problem._basis_functions_u),
-                                      online_nn, device=None,
+                                      online_nn,
                                       norm_error=reduced_problem.norm_error_u,
                                       reconstruct_solution=reduced_problem.reconstruct_solution_u,
                                       input_scaling_range=reduced_problem.input_scaling_range_u,
@@ -842,7 +845,7 @@ for i in indices:
     error_numpy_p[i] = error_analysis(reduced_problem, problem_parametric,
                                       error_analysis_set_p[i, :], model_p,
                                       len(reduced_problem._basis_functions_p),
-                                      online_nn, device=None,
+                                      online_nn,
                                       norm_error=reduced_problem.norm_error_p,
                                       reconstruct_solution=reduced_problem.reconstruct_solution_p,
                                       input_scaling_range=reduced_problem.input_scaling_range_p,
@@ -874,7 +877,6 @@ if rank == 0:
                                                          problem_parametric,
                                                          online_mu, model_u,
                                                          len(reduced_problem._basis_functions_u),
-                                                         device=None,
                                                          input_scaling_range=reduced_problem.input_scaling_range_u,
                                                          output_scaling_range=reduced_problem.output_scaling_range_u,
                                                          input_range=reduced_problem.input_range_u,
@@ -884,7 +886,6 @@ if rank == 0:
                                                          problem_parametric,
                                                          online_mu, model_p,
                                                          len(reduced_problem._basis_functions_p),
-                                                         device=None,
                                                          input_scaling_range=reduced_problem.input_scaling_range_p,
                                                          output_scaling_range=reduced_problem.output_scaling_range_p,
                                                          input_range=reduced_problem.input_range_p,
