@@ -490,7 +490,7 @@ itemsize = MPI.DOUBLE.Get_size()
 
 if world_comm.rank == 0:
     ann_input_set = generate_ann_input_set(samples=ann_samples)
-    np.random.shuffle(ann_input_set)
+    # np.random.shuffle(ann_input_set)
     nbytes_para_ann_training = num_training_samples * itemsize * para_dim
     nbytes_dofs_ann_training_u = num_training_samples * itemsize * \
         len(reduced_problem._basis_functions_u)
@@ -610,9 +610,6 @@ print("\n")
 cpu_group0_procs = world_comm.group.Incl([0, 1])
 cpu_group0_comm = world_comm.Create_group(cpu_group0_procs)
 
-cpu_group1_procs = world_comm.group.Incl([2, 3])
-cpu_group1_comm = world_comm.Create_group(cpu_group1_procs)
-
 # ANN model
 model_u = HiddenLayersNet(input_training_set.shape[1], [30, 30],
                           len(reduced_problem._basis_functions_u), Tanh())
@@ -634,7 +631,7 @@ if cpu_group0_comm != MPI.COMM_NULL:
                                              input_scaling_range=reduced_problem.input_scaling_range_u,
                                              output_scaling_range=reduced_problem.output_scaling_range_u,
                                              input_range=reduced_problem.input_range_u,
-                                             output_range=reduced_problem.output_range_u, verbose=True)
+                                             output_range=reduced_problem.output_range_u, verbose=False)
     train_dataloader_u = DataLoader(customDataset, batch_size=3, shuffle=False)# shuffle=True)
 
     customDataset = CustomPartitionedDataset(reduced_problem, input_validation_set,
@@ -642,14 +639,14 @@ if cpu_group0_comm != MPI.COMM_NULL:
                                              input_scaling_range=reduced_problem.input_scaling_range_u,
                                              output_scaling_range=reduced_problem.output_scaling_range_u,
                                              input_range=reduced_problem.input_range_u,
-                                             output_range=reduced_problem.output_range_u, verbose=True)
+                                             output_range=reduced_problem.output_range_u, verbose=False)
     valid_dataloader_u = DataLoader(customDataset, shuffle=False)
 
     path = "model_u.pth"
     # save_model(model_u, path)
     load_model(model_u, path)
 
-    model_synchronise(model_u, verbose=True)
+    model_synchronise(model_u, verbose=False) # True)
 
     # Training of ANN
     training_loss_u = list()
@@ -693,10 +690,13 @@ if cpu_group0_comm != MPI.COMM_NULL:
     end_time = time.time()
     elapsed_time_u = end_time - start_time
 
-exit()
-
 model_root_process = 0
 share_model(model_u, world_comm, model_root_process)
+
+print("\n")
+
+cpu_group1_procs = world_comm.group.Incl([2, 3])
+cpu_group1_comm = world_comm.Create_group(cpu_group1_procs)
 
 if cpu_group1_comm != MPI.COMM_NULL:
     init_cpu_process_group(cpu_group1_comm)
@@ -713,7 +713,7 @@ if cpu_group1_comm != MPI.COMM_NULL:
                                              input_scaling_range=reduced_problem.input_scaling_range_p,
                                              output_scaling_range=reduced_problem.output_scaling_range_p,
                                              input_range=reduced_problem.input_range_p,
-                                             output_range=reduced_problem.output_range_p, verbose=True)
+                                             output_range=reduced_problem.output_range_p, verbose=False)
     train_dataloader_p = DataLoader(customDataset, batch_size=3, shuffle=False)# shuffle=True)
 
     customDataset = CustomPartitionedDataset(reduced_problem, input_validation_set,
@@ -721,14 +721,14 @@ if cpu_group1_comm != MPI.COMM_NULL:
                                              input_scaling_range=reduced_problem.input_scaling_range_p,
                                              output_scaling_range=reduced_problem.output_scaling_range_p,
                                              input_range=reduced_problem.input_range_p,
-                                             output_range=reduced_problem.output_range_p, verbose=True)
+                                             output_range=reduced_problem.output_range_p, verbose=False)
     valid_dataloader_p = DataLoader(customDataset, shuffle=False)
 
     path = "model_p.pth"
     # save_model(model_p, path)
     load_model(model_p, path)
 
-    model_synchronise(model_p, verbose=True)
+    model_synchronise(model_p, verbose=False) # True)
 
     # Training of ANN
     training_loss_p = list()
@@ -782,7 +782,7 @@ if cpu_group0_comm != MPI.COMM_NULL:
 
 if cpu_group1_comm != MPI.COMM_NULL:
     os.system(f"rm {checkpoint_path_p}")
-exit()
+
 # Error analysis dataset
 print("\n")
 print("Generating error analysis (only input/parameters) dataset")
@@ -852,6 +852,10 @@ for i in indices:
 
 world_comm.Barrier()
 world_comm.Allreduce(error_numpy_p, error_numpy_recv_p, op=MPI.SUM)
+
+if world_comm.rank == 0:
+    print(f"Velocity error: {error_numpy_recv_u}")
+    print(f"Pressure error: {error_numpy_recv_p}")
 
 # Online phase
 
@@ -939,3 +943,8 @@ if rank == 0:
                                  "w") as solution_file:
             solution_file.write_mesh(mesh)
             solution_file.write_function(solution_pressure_error)
+
+    print(rb_solution_u.x.array)
+    print(rb_solution_p.x.array)
+    print(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(rb_solution_u, rb_solution_u) * ufl.dx)))
+    print(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(rb_solution_p, rb_solution_p) * ufl.dx)))

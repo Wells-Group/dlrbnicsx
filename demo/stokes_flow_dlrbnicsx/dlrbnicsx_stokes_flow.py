@@ -488,7 +488,7 @@ customDataset = CustomDataset(reduced_problem, input_training_set,
                               input_scaling_range=reduced_problem.input_scaling_range_u,
                               output_scaling_range=reduced_problem.output_scaling_range_u,
                               input_range=reduced_problem.input_range_u,
-                              output_range=reduced_problem.output_range_u, verbose=True)
+                              output_range=reduced_problem.output_range_u, verbose=False)
 train_dataloader_u = DataLoader(customDataset, batch_size=6, shuffle=False) # shuffle=True)
 
 customDataset = CustomDataset(reduced_problem, input_validation_set,
@@ -496,16 +496,16 @@ customDataset = CustomDataset(reduced_problem, input_validation_set,
                               input_scaling_range=reduced_problem.input_scaling_range_u,
                               output_scaling_range=reduced_problem.output_scaling_range_u,
                               input_range=reduced_problem.input_range_u,
-                              output_range=reduced_problem.output_range_u, verbose=True)
+                              output_range=reduced_problem.output_range_u, verbose=False)
 valid_dataloader_u = DataLoader(customDataset, shuffle=False)
 
 customDataset = \
-    CustomDataset(reduced_problem, input_validation_set,
-                  output_validation_set_p,
+    CustomDataset(reduced_problem, input_training_set,
+                  output_training_set_p,
                   input_scaling_range=reduced_problem.input_scaling_range_p,
                   output_scaling_range=reduced_problem.output_scaling_range_p,
                   input_range=reduced_problem.input_range_p,
-                  output_range=reduced_problem.output_range_p, verbose=True)
+                  output_range=reduced_problem.output_range_p, verbose=False)
 train_dataloader_p = DataLoader(customDataset, batch_size=6, shuffle=False) # shuffle=True)
 
 customDataset = \
@@ -514,7 +514,7 @@ customDataset = \
                   input_scaling_range=reduced_problem.input_scaling_range_p,
                   output_scaling_range=reduced_problem.output_scaling_range_p,
                   input_range=reduced_problem.input_range_p,
-                  output_range=reduced_problem.output_range_p, verbose=True)
+                  output_range=reduced_problem.output_range_p, verbose=False)
 valid_dataloader_p = DataLoader(customDataset, shuffle=False)
 
 # ANN model
@@ -528,9 +528,6 @@ model_p = HiddenLayersNet(input_training_set.shape[1], [15, 15],
 path = "model_u.pth"
 # save_model(model_u, path)
 load_model(model_u, path)
-
-for p in model_u.parameters():
-    print(p.data)
 
 training_loss_u = list()
 validation_loss_u = list()
@@ -571,15 +568,12 @@ for epochs in range(start_epoch_u, max_epochs_u):
     min_validation_loss_u = min(validation_loss_u)
 end_time = time.time()
 elapsed_time = end_time - start_time
-exit()
+
 # Start of training (Pressure)
 
 path = "model_p.pth"
 # save_model(model_p, path)
 load_model(model_p, path)
-
-for p in model_p.parameters():
-    print(p.data)
 
 training_loss_p = list()
 validation_loss_p = list()
@@ -624,7 +618,7 @@ elapsed_time = end_time - start_time
 
 os.system(f"rm {checkpoint_path_u}")
 os.system(f"rm {checkpoint_path_p}")
-exit()
+
 # TODO fix online_nn and error_analysis as N != reduced_problem._basis_functions but reduced_problem._basis_functions_p or reduced_problem._basis_functions_u
 
 # Error analysis dataset
@@ -751,3 +745,8 @@ with HarmonicMeshMotion(problem_parametric._mesh, problem_parametric._boundaries
                              "w") as solution_file:
         solution_file.write_mesh(mesh)
         solution_file.write_function(solution_pressure_error)
+
+print(rb_solution_u.x.array)
+print(rb_solution_p.x.array)
+print(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(rb_solution_u, rb_solution_u) * ufl.dx)))
+print(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(rb_solution_p, rb_solution_p) * ufl.dx)))
