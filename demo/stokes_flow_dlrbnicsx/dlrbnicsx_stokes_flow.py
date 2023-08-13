@@ -289,6 +289,11 @@ mesh, cell_tags, facet_tags = \
 
 # Mesh deformation parameters
 mu = np.array([0.93, 1.03])
+'''
+pod_samples = [8, 8]
+ann_samples = [10, 10]
+error_analysis_samples = [3, 3]
+'''
 pod_samples = [3, 3]
 ann_samples = [3, 4]
 error_analysis_samples = [4, 3]
@@ -425,16 +430,12 @@ plt.savefig("eigenvalue_decay_p")
 print(f"Velocity eigenvalues: {positive_eigenvalues_u}")
 print(f"Pressure eigenvalues: {positive_eigenvalues_p}")
 
-for i in range(training_set.shape[0]):
-    print(f"Index {i}, \n Velocity array: {(snapshots_matrix_u[i]).x.array}, \n Pressure array: {(snapshots_matrix_p[i]).x.array}")
-
-exit()
 # POD Ends ###
 
 # Creating dataset
 
 
-def generate_ann_input_set(samples=ann_samples):
+def generate_ann_input_set(samples=[3, 3]):
     # Select samples from the parameter space for ANN
     training_set_0 = np.linspace(0.5, 1., samples[0])
     training_set_1 = np.linspace(0.5, 1., samples[1])
@@ -528,10 +529,13 @@ path = "model_u.pth"
 # save_model(model_u, path)
 load_model(model_u, path)
 
+for p in model_u.parameters():
+    print(p.data)
+
 training_loss_u = list()
 validation_loss_u = list()
 
-max_epochs_u = 50 # 20000
+max_epochs_u = 1 # 50 # 20000
 min_validation_loss_u = None
 start_epoch_u = 0
 checkpoint_path_u = "checkpoint_u"
@@ -567,17 +571,20 @@ for epochs in range(start_epoch_u, max_epochs_u):
     min_validation_loss_u = min(validation_loss_u)
 end_time = time.time()
 elapsed_time = end_time - start_time
-
+exit()
 # Start of training (Pressure)
 
 path = "model_p.pth"
 # save_model(model_p, path)
 load_model(model_p, path)
 
+for p in model_p.parameters():
+    print(p.data)
+
 training_loss_p = list()
 validation_loss_p = list()
 
-max_epochs_p = 50 # 20000
+max_epochs_p = 1 # 50 # 20000
 min_validation_loss_p = None
 start_epoch_p = 0
 checkpoint_path_p = "checkpoint_p"
@@ -617,7 +624,7 @@ elapsed_time = end_time - start_time
 
 os.system(f"rm {checkpoint_path_u}")
 os.system(f"rm {checkpoint_path_p}")
-
+exit()
 # TODO fix online_nn and error_analysis as N != reduced_problem._basis_functions but reduced_problem._basis_functions_p or reduced_problem._basis_functions_u
 
 # Error analysis dataset

@@ -312,9 +312,15 @@ pod_samples = [3, 3]
 ann_samples = [3, 4]
 error_analysis_samples = [4, 3]
 num_snapshots = np.product(pod_samples)
-nbytes_para = itemsize * num_snapshots * para_dim
-nbytes_dofs_u = itemsize * num_snapshots * num_dofs_u
-nbytes_dofs_p = itemsize * num_snapshots * num_dofs_p
+
+if world_comm.rank == 0:
+    nbytes_para = itemsize * num_snapshots * para_dim
+    nbytes_dofs_u = itemsize * num_snapshots * num_dofs_u
+    nbytes_dofs_p = itemsize * num_snapshots * num_dofs_p
+else:
+    nbytes_para = 0
+    nbytes_dofs_u = 0
+    nbytes_dofs_p = 0
 
 # POD Starts ###
 
@@ -342,7 +348,7 @@ buf1, itemsize = win1.Shared_query(0)
 training_set_solution_u = np.ndarray(buffer=buf1, dtype="d", shape=(num_snapshots, num_dofs_u))
 
 win2 = MPI.Win.Allocate_shared(nbytes_dofs_p, itemsize, comm=MPI.COMM_WORLD)
-buf2, itemsize = win1.Shared_query(0)
+buf2, itemsize = win2.Shared_query(0)
 training_set_solution_p = np.ndarray(buffer=buf2, dtype="d", shape=(num_snapshots, num_dofs_p))
 
 # Solution manifold
@@ -350,9 +356,7 @@ indices = np.arange(world_comm.rank, num_snapshots, world_comm.size)
 
 for i in indices:
     print(f"Solving FEM problem {i+1}/{num_snapshots}")
-    sol_u, sol_p = problem_parametric.solve(training_set[i, :])
-    print(sol_u.x.array)
-    print(sol_p.x.array)
+    (sol_u, sol_p) = problem_parametric.solve(training_set[i, :])
     training_set_solution_u[i, :] = sol_u.x.array
     training_set_solution_p[i, :] = sol_p.x.array
 
@@ -448,12 +452,7 @@ if world_comm.rank == 0:
 
 print(f"Velocity eigenvalues: {positive_eigenvalues_u}")
 print(f"Pressure eigenvalues: {positive_eigenvalues_p}")
-print(indices)
 
-for i in range(len(snapshots_matrix_p)):
-    print(f"Index {i}, \n Velocity array: {(snapshots_matrix_u[i]).x.array}, \n Pressure array: {(snapshots_matrix_p[i]).x.array}")
-
-exit()
 # ### POD Ends ###
 
 # Creating dataset
@@ -656,7 +655,7 @@ if cpu_group0_comm != MPI.COMM_NULL:
     training_loss_u = list()
     validation_loss_u = list()
 
-    max_epochs_u = 50 # 20000
+    max_epochs_u = 1 # 50 # 20000
     min_validation_loss_u = None
     start_epoch = 0
     checkpoint_path_u = "checkpoint_u"
@@ -694,7 +693,7 @@ if cpu_group0_comm != MPI.COMM_NULL:
     end_time = time.time()
     elapsed_time_u = end_time - start_time
 
-
+exit()
 
 model_root_process = 0
 share_model(model_u, world_comm, model_root_process)
@@ -735,7 +734,7 @@ if cpu_group1_comm != MPI.COMM_NULL:
     training_loss_p = list()
     validation_loss_p = list()
 
-    max_epochs_p = 50 # 20000
+    max_epochs_p = 1 # 50 # 20000
     min_validation_loss_p = None
     start_epoch = 0
     checkpoint_path_p = "checkpoint_p"
@@ -783,19 +782,15 @@ if cpu_group0_comm != MPI.COMM_NULL:
 
 if cpu_group1_comm != MPI.COMM_NULL:
     os.system(f"rm {checkpoint_path_p}")
-
-# TODO online_nn and error_analysis adaptation
-
-
-
+exit()
 # Error analysis dataset
 print("\n")
 print("Generating error analysis (only input/parameters) dataset")
 print("\n")
 if rank == 0:
-    error_analysis_set_u = generate_ann_input_set(samples=[15, 15])  # (samples=[3, 3])
+    error_analysis_set_u = generate_ann_input_set(samples=error_analysis_samples)
 else:
-    error_analysis_set_u = np.zeros_like(generate_ann_input_set(samples=[15, 15]))  # (samples=[3, 3]))
+    error_analysis_set_u = np.zeros_like(generate_ann_input_set(samples=error_analysis_samples))
 
 world_comm.Bcast(error_analysis_set_u, root=0)
 
@@ -828,9 +823,9 @@ print("\n")
 print("Generating error analysis (only input/parameters) dataset")
 print("\n")
 if rank == 0:
-    error_analysis_set_p = generate_ann_input_set(samples=[15, 15])  # (samples=[3, 3])
+    error_analysis_set_p = generate_ann_input_set(samples=error_analysis_samples)
 else:
-    error_analysis_set_p = np.zeros_like(generate_ann_input_set(samples=[15, 15]))  # (samples=[3, 3]))
+    error_analysis_set_p = np.zeros_like(generate_ann_input_set(samples=error_analysis_samples))
 
 world_comm.Bcast(error_analysis_set_p, root=0)
 
