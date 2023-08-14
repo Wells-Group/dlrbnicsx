@@ -709,7 +709,6 @@ solution_velocity_error = dolfinx.fem.Function(V)
 solution_pressure_error = dolfinx.fem.Function(Q)
 
 solution_velocity_error.x.array[:] = abs(solution_u.x.array - rb_solution_u.x.array)
-
 solution_pressure_error.x.array[:] = abs(solution_p.x.array - rb_solution_p.x.array)
 
 with HarmonicMeshMotion(problem_parametric._mesh, problem_parametric._boundaries,
