@@ -30,16 +30,24 @@ ds_out = ds(30)
 ds_sym = ds(5) + ds(9) + ds(12)
 ds_top = ds(18) + ds(19) + ds(27) + ds(28) + ds(29)
 
+omega_1_cells = subdomains.find(1)
+omega_2_cells = subdomains.find(2)
+omega_3_cells = subdomains.find(3)
+omega_4_cells = subdomains.find(4)
+omega_5_cells = subdomains.find(5)
+omega_6_cells = subdomains.find(6)
+omega_7_cells = subdomains.find(7)
+
 x = ufl.SpatialCoordinate(mesh)
+n_vec = ufl.FacetNormal(mesh)
 
-sym_T = sympy.Symbol("sym_T")
-
-# Parameter tuple (D_0, D_1, t_0, t_1)
-mu_ref = [0.6438, 0.4313, 1., 0.5]  # reference geometry
-mu = mu_ref #[0.8, 0.55, 0.8, 0.4]  # Parametric geometry
+sym_T = sympy.Symbol("sym_T") #  Sympy symbol for spline interpolation
 
 # Geometric deformation boundary condition w.r.t. reference domain
 # i.e. set reset_reference=True and is_deformation=True
+# Parameter tuple (D_0, D_1, t_0, t_1)
+mu_ref = [0.6438, 0.4313, 1., 0.5]  # reference geometry
+mu = [0.8, 0.55, 0.8, 0.4]  # Parametric geometry
 
 bc_list_geometric = list()
 
@@ -320,21 +328,25 @@ bc_list_geometric.append(bc_31_geometric)
 
 bc_markers_list = list(np.arange(1, 32))
 
+# ### Thermal model ###
 T_f = 1773.
 T_out = 300.
 T_bottom = 300.
 h_cf = 2000.
 h_cout = 200.
-h_cbottom = 2000.
+h_cbottom = 200.
 q_source = dolfinx.fem.Function(VT)
 q_source.x.array[:] = 0.
 q_top = dolfinx.fem.Function(VT)
 q_top.x.array[:] = 0.
 
+# Temperature_field t previous iteration
 temperature_field = dolfinx.fem.Function(VT,name="Temperature")
-temperature_field.x.array[:] = 300.
+temperature_field.x.array[:] = 350. # Inital guess 350 K
+# temperature field at current iteration
 solution_field = dolfinx.fem.Function(VT)
 
+# Material properties
 Q = dolfinx.fem.FunctionSpace(mesh, ("DG", 0))
 thermal_conductivity_func = dolfinx.fem.Function(Q)
 thermal_conductivity_func_diff = dolfinx.fem.Function(Q)
@@ -347,6 +359,7 @@ thermal_conductivity_func_diff_5 = dolfinx.fem.Function(Q)
 thermal_conductivity_func_7 = dolfinx.fem.Function(Q)
 thermal_conductivity_func_diff_7 = dolfinx.fem.Function(Q)
 
+# Weak form
 JaT = ufl.inner(thermal_conductivity_func * ufl.grad(uT), ufl.grad(vT)) * x[0] * ufl.dx + \
     ufl.inner(uT * thermal_conductivity_func_diff * ufl.grad(temperature_field), ufl.grad(vT)) * x[0] * ufl.dx
 cT = ufl.inner(h_cf * uT, vT) * x[0] * ds_sf + ufl.inner(h_cout * uT, vT) * x[0] * ds_out + \
@@ -358,18 +371,10 @@ aT_cpp = dolfinx.fem.form(JaT + cT)
 lT_cpp = dolfinx.fem.form(JlT + lT)
 bcsT = []
 
-
-# Conductivity for subdomains 3, 4, 6  ==================
-omega_3_cells = subdomains.find(3)
-omega_4_cells = subdomains.find(4)
-omega_6_cells = subdomains.find(6)
-thermal_conductivity_func.x.array[omega_3_cells] = 5.5
-thermal_conductivity_func.x.array[omega_4_cells] = 5.
-thermal_conductivity_func.x.array[omega_6_cells] = 48.
-
+# ### Material property interpolation ###
 # Conductivity for subdomain 1 ==================
 
-thermal_conductivity_sym_1 = sympy.interpolating_spline(2, sym_T, [293., 473., 873., 1273.], [15., 15.2, 16.2, 15.1])
+thermal_conductivity_sym_1 = sympy.interpolating_spline(2, sym_T, [293., 473., 873., 1273.], [16.07, 15.53, 15.97, 17.23])
 thermal_conductivity_sym_1 = sympy.Piecewise(
     thermal_conductivity_sym_1.args[0], (thermal_conductivity_sym_1.args[1][0], True))
 thermal_conductivity_sym_1_lambdified = sympy.lambdify(sym_T, thermal_conductivity_sym_1)
@@ -390,8 +395,6 @@ def conductivity_eval_diff_1(x, temperature_field=temperature_field):
     colliding_cells = dolfinx.geometry.compute_colliding_cells(mesh, cell_candidates, x.T)
     return thermal_conductivity_sym_diff_1_lambdified(temperature_field.eval(x.T, colliding_cells.array)[:, 0])
 
-omega_1_cells = subdomains.find(1)
-
 temp_vec = np.linspace(293., 1800., 152)
 thermal_conductivity_sym_diff_1_lambdified = sympy.lambdify(sym_T, thermal_conductivity_sym_diff_1)
 k_1_vec = np.empty_like(temp_vec)
@@ -408,7 +411,7 @@ plt.savefig("k_1")
 
 # Conductivity for subdomain 2 ==================
 
-thermal_conductivity_sym_2 = sympy.interpolating_spline(2, sym_T, [293., 473., 873., 1273.], [35.8, 37.3, 42.7, 47.2])
+thermal_conductivity_sym_2 = sympy.interpolating_spline(2, sym_T, [293., 473., 873., 1273.], [49.35, 24.75, 27.06, 38.24])
 thermal_conductivity_sym_2 = sympy.Piecewise(
     thermal_conductivity_sym_2.args[0], (thermal_conductivity_sym_2.args[1][0], True))
 thermal_conductivity_sym_2_lambdified = sympy.lambdify(sym_T, thermal_conductivity_sym_2)
@@ -429,9 +432,6 @@ def conductivity_eval_diff_2(x, temperature_field=temperature_field):
     colliding_cells = dolfinx.geometry.compute_colliding_cells(mesh, cell_candidates, x.T)
     return thermal_conductivity_sym_diff_2_lambdified(temperature_field.eval(x.T, colliding_cells.array)[:, 0])
 
-
-omega_2_cells = subdomains.find(2)
-
 temp_vec = np.linspace(293., 1800., 152)
 thermal_conductivity_sym_diff_2_lambdified = sympy.lambdify(sym_T, thermal_conductivity_sym_diff_2)
 k_2_vec = np.empty_like(temp_vec)
@@ -448,8 +448,7 @@ plt.savefig("k_2")
 
 # Conductivity for subdomain 5  ==================
 
-thermal_conductivity_sym_5 = sympy.interpolating_spline(2, sym_T, [293., 473., 873., 1273.], [19.2, 19.6, 20.7, 21.3])
-# thermal_conductivity_sym_5 = sympy.interpolating_spline(2, sym_T, [293., 473., 873., 1273.], [19.2,18.6,20.7,21.3])
+thermal_conductivity_sym_5 = sympy.interpolating_spline(2, sym_T, [293., 473., 873., 1273.], [23.34, 20.81, 20.99, 21.62])
 thermal_conductivity_sym_5 = sympy.Piecewise(
     thermal_conductivity_sym_5.args[0], (thermal_conductivity_sym_5.args[1][0], True))
 thermal_conductivity_sym_5_lambdified = sympy.lambdify(sym_T, thermal_conductivity_sym_5)
@@ -470,9 +469,6 @@ def conductivity_eval_diff_5(x, temperature_field=temperature_field):
     colliding_cells = dolfinx.geometry.compute_colliding_cells(mesh, cell_candidates, x.T)
     return thermal_conductivity_sym_diff_5_lambdified(temperature_field.eval(x.T, colliding_cells.array)[:, 0])
 
-
-omega_5_cells = subdomains.find(5)
-
 temp_vec = np.linspace(293., 1800., 152)
 k_5_vec = np.empty_like(temp_vec)
 k_5_diff_vec = np.empty_like(temp_vec)
@@ -487,8 +483,7 @@ plt.legend(loc="best")
 plt.savefig("k_5")
 
 # Conductivity for subdomain 7  ==================
-
-thermal_conductivity_sym_7 = sympy.interpolating_spline(2, sym_T, [293., 473., 873., 1273.], [35.8, 37.3, 42.7, 47.2])
+thermal_conductivity_sym_7 = sympy.interpolating_spline(2, sym_T, [293., 473., 873., 1273.], [49.35, 24.75, 27.06, 38.24])
 thermal_conductivity_sym_7 = sympy.Piecewise(
     thermal_conductivity_sym_7.args[0], (thermal_conductivity_sym_7.args[1][0], True))
 thermal_conductivity_sym_7_lambdified = sympy.lambdify(sym_T, thermal_conductivity_sym_7)
@@ -509,9 +504,6 @@ def conductivity_eval_diff_7(x, temperature_field=temperature_field):
     colliding_cells = dolfinx.geometry.compute_colliding_cells(mesh, cell_candidates, x.T)
     return thermal_conductivity_sym_diff_7_lambdified(temperature_field.eval(x.T, colliding_cells.array)[:, 0])
 
-
-omega_7_cells = subdomains.find(7)
-
 temp_vec = np.linspace(293., 1800., 152)
 k_7_vec = np.empty_like(temp_vec)
 k_7_diff_vec = np.empty_like(temp_vec)
@@ -525,10 +517,17 @@ plt.plot(temp_vec, k_7_diff_vec, "-b", label="Thermal conductivity Diff 7")
 plt.legend(loc="best")
 plt.savefig("k_7")
 
-max_iteration = 10
-rtol = 1.e-5
-atol = 1.e-6
+# Conductivity for subdomains 3, 4, 6  ==================
+thermal_conductivity_func.x.array[omega_3_cells] = 5.3
+thermal_conductivity_func.x.array[omega_4_cells] = 4.75
+thermal_conductivity_func.x.array[omega_6_cells] = 45.6
 
+# Solver values
+max_iteration = 10
+rtol = 1.e-4
+atol = 1.e-12
+
+# Thermal solve method
 with HarmonicMeshMotion(mesh, boundaries, bc_markers_list,
                         bc_list_geometric, reset_reference=True,
                         is_deformation=True):
@@ -615,6 +614,7 @@ with HarmonicMeshMotion(mesh, boundaries, bc_markers_list,
         solution_file.write_mesh(mesh)
         solution_file.write_function(temperature_field)
 
+# ### Mechanical model ###
 VM = dolfinx.fem.VectorFunctionSpace(mesh, ("CG", 1))
 uM = ufl.TrialFunction(VM)
 vM = ufl.TestFunction(VM)
@@ -623,11 +623,10 @@ rho = 77106.
 g = 9.8
 ymax = mesh_comm.allreduce(np.max(mesh.geometry.x), op=MPI.MAX)
 T0 = 300.
-n_vec = ufl.FacetNormal(mesh)
 
+# ### Material property interpolation
 # Young's modulus for subdomain 1 ==================
-
-young_modulus_sym_1 = sympy.interpolating_spline(2, sym_T, [293., 473., 873., 1273.], [10.5e9, 10.3e9, 10.4e9, 10.3e9])
+young_modulus_sym_1 = sympy.interpolating_spline(2, sym_T, [293., 573., 1073., 1273.], [10.5e9, 10.3e9, 10.4e9, 10.3e9])
 young_modulus_sym_1 = sympy.Piecewise(
     young_modulus_sym_1.args[0], (young_modulus_sym_1.args[1][0], True))
 young_modulus_sym_1_lambdified = sympy.lambdify(sym_T, young_modulus_sym_1)
@@ -649,8 +648,7 @@ plt.legend(loc="best")
 plt.savefig("E_1")
 
 # Young's modulus for subdomain 2 ==================
-
-young_modulus_sym_2 = sympy.interpolating_spline(2, sym_T, [293., 473., 873., 1273.], [15.4e9, 14.7e9, 13.8e9, 14.4e9])
+young_modulus_sym_2 = sympy.interpolating_spline(2, sym_T, [293., 573., 1073., 1273.], [15.4e9, 14.7e9, 13.8e9, 14.4e9])
 young_modulus_sym_2 = sympy.Piecewise(
     young_modulus_sym_2.args[0], (young_modulus_sym_2.args[1][0], True))
 young_modulus_sym_2_lambdified = sympy.lambdify(sym_T, young_modulus_sym_2)
@@ -672,8 +670,7 @@ plt.legend(loc="best")
 plt.savefig("E_2")
 
 # Young's modulus for subdomain 3 ==================
-
-young_modulus_sym_3 = sympy.interpolating_spline(2, sym_T, [293., 473., 873., 1273.], [58.2e9, 67.3e9, 52.9e9, 51.6e9])
+young_modulus_sym_3 = sympy.interpolating_spline(2, sym_T, [293., 573., 1073., 1273.], [58.2e9, 67.3e9, 52.9e9, 51.6e9])
 young_modulus_sym_3 = sympy.Piecewise(
     young_modulus_sym_3.args[0], (young_modulus_sym_3.args[1][0], True))
 young_modulus_sym_3_lambdified = sympy.lambdify(sym_T, young_modulus_sym_3)
@@ -695,8 +692,7 @@ plt.legend(loc="best")
 plt.savefig("E_3")
 
 # Young's modulus for subdomain 4 ==================
-
-young_modulus_sym_4 = sympy.interpolating_spline(2, sym_T, [293., 473., 873., 1273.], [1.85e9, 1.92e9, 1.83e9, 1.85e9])
+young_modulus_sym_4 = sympy.interpolating_spline(2, sym_T, [293., 573., 1073., 1273.], [1.85e9, 1.92e9, 1.83e9, 1.85e9])
 young_modulus_sym_4 = sympy.Piecewise(
     young_modulus_sym_4.args[0], (young_modulus_sym_4.args[1][0], True))
 young_modulus_sym_4_lambdified = sympy.lambdify(sym_T, young_modulus_sym_4)
@@ -718,8 +714,7 @@ plt.legend(loc="best")
 plt.savefig("E_4")
 
 # Young's modulus for subdomain 5 ==================
-
-young_modulus_sym_5 = sympy.interpolating_spline(2, sym_T, [293., 473., 873., 1273.], [14.5e9, 15.0e9, 15.3e9, 13.3e9])
+young_modulus_sym_5 = sympy.interpolating_spline(2, sym_T, [293., 573., 1073., 1273.], [14.5e9, 15.0e9, 15.3e9, 13.3e9])
 young_modulus_sym_5 = sympy.Piecewise(
     young_modulus_sym_5.args[0], (young_modulus_sym_5.args[1][0], True))
 young_modulus_sym_5_lambdified = sympy.lambdify(sym_T, young_modulus_sym_5)
@@ -741,8 +736,7 @@ plt.legend(loc="best")
 plt.savefig("E_5")
 
 # Young's modulus for subdomain 7 ==================
-
-young_modulus_sym_7 = sympy.interpolating_spline(2, sym_T, [293., 473., 873., 1273.], [15.4e9, 14.7e9, 13.8e9, 14.4e9])
+young_modulus_sym_7 = sympy.interpolating_spline(2, sym_T, [293., 573., 1073., 1273.], [15.4e9, 14.7e9, 13.8e9, 14.4e9])
 young_modulus_sym_7 = sympy.Piecewise(
     young_modulus_sym_7.args[0], (young_modulus_sym_7.args[1][0], True))
 young_modulus_sym_7_lambdified = sympy.lambdify(sym_T, young_modulus_sym_7)
@@ -763,6 +757,7 @@ plt.plot(temp_vec, E_7_vec, "*r", label="Young modulus 7")
 plt.legend(loc="best")
 plt.savefig("E_7")
 
+# Young modulus
 young_modulus_func = dolfinx.fem.Function(Q)
 young_modulus_func_1 = dolfinx.fem.Function(Q)
 young_modulus_func_2 = dolfinx.fem.Function(Q)
@@ -773,6 +768,7 @@ young_modulus_func_7 = dolfinx.fem.Function(Q)
 
 young_modulus_func.x.array[omega_6_cells] = 1.9E11
 
+# Poisson ratio
 poisson_ratio_func = dolfinx.fem.Function(Q)
 poisson_ratio_func.x.array[omega_1_cells] = 0.3
 poisson_ratio_func.x.array[omega_2_cells] = 0.2
@@ -782,6 +778,7 @@ poisson_ratio_func.x.array[omega_5_cells] = 0.2
 poisson_ratio_func.x.array[omega_6_cells] = 0.3
 poisson_ratio_func.x.array[omega_7_cells] = 0.2
 
+# Thermal expansion coefficient
 thermal_expansion_coefficient_func = dolfinx.fem.Function(Q)
 thermal_expansion_coefficient_func.x.array[omega_1_cells] = 2.3e-6
 thermal_expansion_coefficient_func.x.array[omega_2_cells] = 4.6e-6
@@ -791,6 +788,7 @@ thermal_expansion_coefficient_func.x.array[omega_5_cells] = 6.e-6
 thermal_expansion_coefficient_func.x.array[omega_6_cells] = 1.2e-5
 thermal_expansion_coefficient_func.x.array[omega_7_cells] = 4.6e-6
 
+# Weak form
 def epsilon(u):
     return ufl.sym(ufl.grad(u))
 
@@ -818,9 +816,6 @@ bc_sym_9 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_sym_9, VM.sub(0))
 bc_sym_12 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_sym_12, VM.sub(0))
 
 bcsM = [bc_bottom_1, bc_bottom_31, bc_sym_5, bc_sym_9, bc_sym_12]
-
-n_vec_bottom = ufl.FacetNormal(mesh)
-n_vec_sym = ufl.FacetNormal(mesh)
 
 with HarmonicMeshMotion(mesh, boundaries, bc_markers_list,
                         bc_list_geometric, reset_reference=True,
