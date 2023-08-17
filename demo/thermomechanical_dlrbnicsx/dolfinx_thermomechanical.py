@@ -628,7 +628,6 @@ vM = ufl.TestFunction(VM)
 displacement_field = dolfinx.fem.Function(VM, name="Displacement")
 rho = 77106.
 g = 9.8
-ymax = mesh_comm.allreduce(np.max(mesh.geometry.x), op=MPI.MAX)
 T0 = 300.
 
 # ### Material property interpolation
@@ -796,16 +795,18 @@ thermal_expansion_coefficient_func.x.array[omega_6_cells] = 1.2e-5
 thermal_expansion_coefficient_func.x.array[omega_7_cells] = 4.6e-6
 
 # Weak form
-def epsilon(u):
-    return ufl.sym(ufl.grad(u))
+def epsilon(u, x=ufl.SpatialCoordinate(mesh)):
+    return ufl.as_tensor([[u[0].dx(0), 0.5*(u[0].dx(1)+u[1].dx(0)), 0.],[0.5*(u[0].dx(1)+u[1].dx(0)), u[1].dx(1), 0.],[0., 0., u[0]/x[0]]]) # ufl.sym(ufl.grad(u))
 
-def sigma(u, E=young_modulus_func, nu=poisson_ratio_func, epsilon=epsilon):
+def sigma(u, E=young_modulus_func, nu=poisson_ratio_func, epsilon=epsilon, x=ufl.SpatialCoordinate(mesh)):
     lambda_ = E * nu / ((1 - 2 * nu) * (1 + nu))
     mu = E / (2 * (1 + nu))
-    return lambda_ * ufl.nabla_div(u) * ufl.Identity(len(u)) + 2 * mu * epsilon(u)
+    return  lambda_ * (u[0].dx(0) + u[1].dx(1) + u[0]/x[0]) * ufl.Identity(3) + 2 * mu * epsilon(u) # lambda_ * ufl.nabla_div(u) * ufl.Identity(len(u)) + 2 * mu * epsilon(u)
+
 
 aM = ufl.inner(sigma(uM, E=young_modulus_func, nu=poisson_ratio_func), epsilon(vM)) * x[0] * ufl.dx
-lM = (temperature_field - T0) * thermal_expansion_coefficient_func * ufl.div(vM) * x[0] * ufl.dx - rho * g * (ymax - x[1]) * ufl.dot(vM, n_vec) * x[0] * ds_sf
+ymax = dolfinx.fem.Constant(mesh, PETSc.ScalarType(0.))
+lM = (temperature_field - T0) * young_modulus_func/(1-2*poisson_ratio_func) * thermal_expansion_coefficient_func * (vM[0].dx(0) + vM[1].dx(1) + vM[0]/x[0]) * x[0] * ufl.dx - rho * g * (ymax - x[1]) * ufl.dot(vM, n_vec) * x[0] * ds_sf
 
 aM_cpp = dolfinx.fem.form(aM)
 lM_cpp = dolfinx.fem.form(lM)
@@ -827,6 +828,8 @@ bcsM = [bc_bottom_1, bc_bottom_31, bc_sym_5, bc_sym_9, bc_sym_12]
 with HarmonicMeshMotion(mesh, boundaries, bc_markers_list,
                         bc_list_geometric, reset_reference=True,
                         is_deformation=True):
+
+    ymax.value = mesh_comm.allreduce(np.max(mesh.geometry.x[:, 1]), op=MPI.MAX)
 
     young_modulus_func_1.interpolate(young_modulus_eval_1)
     young_modulus_func_2.interpolate(young_modulus_eval_2)
@@ -863,9 +866,13 @@ with HarmonicMeshMotion(mesh, boundaries, bc_markers_list,
     ksp.solve(L, displacement_field.vector)
     displacement_field.x.scatter_forward()
     # print(displacement_field.x.array)
-    print(f"Displacement field norm: {mesh_comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(displacement_field, displacement_field)*ufl.dx)))}")
+    print(f"Displacement field norm: {mesh_comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(displacement_field, displacement_field) * x[0] * ufl.dx + ufl.inner(epsilon(displacement_field), epsilon(displacement_field)) * x[0] * ufl.dx)))}")
 
     computed_file = "solution_nonlinear_thermomechanical_mechanical/solution_computed.xdmf"
     with dolfinx.io.XDMFFile(mesh.comm, computed_file, "w") as solution_file:
         solution_file.write_mesh(mesh)
         solution_file.write_function(displacement_field)
+
+print(f"temperature field norm: {mesh_comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(temperature_field, temperature_field) * x[0] * ufl.dx + ufl.inner(ufl.grad(temperature_field), ufl.grad(temperature_field)) * x[0] * ufl.dx)))}")
+
+print(f"Displacement field norm: {mesh_comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(displacement_field, displacement_field) * x[0] * ufl.dx + ufl.inner(epsilon(displacement_field), epsilon(displacement_field)) * x[0] * ufl.dx)))}")
