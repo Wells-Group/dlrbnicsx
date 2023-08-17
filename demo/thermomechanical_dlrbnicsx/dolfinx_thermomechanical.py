@@ -47,7 +47,7 @@ sym_T = sympy.Symbol("sym_T") #  Sympy symbol for spline interpolation
 # i.e. set reset_reference=True and is_deformation=True
 # Parameter tuple (D_0, D_1, t_0, t_1)
 mu_ref = [0.6438, 0.4313, 1., 0.5]  # reference geometry
-mu = [0.8, 0.55, 0.8, 0.4]  # Parametric geometry
+mu = [0.45, 0.56, 0.9, 0.7] # [0.8, 0.55, 0.8, 0.4]  # Parametric geometry
 
 bc_list_geometric = list()
 
@@ -568,9 +568,16 @@ with HarmonicMeshMotion(mesh, boundaries, bc_markers_list,
         if iteration == 0:
             initial_residual = residual
 
-        print(f"Residual: {residual/initial_residual}")
-
+        # print(f"Residual: {residual/initial_residual}")
+        print(f"Residual: {residual}")
+        
+        '''
         if residual/initial_residual < rtol:
+            print(f"Residual tolerance {rtol} reached in iterations {iteration}")
+            break
+        '''
+
+        if residual < rtol:
             print(f"Residual tolerance {rtol} reached in iterations {iteration}")
             break
 
@@ -603,7 +610,7 @@ with HarmonicMeshMotion(mesh, boundaries, bc_markers_list,
 
         print(f"Absolute update: {update_abs}")
 
-        temperature_field.x.array[:] = solution_field.x.array
+        temperature_field.x.array[:] = solution_field.x.array.copy()
 
         if update_abs < atol:
             print(f"Solver tolerance {atol} reached in iterations {iteration + 1}")
