@@ -507,8 +507,106 @@ class MechanicalProblemOnDeformedDomain(abc.ABC):
             displacement_field.x.scatter_forward()
         return displacement_field
 
+class ThermalPODANNReducedProblem(abc.ABC):
+    def __init__(self, thermal_problem) -> None:
+        self._basis_functions = rbnicsx.backends.FunctionsList(thermal_problem._VT)
+        uT, vT = ufl.TrialFunction(thermal_problem._VT), ufl.TestFunction(thermal_problem._VT)
+        x = ufl.SpatialCoordinate(thermal_problem._mesh)
+        self._inner_product = ufl.inner(uT, vT) * x[0] * ufl.dx + \
+            ufl.inner(ufl.grad(uT), ufl.grad(vT)) * x[0] * ufl.dx
+        self._inner_product_action = \
+            rbnicsx.backends.bilinear_form_action(self._inner_product,
+                                                  part="real")
+        self.input_scaling_range = [-1., 1.]
+        self.output_scaling_range = [-1., 1.]
+        self.input_range = \
+            np.array([[0.55, 0.35, 0.8, 0.4], [0.75, 0.55, 1.2, 0.6]])
+        self.output_range = [-6., 3.]
+        self.regularisation = "EarlyStopping"
+
+    def reconstruct_solution(self, reduced_solution):
+        """Reconstructed reduced solution on the high fidelity space."""
+        return self._basis_functions[:reduced_solution.size] * \
+            reduced_solution
+
+    def compute_norm(self, function):
+        """Compute the norm of a function inner product
+        on the reference domain."""
+        return np.sqrt(self._inner_product_action(function)(function))
+
+    def project_snapshot(self, solution, N):
+        return self._project_snapshot(solution, N)
+
+    def _project_snapshot(self, solution, N):
+        projected_snapshot = rbnicsx.online.create_vector(N)
+        A = rbnicsx.backends.\
+            project_matrix(self._inner_product_action,
+                           self._basis_functions[:N])
+        F = rbnicsx.backends.\
+            project_vector(self._inner_product_action(solution),
+                           self._basis_functions[:N])
+        ksp = PETSc.KSP()
+        ksp.create(projected_snapshot.comm)
+        ksp.setOperators(A)
+        ksp.setType("preonly")
+        ksp.getPC().setType("lu")
+        ksp.setFromOptions()
+        ksp.solve(F, projected_snapshot)
+        return projected_snapshot
+
+    def norm_error(self, u, v):
+        return self.compute_norm(u-v)/self.compute_norm(u)
 
 
+class MechanicalPODANNReducedProblem(abc.ABC):
+    def __init__(self, mechanical_problem) -> None:
+        self._basis_functions = rbnicsx.backends.FunctionsList(mechanical_problem._VM)
+        uM, vM = ufl.TrialFunction(mechanical_problem._VM), ufl.TestFunction(mechanical_problem._VM)
+        x = ufl.SpatialCoordinate(mechanical_problem._mesh)
+        self._inner_product = ufl.inner(uM, vM) * x[0] * ufl.dx + \
+            ufl.inner(mechanical_problem.epsilon(uM), mechanical_problem.epsilon(vM)) * x[0] * ufl.dx
+        self._inner_product_action = \
+            rbnicsx.backends.bilinear_form_action(self._inner_product,
+                                                  part="real")
+        self.input_scaling_range = [-1., 1.]
+        self.output_scaling_range = [-1., 1.]
+        self.input_range = \
+            np.array([[0.55, 0.35, 0.8, 0.4], [0.75, 0.55, 1.2, 0.6]])
+        self.output_range = [-6., 3.]
+        self.regularisation = "EarlyStopping"
+
+    def reconstruct_solution(self, reduced_solution):
+        """Reconstructed reduced solution on the high fidelity space."""
+        return self._basis_functions[:reduced_solution.size] * \
+            reduced_solution
+
+    def compute_norm(self, function):
+        """Compute the norm of a function inner product
+        on the reference domain."""
+        return np.sqrt(self._inner_product_action(function)(function))
+
+    def project_snapshot(self, solution, N):
+        return self._project_snapshot(solution, N)
+
+    def _project_snapshot(self, solution, N):
+        projected_snapshot = rbnicsx.online.create_vector(N)
+        A = rbnicsx.backends.\
+            project_matrix(self._inner_product_action,
+                           self._basis_functions[:N])
+        F = rbnicsx.backends.\
+            project_vector(self._inner_product_action(solution),
+                           self._basis_functions[:N])
+        ksp = PETSc.KSP()
+        ksp.create(projected_snapshot.comm)
+        ksp.setOperators(A)
+        ksp.setType("preonly")
+        ksp.getPC().setType("lu")
+        ksp.setFromOptions()
+        ksp.solve(F, projected_snapshot)
+        return projected_snapshot
+
+    def norm_error(self, u, v):
+        return self.compute_norm(u-v)/self.compute_norm(u)
 
 # Read mesh
 world_comm = MPI.COMM_WORLD
@@ -521,6 +619,9 @@ mesh, cell_tags, facet_tags = \
 # Mesh deformation parameters
 mu_ref = [0.6438, 0.4313, 1., 0.5]  # reference geometry
 mu = [0.45, 0.56, 0.9, 0.7] # [0.8, 0.55, 0.8, 0.4]  # Parametric geometry
+
+pod_ann_samples = [3, 4, 3, 4]
+
 
 # FEM solve
 thermal_problem_parametric = \
@@ -539,6 +640,84 @@ with MeshDeformationWrapperClass(mesh, facet_tags, mu_ref, mu):
         solution_file.write_mesh(mesh)
         solution_file.write_function(solution_mu)
 
+# Thermal POD Starts ###
+
+def generate_training_set(samples=pod_ann_samples):
+    training_set_0 = np.linspace(0.55, 0.75, samples[0])
+    training_set_1 = np.linspace(0.35, 0.55, samples[1])
+    training_set_2 = np.linspace(0.8, 1.2, samples[2])
+    training_set_3 = np.linspace(0.4, 0.6, samples[3])
+    training_set = np.array(list(itertools.product(training_set_0,
+                                                   training_set_1,
+                                                   training_set_2,
+                                                   training_set_3)))
+    return training_set
+
+
+thermal_training_set = rbnicsx.io.on_rank_zero(mesh.comm, generate_training_set)
+
+Nmax = 30
+
+print(rbnicsx.io.TextBox("POD offline phase begins", fill="="))
+print("")
+
+print("set up snapshots matrix")
+thermal_snapshots_matrix = rbnicsx.backends.FunctionsList(thermal_problem_parametric._VT)
+
+print("set up reduced problem")
+thermal_reduced_problem = ThermalPODANNReducedProblem(thermal_problem_parametric)
+
+print("")
+
+for (mu_index, mu) in enumerate(thermal_training_set):
+    print(rbnicsx.io.TextLine(str(mu_index+1), fill="#"))
+
+    print("Parameter number ", (mu_index+1), "of", thermal_training_set.shape[0])
+    print("high fidelity solve for mu =", mu)
+    snapshot = thermal_problem_parametric.solve(mu)
+
+    print("update snapshots matrix")
+    thermal_snapshots_matrix.append(snapshot)
+
+    print("")
+
+print(rbnicsx.io.TextLine("perform POD", fill="#"))
+thermal_eigenvalues, thermal_modes, _ = \
+    rbnicsx.backends.\
+    proper_orthogonal_decomposition(thermal_snapshots_matrix,
+                                    thermal_reduced_problem._inner_product_action,
+                                    N=Nmax, tol=1.e-6)
+thermal_reduced_problem._basis_functions.extend(thermal_modes)
+thermal_reduced_size = len(thermal_reduced_problem._basis_functions)
+print("")
+
+print(rbnicsx.io.TextBox("POD-Galerkin offline phase ends", fill="="))
+
+thermal_positive_eigenvalues = np.where(thermal_eigenvalues > 0., thermal_eigenvalues, np.nan)
+thermal_singular_values = np.sqrt(thermal_positive_eigenvalues)
+
+plt.figure(figsize=[8, 10])
+xint = list()
+yval = list()
+
+for x, y in enumerate(thermal_eigenvalues[:Nmax]):
+    yval.append(y)
+    xint.append(x+1)
+
+plt.plot(xint, yval, "*-", color="orange")
+plt.xlabel("Eigenvalue number", fontsize=18)
+plt.ylabel("Eigenvalue", fontsize=18)
+plt.xticks(xint)
+plt.yscale("log")
+plt.title("Eigenvalue decay (Thermal)", fontsize=24)
+plt.tight_layout()
+plt.savefig("thermal_eigenvalues.png")
+
+print(f"Eigenvalues (Thermal): {thermal_positive_eigenvalues}")
+
+# Thermal POD Ends ###
+
+# Mechanical POD starts ###
 mechanical_problem_parametric = \
     MechanicalProblemOnDeformedDomain(mesh, cell_tags, facet_tags,
                                       thermal_problem_parametric)
@@ -554,3 +733,76 @@ with MeshDeformationWrapperClass(mesh, facet_tags, mu_ref, mu):
     with dolfinx.io.XDMFFile(mesh.comm, computed_file, "w") as solution_file:
         solution_file.write_mesh(mesh)
         solution_file.write_function(solution_mu)
+
+# Mechanical POD starts ###
+
+# NOTE using same generate_training_set as Thermal problem
+
+mechanical_training_set = rbnicsx.io.on_rank_zero(mesh.comm, generate_training_set)
+
+Nmax = 30
+
+print(rbnicsx.io.TextBox("POD offline phase begins", fill="="))
+print("")
+
+print("set up snapshots matrix")
+mechanical_snapshots_matrix = rbnicsx.backends.FunctionsList(mechanical_problem_parametric._VM)
+
+print("set up reduced problem")
+mechanical_reduced_problem = MechanicalPODANNReducedProblem(mechanical_problem_parametric)
+
+print("")
+
+for (mu_index, mu) in enumerate(mechanical_training_set):
+    print(rbnicsx.io.TextLine(str(mu_index+1), fill="#"))
+
+    print("Parameter number ", (mu_index+1), "of", mechanical_training_set.shape[0])
+    print("high fidelity solve for mu =", mu)
+    snapshot = mechanical_problem_parametric.solve(mu)
+
+    print("update snapshots matrix")
+    mechanical_snapshots_matrix.append(snapshot)
+
+    print("")
+
+print(rbnicsx.io.TextLine("perform POD", fill="#"))
+mechanical_eigenvalues, mechanical_modes, _ = \
+    rbnicsx.backends.\
+    proper_orthogonal_decomposition(mechanical_snapshots_matrix,
+                                    mechanical_reduced_problem._inner_product_action,
+                                    N=Nmax, tol=1.e-6)
+mechanical_reduced_problem._basis_functions.extend(mechanical_modes)
+mechanical_reduced_size = len(mechanical_reduced_problem._basis_functions)
+print("")
+
+print(rbnicsx.io.TextBox("POD-Galerkin offline phase ends", fill="="))
+
+mechanical_positive_eigenvalues = np.where(mechanical_eigenvalues > 0., mechanical_eigenvalues, np.nan)
+mechanical_singular_values = np.sqrt(mechanical_positive_eigenvalues)
+
+plt.figure(figsize=[8, 10])
+xint = list()
+yval = list()
+
+for x, y in enumerate(mechanical_eigenvalues[:Nmax]):
+    yval.append(y)
+    xint.append(x+1)
+
+plt.plot(xint, yval, "*-", color="orange")
+plt.xlabel("Eigenvalue number", fontsize=18)
+plt.ylabel("Eigenvalue", fontsize=18)
+plt.xticks(xint)
+plt.yscale("log")
+plt.title("Eigenvalue decay (Mechanical)", fontsize=24)
+plt.tight_layout()
+plt.savefig("mechanical_eigenvalues.png")
+
+print(f"Eigenvalues (Mechanical): {mechanical_positive_eigenvalues}")
+
+# Mechanical POD Ends ###
+
+# Thermal ANN starts ###
+
+
+
+# Thermal ANN ends ###
