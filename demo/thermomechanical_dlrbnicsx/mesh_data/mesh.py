@@ -37,7 +37,7 @@ gmsh.model.geo.addCurveLoop([-4, 6, 7, 8, 9], 2)
 gmsh.model.geo.addPlaneSurface([2], 2)
 
 # Omega_3 Corondum Brick
-lc3 = 0.04
+lc3 = 0.08
 gmsh.model.geo.addPoint(0.39, 2.1, 0., lc3, 9)
 gmsh.model.geo.addPoint(0., 2.1, 0., lc3, 10)
 
@@ -49,7 +49,7 @@ gmsh.model.geo.addCurveLoop([-8, 10, 11, 12], 3)
 gmsh.model.geo.addPlaneSurface([3], 3)
 
 # Omega_4 Ceramic cup
-lc4 = 0.04
+lc4 = 0.08
 gmsh.model.geo.addPoint(4.875, 1.6, 0., lc4, 11)
 gmsh.model.geo.addPoint(4.875, 5.2, 0., lc4, 12)
 gmsh.model.geo.addPoint(4.875, 6.4, 0., lc4, 13)
@@ -98,7 +98,7 @@ gmsh.model.geo.addCurveLoop([-25, 26, 27, -17, -16, -15], 7)
 gmsh.model.geo.addPlaneSurface([7], 7)
 
 # Omega_6 Stainless steel
-lc6 = 0.04
+lc6 = 0.08
 gmsh.model.geo.addPoint(5.9501, 7.4, 0., lc6, 23)
 gmsh.model.geo.addPoint(6.0201, 7.4, 0., lc6, 24)
 gmsh.model.geo.addPoint(6.0201, 0, 0., lc6, 25)
