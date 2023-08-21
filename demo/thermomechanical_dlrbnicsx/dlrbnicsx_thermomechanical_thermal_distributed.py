@@ -639,6 +639,8 @@ solution_mu = thermal_problem_parametric.solve(mu)
 itemsize = MPI.DOUBLE.Get_size()
 para_dim = 4
 pod_samples = [3, 4, 3, 4]
+ann_samples = [4, 3, 4, 3]
+error_analysis_samples = [2, 2, 2, 2]
 thermal_num_dofs = solution_mu.x.array.shape[0]
 # TODO ann samples, error_analysis_samples
 num_snapshots = np.product(pod_samples)
@@ -740,6 +742,261 @@ print(f"Thermal eigenvalues: {thermal_positive_eigenvalues}")
 
 # ### # Thermal POD Ends ###
 
+# ### Thermal ANN starts ###
+
+def generate_ann_input_set(samples=ann_samples):
+    # Select samples from the parameter space for ANN
+    training_set_0 = np.linspace(0.55, 0.75, samples[0])
+    training_set_1 = np.linspace(0.35, 0.55, samples[1])
+    training_set_2 = np.linspace(0.8, 1.2, samples[2])
+    training_set_3 = np.linspace(0.4, 0.6, samples[3])
+    training_set = np.array(list(itertools.product(training_set_0,
+                                                   training_set_1,
+                                                   training_set_2,
+                                                   training_set_3)))
+    return training_set
+
+
+def generate_ann_output_set(problem, reduced_problem, input_set,
+                            output_set, indices, mode=None):
+    # Solve the FE problem at given input_sets and
+    # project on the RB space
+    rb_size = len(reduced_problem._basis_functions)
+    for i in indices:
+        if mode is None:
+            print(f"Parameter {i+1}/{input_set.shape[0]}")
+        else:
+            print(f"{mode} parameter number {i+1}/{input_set.shape[0]}")
+        solution = problem.solve(input_set[i, :])
+        output_set[i, :] = reduced_problem.project_snapshot(solution,
+                                                            rb_size).array
+
+thermal_num_ann_input_samples = np.product(ann_samples)
+thermal_num_training_samples = int(0.7 * thermal_num_ann_input_samples)
+thermal_num_validation_samples = \
+    thermal_num_ann_input_samples - int(0.7 * thermal_num_ann_input_samples)
+itemsize = MPI.DOUBLE.Get_size()
+
+if world_comm.rank == 0:
+    thermal_ann_input_set = generate_ann_input_set(samples=ann_samples)
+    np.random.shuffle(thermal_ann_input_set)
+    thermal_nbytes_para_ann_training = thermal_num_training_samples * itemsize * para_dim
+    thermal_nbytes_dofs_ann_training = thermal_num_training_samples * itemsize * \
+        len(thermal_reduced_problem._basis_functions)
+    thermal_nbytes_para_ann_validation = thermal_num_validation_samples * itemsize * para_dim
+    thermal_nbytes_dofs_ann_validation = thermal_num_validation_samples * itemsize * \
+        len(thermal_reduced_problem._basis_functions)
+else:
+    thermal_nbytes_para_ann_training = 0
+    thermal_nbytes_dofs_ann_training = 0
+    thermal_nbytes_para_ann_validation = 0
+    thermal_nbytes_dofs_ann_validation = 0
+
+world_comm.barrier()
+
+win2 = MPI.Win.Allocate_shared(thermal_nbytes_para_ann_training, itemsize,
+                               comm=MPI.COMM_WORLD)
+buf2, itemsize = win2.Shared_query(0)
+thermal_input_training_set = \
+    np.ndarray(buffer=buf2, dtype="d",
+               shape=(thermal_num_training_samples, para_dim))
+
+win3 = MPI.Win.Allocate_shared(thermal_nbytes_para_ann_validation, itemsize,
+                               comm=MPI.COMM_WORLD)
+buf3, itemsize = win3.Shared_query(0)
+thermal_input_validation_set = \
+    np.ndarray(buffer=buf3, dtype="d",
+               shape=(thermal_num_validation_samples, para_dim))
+
+win4 = MPI.Win.Allocate_shared(thermal_nbytes_dofs_ann_training, itemsize,
+                               comm=MPI.COMM_WORLD)
+buf4, itemsize = win4.Shared_query(0)
+thermal_output_training_set = \
+    np.ndarray(buffer=buf4, dtype="d",
+               shape=(thermal_num_training_samples,
+                      len(thermal_reduced_problem._basis_functions)))
+
+win5 = MPI.Win.Allocate_shared(thermal_nbytes_dofs_ann_validation, itemsize,
+                               comm=MPI.COMM_WORLD)
+buf5, itemsize = win5.Shared_query(0)
+thermal_output_validation_set = \
+    np.ndarray(buffer=buf5, dtype="d",
+               shape=(thermal_num_validation_samples,
+                      len(thermal_reduced_problem._basis_functions)))
+
+if world_comm.rank == 0:
+    thermal_input_training_set[:, :] = \
+        thermal_ann_input_set[:thermal_num_training_samples, :]
+    thermal_input_validation_set[:, :] = \
+        thermal_ann_input_set[thermal_num_training_samples:, :]
+    thermal_output_training_set[:, :] = \
+        np.zeros([thermal_num_training_samples,
+                  len(thermal_reduced_problem._basis_functions)])
+    thermal_output_validation_set[:, :] = \
+        np.zeros([thermal_num_validation_samples,
+                  len(thermal_reduced_problem._basis_functions)])
+
+world_comm.Barrier()
+
+thermal_training_set_indices = \
+    np.arange(world_comm.rank, thermal_input_training_set.shape[0],
+              world_comm.size)
+
+thermal_validation_set_indices = \
+    np.arange(world_comm.rank, thermal_input_validation_set.shape[0],
+              world_comm.size)
+
+world_comm.Barrier()
+
+# Training dataset
+generate_ann_output_set(thermal_problem_parametric, thermal_reduced_problem,
+                        thermal_input_training_set, thermal_output_training_set,
+                        thermal_training_set_indices, mode="Training")
+
+generate_ann_output_set(thermal_problem_parametric, thermal_reduced_problem,
+                        thermal_input_validation_set, thermal_output_validation_set,
+                        thermal_validation_set_indices, mode="Validation")
+
+world_comm.Barrier()
+
+thermal_reduced_problem.output_range[0] = \
+    min(np.min(thermal_output_training_set), np.min(thermal_output_validation_set))
+thermal_reduced_problem.output_range[1] = \
+    max(np.max(thermal_output_training_set), np.max(thermal_output_validation_set))
+
+print("\n")
+
+thermal_cpu_group0_procs = world_comm.group.Incl([0, 1, 2, 3])
+thermal_cpu_group0_comm = world_comm.Create_group(thermal_cpu_group0_procs)
+
+# ANN model
+thermal_model = HiddenLayersNet(thermal_training_set.shape[1], [35, 35],
+                        len(thermal_reduced_problem._basis_functions), Tanh())
+
+if thermal_cpu_group0_comm != MPI.COMM_NULL:
+    init_cpu_process_group(thermal_cpu_group0_comm)
+
+    thermal_training_set_indices_cpu = np.arange(thermal_cpu_group0_comm.rank,
+                                         thermal_input_training_set.shape[0],
+                                         thermal_cpu_group0_comm.size)
+    thermal_validation_set_indices_cpu = np.arange(thermal_cpu_group0_comm.rank,
+                                           thermal_input_validation_set.shape[0],
+                                           thermal_cpu_group0_comm.size)
+
+    customDataset = CustomPartitionedDataset(thermal_reduced_problem, thermal_input_training_set,
+                                             thermal_output_training_set, thermal_training_set_indices_cpu)
+    thermal_train_dataloader = DataLoader(customDataset, batch_size=10, shuffle=False)# shuffle=True)
+
+    customDataset = CustomPartitionedDataset(thermal_reduced_problem, thermal_input_validation_set,
+                                            thermal_output_validation_set, thermal_validation_set_indices_cpu)
+    thermal_valid_dataloader = DataLoader(customDataset, shuffle=False)
+
+    thermal_path = "thermal_model.pth"
+    save_model(thermal_model, thermal_path)
+    # load_model(thermal_model, thermal_path)
+
+    model_synchronise(thermal_model, verbose=True)
+
+    # Training of ANN
+    thermal_training_loss = list()
+    thermal_validation_loss = list()
+
+    thermal_max_epochs = 20#000
+    thermal_min_validation_loss = None
+    thermal_start_epoch = 0
+    thermal_checkpoint_path = "thermal_checkpoint"
+    thermal_checkpoint_epoch = 10
+
+    thermal_learning_rate = 1e-4
+    thermal_optimiser = get_optimiser(thermal_model, "Adam", thermal_learning_rate)
+    thermal_loss_fn = get_loss_func("MSE", reduction="sum")
+
+    if os.path.exists(thermal_checkpoint_path):
+        thermal_start_epoch, thermal_min_validation_loss = \
+            load_checkpoint(thermal_checkpoint_path, thermal_model, thermal_optimiser)
+
+    import time
+    start_time = time.time()
+    for thermal_epochs in range(thermal_start_epoch, thermal_max_epochs):
+        if thermal_epochs > 0 and thermal_epochs % thermal_checkpoint_epoch == 0:
+            save_checkpoint(thermal_checkpoint_path, thermal_epochs,
+                            thermal_model, thermal_optimiser,
+                            thermal_min_validation_loss)
+        print(f"Epoch: {thermal_epochs+1}/{thermal_max_epochs}")
+        thermal_current_training_loss = train_nn(thermal_reduced_problem,
+                                         thermal_train_dataloader,
+                                         thermal_model, thermal_loss_fn, thermal_optimiser)
+        thermal_training_loss.append(thermal_current_training_loss)
+        thermal_current_validation_loss = validate_nn(thermal_reduced_problem,
+                                              thermal_valid_dataloader,
+                                              thermal_model, thermal_loss_fn)
+        thermal_validation_loss.append(thermal_current_validation_loss)
+        if thermal_epochs > 0 and thermal_current_validation_loss > thermal_min_validation_loss \
+        and thermal_reduced_problem.regularisation == "EarlyStopping":
+            # 1% safety margin against min_validation_loss
+            # before invoking early stopping criteria
+            print(f"Early stopping criteria invoked at epoch: {thermal_epochs+1}")
+            break
+        thermal_min_validation_loss = min(thermal_validation_loss)
+    end_time = time.time()
+    thermal_elapsed_time = end_time - start_time
+
+    os.system(f"rm {thermal_checkpoint_path}")
+
+thermal_model_root_process = 0
+share_model(thermal_model, world_comm, thermal_model_root_process)
+world_comm.Barrier()
+
+# ### Thermal ANN ends ###
+
+# ### Thermal Error analysis starts ###
+
+print("\n")
+print("Generating error analysis (only input/parameters) dataset")
+print("\n")
+
+thermal_error_analysis_num_para = np.product(error_analysis_samples)
+itemsize = MPI.DOUBLE.Get_size()
+
+if world_comm.rank == 0:
+    thermal_nbytes_para = thermal_error_analysis_num_para * itemsize * para_dim
+    thermal_nbytes_error = thermal_error_analysis_num_para * itemsize
+else:
+    thermal_nbytes_para = 0
+    thermal_nbytes_error = 0
+
+win6 = MPI.Win.Allocate_shared(thermal_nbytes_para, itemsize,
+                               comm=world_comm)
+buf6, itemsize = win6.Shared_query(0)
+thermal_error_analysis_set = \
+    np.ndarray(buffer=buf6, dtype="d",
+               shape=(thermal_error_analysis_num_para,
+                      para_dim))
+
+win7 = MPI.Win.Allocate_shared(thermal_nbytes_error, itemsize,
+                               comm=world_comm)
+buf7, itemsize = win7.Shared_query(0)
+thermal_error_numpy = np.ndarray(buffer=buf7, dtype="d",
+                         shape=(thermal_error_analysis_num_para))
+
+if world_comm.rank == 0:
+    thermal_error_analysis_set[:, :] = generate_ann_input_set(samples=error_analysis_samples)
+
+world_comm.Barrier()
+
+thermal_error_analysis_indices = np.arange(world_comm.rank,
+                                   thermal_error_analysis_set.shape[0],
+                                   world_comm.size)
+for i in thermal_error_analysis_indices:
+    thermal_error_numpy[i] = error_analysis(thermal_reduced_problem, thermal_problem_parametric,
+                                    thermal_error_analysis_set[i, :], thermal_model,
+                                    len(thermal_reduced_problem._basis_functions),
+                                    online_nn)
+    print(f"Error analysis {i+1} of {thermal_error_analysis_set.shape[0]}, Error: {thermal_error_numpy[i]}")
+
+world_comm.Barrier()
+# ### Thermal Error analysis ends ###
+
 mechanical_problem_parametric = \
     MechanicalProblemOnDeformedDomain(mesh, cell_tags, facet_tags,
                                       thermal_problem_parametric)
@@ -760,7 +1017,6 @@ if world_comm.rank == 0:
 # ### # Mechanical POD starts ###
 
 mechanical_num_dofs = solution_mu.x.array.shape[0]
-# TODO ann samples, error_analysis_samples
 num_snapshots = np.product(pod_samples)
 nbytes_para = itemsize * num_snapshots * para_dim
 nbytes_dofs = itemsize * num_snapshots * mechanical_num_dofs
@@ -847,3 +1103,334 @@ if world_comm.rank == 0:
 print(f"Mechanical eigenvalues: {mechanical_positive_eigenvalues}")
 
 # ### # Mechanical POD Ends ###
+
+# ### Mechanical ANN starts ###
+mechanical_num_ann_input_samples = np.product(ann_samples)
+mechanical_num_training_samples = int(0.7 * mechanical_num_ann_input_samples)
+mechanical_num_validation_samples = \
+    mechanical_num_ann_input_samples - int(0.7 * mechanical_num_ann_input_samples)
+itemsize = MPI.DOUBLE.Get_size()
+
+if world_comm.rank == 0:
+    mechanical_ann_input_set = generate_ann_input_set(samples=ann_samples)
+    np.random.shuffle(mechanical_ann_input_set)
+    mechanical_nbytes_para_ann_training = mechanical_num_training_samples * itemsize * para_dim
+    mechanical_nbytes_dofs_ann_training = mechanical_num_training_samples * itemsize * \
+        len(mechanical_reduced_problem._basis_functions)
+    mechanical_nbytes_para_ann_validation = mechanical_num_validation_samples * itemsize * para_dim
+    mechanical_nbytes_dofs_ann_validation = mechanical_num_validation_samples * itemsize * \
+        len(mechanical_reduced_problem._basis_functions)
+else:
+    mechanical_nbytes_para_ann_training = 0
+    mechanical_nbytes_dofs_ann_training = 0
+    mechanical_nbytes_para_ann_validation = 0
+    mechanical_nbytes_dofs_ann_validation = 0
+
+world_comm.barrier()
+
+win2 = MPI.Win.Allocate_shared(mechanical_nbytes_para_ann_training, itemsize,
+                               comm=MPI.COMM_WORLD)
+buf2, itemsize = win2.Shared_query(0)
+mechanical_input_training_set = \
+    np.ndarray(buffer=buf2, dtype="d",
+               shape=(mechanical_num_training_samples, para_dim))
+
+win3 = MPI.Win.Allocate_shared(mechanical_nbytes_para_ann_validation, itemsize,
+                               comm=MPI.COMM_WORLD)
+buf3, itemsize = win3.Shared_query(0)
+mechanical_input_validation_set = \
+    np.ndarray(buffer=buf3, dtype="d",
+               shape=(mechanical_num_validation_samples, para_dim))
+
+win4 = MPI.Win.Allocate_shared(mechanical_nbytes_dofs_ann_training, itemsize,
+                               comm=MPI.COMM_WORLD)
+buf4, itemsize = win4.Shared_query(0)
+mechanical_output_training_set = \
+    np.ndarray(buffer=buf4, dtype="d",
+               shape=(mechanical_num_training_samples,
+                      len(mechanical_reduced_problem._basis_functions)))
+
+win5 = MPI.Win.Allocate_shared(mechanical_nbytes_dofs_ann_validation, itemsize,
+                               comm=MPI.COMM_WORLD)
+buf5, itemsize = win5.Shared_query(0)
+mechanical_output_validation_set = \
+    np.ndarray(buffer=buf5, dtype="d",
+               shape=(mechanical_num_validation_samples,
+                      len(mechanical_reduced_problem._basis_functions)))
+
+if world_comm.rank == 0:
+    mechanical_input_training_set[:, :] = \
+        mechanical_ann_input_set[:mechanical_num_training_samples, :]
+    mechanical_input_validation_set[:, :] = \
+        mechanical_ann_input_set[mechanical_num_training_samples:, :]
+    mechanical_output_training_set[:, :] = \
+        np.zeros([mechanical_num_training_samples,
+                  len(mechanical_reduced_problem._basis_functions)])
+    mechanical_output_validation_set[:, :] = \
+        np.zeros([mechanical_num_validation_samples,
+                  len(mechanical_reduced_problem._basis_functions)])
+
+world_comm.Barrier()
+
+mechanical_training_set_indices = \
+    np.arange(world_comm.rank, mechanical_input_training_set.shape[0],
+              world_comm.size)
+
+mechanical_validation_set_indices = \
+    np.arange(world_comm.rank, mechanical_input_validation_set.shape[0],
+              world_comm.size)
+
+world_comm.Barrier()
+
+# Training dataset
+generate_ann_output_set(mechanical_problem_parametric, mechanical_reduced_problem,
+                        mechanical_input_training_set, mechanical_output_training_set,
+                        mechanical_training_set_indices, mode="Training")
+
+generate_ann_output_set(mechanical_problem_parametric, mechanical_reduced_problem,
+                        mechanical_input_validation_set, mechanical_output_validation_set,
+                        mechanical_validation_set_indices, mode="Validation")
+
+world_comm.Barrier()
+
+mechanical_reduced_problem.output_range[0] = \
+    min(np.min(mechanical_output_training_set), np.min(mechanical_output_validation_set))
+mechanical_reduced_problem.output_range[1] = \
+    max(np.max(mechanical_output_training_set), np.max(mechanical_output_validation_set))
+
+print("\n")
+
+mechanical_cpu_group0_procs = world_comm.group.Incl([4, 5, 6, 7])
+mechanical_cpu_group0_comm = world_comm.Create_group(mechanical_cpu_group0_procs)
+
+# ANN model
+mechanical_model = HiddenLayersNet(mechanical_training_set.shape[1], [35, 35],
+                        len(mechanical_reduced_problem._basis_functions), Tanh())
+
+if mechanical_cpu_group0_comm != MPI.COMM_NULL:
+    init_cpu_process_group(mechanical_cpu_group0_comm)
+
+    mechanical_training_set_indices_cpu = np.arange(mechanical_cpu_group0_comm.rank,
+                                         mechanical_input_training_set.shape[0],
+                                         mechanical_cpu_group0_comm.size)
+    mechanical_validation_set_indices_cpu = np.arange(mechanical_cpu_group0_comm.rank,
+                                           mechanical_input_validation_set.shape[0],
+                                           mechanical_cpu_group0_comm.size)
+
+    customDataset = CustomPartitionedDataset(mechanical_reduced_problem, mechanical_input_training_set,
+                                             mechanical_output_training_set, mechanical_training_set_indices_cpu)
+    mechanical_train_dataloader = DataLoader(customDataset, batch_size=10, shuffle=False)# shuffle=True)
+
+    customDataset = CustomPartitionedDataset(mechanical_reduced_problem, mechanical_input_validation_set,
+                                            mechanical_output_validation_set, mechanical_validation_set_indices_cpu)
+    mechanical_valid_dataloader = DataLoader(customDataset, shuffle=False)
+
+    mechanical_path = "mechanical_model.pth"
+    save_model(mechanical_model, mechanical_path)
+    # load_model(mechanical_model, mechanical_path)
+
+    model_synchronise(mechanical_model, verbose=True)
+
+    # Training of ANN
+    mechanical_training_loss = list()
+    mechanical_validation_loss = list()
+
+    mechanical_max_epochs = 20#000
+    mechanical_min_validation_loss = None
+    mechanical_start_epoch = 0
+    mechanical_checkpoint_path = "mechanical_checkpoint"
+    mechanical_checkpoint_epoch = 10
+
+    mechanical_learning_rate = 1e-4
+    mechanical_optimiser = get_optimiser(mechanical_model, "Adam", mechanical_learning_rate)
+    mechanical_loss_fn = get_loss_func("MSE", reduction="sum")
+
+    if os.path.exists(mechanical_checkpoint_path):
+        mechanical_start_epoch, mechanical_min_validation_loss = \
+            load_checkpoint(mechanical_checkpoint_path, mechanical_model, mechanical_optimiser)
+
+    import time
+    start_time = time.time()
+    for mechanical_epochs in range(mechanical_start_epoch, mechanical_max_epochs):
+        if mechanical_epochs > 0 and mechanical_epochs % mechanical_checkpoint_epoch == 0:
+            save_checkpoint(mechanical_checkpoint_path, mechanical_epochs,
+                            mechanical_model, mechanical_optimiser,
+                            mechanical_min_validation_loss)
+        print(f"Epoch: {mechanical_epochs+1}/{mechanical_max_epochs}")
+        mechanical_current_training_loss = train_nn(mechanical_reduced_problem,
+                                         mechanical_train_dataloader,
+                                         mechanical_model, mechanical_loss_fn, mechanical_optimiser)
+        mechanical_training_loss.append(mechanical_current_training_loss)
+        mechanical_current_validation_loss = validate_nn(mechanical_reduced_problem,
+                                              mechanical_valid_dataloader,
+                                              mechanical_model, mechanical_loss_fn)
+        mechanical_validation_loss.append(mechanical_current_validation_loss)
+        if mechanical_epochs > 0 and mechanical_current_validation_loss > mechanical_min_validation_loss \
+        and mechanical_reduced_problem.regularisation == "EarlyStopping":
+            # 1% safety margin against min_validation_loss
+            # before invoking early stopping criteria
+            print(f"Early stopping criteria invoked at epoch: {mechanical_epochs+1}")
+            break
+        mechanical_min_validation_loss = min(mechanical_validation_loss)
+    end_time = time.time()
+    mechanical_elapsed_time = end_time - start_time
+
+    os.system(f"rm {mechanical_checkpoint_path}")
+
+mechanical_model_root_process = 0
+share_model(mechanical_model, world_comm, mechanical_model_root_process)
+world_comm.Barrier()
+# ### Mechanical ANN ends ###
+
+# ### Mechanical Error analysis starts ###
+
+print("\n")
+print("Generating error analysis (only input/parameters) dataset")
+print("\n")
+
+mechanical_error_analysis_num_para = np.product(error_analysis_samples)
+itemsize = MPI.DOUBLE.Get_size()
+
+if world_comm.rank == 0:
+    mechanical_nbytes_para = mechanical_error_analysis_num_para * itemsize * para_dim
+    mechanical_nbytes_error = mechanical_error_analysis_num_para * itemsize
+else:
+    mechanical_nbytes_para = 0
+    mechanical_nbytes_error = 0
+
+win6 = MPI.Win.Allocate_shared(mechanical_nbytes_para, itemsize,
+                               comm=world_comm)
+buf6, itemsize = win6.Shared_query(0)
+mechanical_error_analysis_set = \
+    np.ndarray(buffer=buf6, dtype="d",
+               shape=(mechanical_error_analysis_num_para,
+                      para_dim))
+
+win7 = MPI.Win.Allocate_shared(mechanical_nbytes_error, itemsize,
+                               comm=world_comm)
+buf7, itemsize = win7.Shared_query(0)
+mechanical_error_numpy = np.ndarray(buffer=buf7, dtype="d",
+                         shape=(mechanical_error_analysis_num_para))
+
+if world_comm.rank == 0:
+    mechanical_error_analysis_set[:, :] = generate_ann_input_set(samples=error_analysis_samples)
+
+world_comm.Barrier()
+
+mechanical_error_analysis_indices = np.arange(world_comm.rank,
+                                   mechanical_error_analysis_set.shape[0],
+                                   world_comm.size)
+for i in mechanical_error_analysis_indices:
+    mechanical_error_numpy[i] = error_analysis(mechanical_reduced_problem, mechanical_problem_parametric,
+                                    mechanical_error_analysis_set[i, :], mechanical_model,
+                                    len(mechanical_reduced_problem._basis_functions),
+                                    online_nn)
+    print(f"Error analysis (Mechanical) {i+1} of {mechanical_error_analysis_set.shape[0]}, Error: {mechanical_error_numpy[i]}")
+
+world_comm.Barrier()
+# ### Mechanical Error analysis ends ###
+
+# ### Online phase ###
+# Online phase at parameter online_mu
+
+if world_comm.rank == 0:
+    online_mu = np.array([0.45, 0.56, 0.9, 0.7])
+    thermal_fem_solution = thermal_problem_parametric.solve(online_mu)
+    thermal_rb_solution = \
+        thermal_reduced_problem.reconstruct_solution(
+            online_nn(thermal_reduced_problem, thermal_problem_parametric,
+                    online_mu, thermal_model,
+                    len(thermal_reduced_problem._basis_functions)))
+
+
+    thermal_fem_online_file \
+        = "dlrbnicsx_solution_thermomechanical/thermal_fem_online_mu_computed.xdmf"
+    with MeshDeformationWrapperClass(mesh, facet_tags, mu_ref,
+                            online_mu):
+        with dolfinx.io.XDMFFile(mesh.comm, thermal_fem_online_file,
+                                "w") as thermal_solution_file:
+            thermal_solution_file.write_mesh(mesh)
+            thermal_solution_file.write_function(thermal_fem_solution)
+
+    thermal_rb_online_file \
+        = "dlrbnicsx_solution_thermomechanical/thermal_rb_online_mu_computed.xdmf"
+    with MeshDeformationWrapperClass(mesh, facet_tags, mu_ref,
+                            online_mu):
+        with dolfinx.io.XDMFFile(mesh.comm, thermal_rb_online_file,
+                                "w") as thermal_solution_file:
+            # NOTE scatter_forward not considered for online solution
+            thermal_solution_file.write_mesh(mesh)
+            thermal_solution_file.write_function(thermal_rb_solution)
+
+    thermal_error_function = dolfinx.fem.Function(thermal_problem_parametric._VT)
+    thermal_error_function.x.array[:] = \
+        thermal_fem_solution.x.array - thermal_rb_solution.x.array
+    thermal_fem_rb_error_file \
+        = "dlrbnicsx_solution_thermomechanical/thermal_fem_rb_error_computed.xdmf"
+    with MeshDeformationWrapperClass(mesh, facet_tags, mu_ref,
+                            online_mu):
+        with dolfinx.io.XDMFFile(mesh.comm, thermal_fem_rb_error_file,
+                                "w") as thermal_solution_file:
+            thermal_solution_file.write_mesh(mesh)
+            thermal_solution_file.write_function(thermal_error_function)
+
+    with MeshDeformationWrapperClass(mesh, facet_tags, mu_ref,
+                            online_mu):
+        print(thermal_reduced_problem.norm_error(thermal_fem_solution, thermal_rb_solution))
+        print(thermal_reduced_problem.compute_norm(thermal_error_function))
+
+    print(thermal_reduced_problem.norm_error(thermal_fem_solution, thermal_rb_solution))
+    print(thermal_reduced_problem.compute_norm(thermal_error_function))
+
+    mechanical_fem_solution = mechanical_problem_parametric.solve(online_mu)
+    mechanical_rb_solution = \
+        mechanical_reduced_problem.reconstruct_solution(
+            online_nn(mechanical_reduced_problem, mechanical_problem_parametric,
+                    online_mu, mechanical_model,
+                    len(mechanical_reduced_problem._basis_functions)))
+
+
+    mechanical_fem_online_file \
+        = "dlrbnicsx_solution_thermomechanical/mechanical_fem_online_mu_computed.xdmf"
+    with MeshDeformationWrapperClass(mesh, facet_tags, mu_ref,
+                            online_mu):
+        with dolfinx.io.XDMFFile(mesh.comm, mechanical_fem_online_file,
+                                "w") as mechanical_solution_file:
+            mechanical_solution_file.write_mesh(mesh)
+            mechanical_solution_file.write_function(mechanical_fem_solution)
+
+    mechanical_rb_online_file \
+        = "dlrbnicsx_solution_thermomechanical/mechanical_rb_online_mu_computed.xdmf"
+    with MeshDeformationWrapperClass(mesh, facet_tags, mu_ref,
+                            online_mu):
+        with dolfinx.io.XDMFFile(mesh.comm, mechanical_rb_online_file,
+                                "w") as mechanical_solution_file:
+            # NOTE scatter_forward not considered for online solution
+            mechanical_solution_file.write_mesh(mesh)
+            mechanical_solution_file.write_function(mechanical_rb_solution)
+
+    mechanical_error_function = dolfinx.fem.Function(mechanical_problem_parametric._VM)
+    mechanical_error_function.x.array[:] = \
+        mechanical_fem_solution.x.array - mechanical_rb_solution.x.array
+    mechanical_fem_rb_error_file \
+        = "dlrbnicsx_solution_thermomechanical/mechanical_fem_rb_error_computed.xdmf"
+    with MeshDeformationWrapperClass(mesh, facet_tags, mu_ref,
+                            online_mu):
+        with dolfinx.io.XDMFFile(mesh.comm, mechanical_fem_rb_error_file,
+                                "w") as mechanical_solution_file:
+            mechanical_solution_file.write_mesh(mesh)
+            mechanical_solution_file.write_function(mechanical_error_function)
+
+    with MeshDeformationWrapperClass(mesh, facet_tags, mu_ref,
+                            online_mu):
+        print(mechanical_reduced_problem.norm_error(mechanical_fem_solution, mechanical_rb_solution))
+        print(mechanical_reduced_problem.compute_norm(mechanical_error_function))
+
+    print(mechanical_reduced_problem.norm_error(mechanical_fem_solution, mechanical_rb_solution))
+    print(mechanical_reduced_problem.compute_norm(mechanical_error_function))
+
+if thermal_cpu_group0_comm != MPI.COMM_NULL:
+    print(f"Training time (Thermal): {thermal_elapsed_time}")
+
+if mechanical_cpu_group0_comm != MPI.COMM_NULL:
+    print(f"Training time (Mechanical): {mechanical_elapsed_time}")
