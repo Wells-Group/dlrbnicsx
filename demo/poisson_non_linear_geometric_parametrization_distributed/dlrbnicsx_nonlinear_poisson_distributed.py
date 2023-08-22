@@ -510,7 +510,7 @@ if cpu_group0_comm != MPI.COMM_NULL:
             break
         min_validation_loss = min(validation_loss)
     end_time = time.time()
-    thermal_elapsed_time = end_time - start_time
+    elapsed_time = end_time - start_time
 
     os.system(f"rm {checkpoint_path}")
 
