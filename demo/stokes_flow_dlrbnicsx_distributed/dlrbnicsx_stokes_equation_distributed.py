@@ -325,7 +325,7 @@ else:
 # POD Starts ###
 
 
-def generate_training_set(samples=[12, 12]):  # (samples=[6, 6]):
+def generate_training_set(samples=pod_samples):  # (samples=[6, 6]):
     # Select input samples for POD
     training_set_0 = np.linspace(0.5, 1., samples[0])
     training_set_1 = np.linspace(0.5, 1., samples[1])
@@ -774,7 +774,7 @@ if cpu_group1_comm != MPI.COMM_NULL:
 
 
 
-model_root_process = 0
+model_root_process = 2
 share_model(model_p, world_comm, model_root_process)
 
 if cpu_group0_comm != MPI.COMM_NULL:
@@ -832,7 +832,7 @@ world_comm.Bcast(error_analysis_set_p, root=0)
 world_comm.Barrier()
 error_numpy_p = np.zeros(error_analysis_set_p.shape[0])
 error_numpy_recv_p = np.zeros(error_analysis_set_p.shape[0])
-indices = np.arange(rank, error_analysis_set_p.shape[0], size)
+indices = np.arange(world_comm.rank, error_analysis_set_p.shape[0], world_comm.size)
 
 for i in indices:
     print(f"Error analysis parameter number {i+1} of ")

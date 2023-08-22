@@ -622,8 +622,8 @@ mesh, cell_tags, facet_tags = \
 mu_ref = [0.6438, 0.4313, 1., 0.5]  # reference geometry
 mu = [0.8, 0.55, 0.8, 0.4]  # Parametric geometry
 
-pod_samples = [2, 2, 2, 2]
-ann_samples = [3, 3, 3, 3]
+pod_samples = [3, 4, 3, 4]
+ann_samples = [4, 3, 4, 3]
 error_analysis_samples = [2, 2, 2, 2]
 
 # FEM solve
@@ -688,7 +688,7 @@ thermal_eigenvalues, thermal_modes, _ = \
     rbnicsx.backends.\
     proper_orthogonal_decomposition(thermal_snapshots_matrix,
                                     thermal_reduced_problem._inner_product_action,
-                                    N=Nmax, tol=1.e-6)
+                                    N=Nmax, tol=1.e-10)
 thermal_reduced_problem._basis_functions.extend(thermal_modes)
 thermal_reduced_size = len(thermal_reduced_problem._basis_functions)
 print("")
@@ -753,7 +753,7 @@ def generate_ann_output_set(problem, reduced_problem,
 
 # Training dataset
 thermal_ann_input_set = generate_ann_input_set(samples=ann_samples)
-np.random.shuffle(thermal_ann_input_set)
+# np.random.shuffle(thermal_ann_input_set)
 thermal_ann_output_set = \
     generate_ann_output_set(thermal_problem_parametric,
                             thermal_reduced_problem,
@@ -775,7 +775,7 @@ thermal_output_validation_set = thermal_ann_output_set[thermal_num_training_samp
 
 customDataset = CustomDataset(thermal_reduced_problem,
                               thermal_input_training_set, thermal_output_training_set)
-thermal_train_dataloader = DataLoader(customDataset, batch_size=40, shuffle=True)
+thermal_train_dataloader = DataLoader(customDataset, batch_size=40, shuffle=False)# shuffle=True)
 
 customDataset = CustomDataset(thermal_reduced_problem,
                               thermal_input_validation_set, thermal_output_validation_set)
@@ -787,9 +787,12 @@ thermal_model = HiddenLayersNet(thermal_training_set.shape[1],
                                 len(thermal_reduced_problem._basis_functions),
                                 Tanh())
 
+for params in thermal_model.parameters():
+    print(params.shape)
+
 thermal_path = "thermal_model.pth"
-save_model(thermal_model, thermal_path)
-# load_model(thermal_model, thermal_path)
+# save_model(thermal_model, thermal_path)
+load_model(thermal_model, thermal_path)
 
 
 # Training of ANN
@@ -905,7 +908,7 @@ mechanical_eigenvalues, mechanical_modes, _ = \
     rbnicsx.backends.\
     proper_orthogonal_decomposition(mechanical_snapshots_matrix,
                                     mechanical_reduced_problem._inner_product_action,
-                                    N=Nmax, tol=1.e-6)
+                                    N=Nmax, tol=1.e-10)
 mechanical_reduced_problem._basis_functions.extend(mechanical_modes)
 mechanical_reduced_size = len(mechanical_reduced_problem._basis_functions)
 print("")
@@ -938,7 +941,7 @@ print(f"Eigenvalues (Mechanical): {mechanical_positive_eigenvalues}")
 
 # Training dataset
 mechanical_ann_input_set = generate_ann_input_set(samples=ann_samples)
-np.random.shuffle(mechanical_ann_input_set)
+# np.random.shuffle(mechanical_ann_input_set)
 mechanical_ann_output_set = \
     generate_ann_output_set(mechanical_problem_parametric,
                             mechanical_reduced_problem,
@@ -960,7 +963,7 @@ mechanical_output_validation_set = mechanical_ann_output_set[mechanical_num_trai
 
 customDataset = CustomDataset(mechanical_reduced_problem,
                               mechanical_input_training_set, mechanical_output_training_set)
-mechanical_train_dataloader = DataLoader(customDataset, batch_size=40, shuffle=True)
+mechanical_train_dataloader = DataLoader(customDataset, batch_size=40, shuffle=False)# shuffle=True)
 
 customDataset = CustomDataset(mechanical_reduced_problem,
                               mechanical_input_validation_set, mechanical_output_validation_set)
@@ -973,8 +976,8 @@ mechanical_model = HiddenLayersNet(mechanical_training_set.shape[1],
                                 Tanh())
 
 mechanical_path = "mechanical_model.pth"
-save_model(mechanical_model, mechanical_path)
-# load_model(mechanical_model, mechanical_path)
+# save_model(mechanical_model, mechanical_path)
+load_model(mechanical_model, mechanical_path)
 
 
 # Training of ANN

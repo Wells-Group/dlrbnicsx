@@ -642,7 +642,6 @@ pod_samples = [3, 4, 3, 4]
 ann_samples = [4, 3, 4, 3]
 error_analysis_samples = [2, 2, 2, 2]
 thermal_num_dofs = solution_mu.x.array.shape[0]
-# TODO ann samples, error_analysis_samples
 num_snapshots = np.product(pod_samples)
 nbytes_para = itemsize * num_snapshots * para_dim
 nbytes_dofs = itemsize * num_snapshots * thermal_num_dofs
@@ -779,7 +778,7 @@ itemsize = MPI.DOUBLE.Get_size()
 
 if world_comm.rank == 0:
     thermal_ann_input_set = generate_ann_input_set(samples=ann_samples)
-    np.random.shuffle(thermal_ann_input_set)
+    # np.random.shuffle(thermal_ann_input_set)
     thermal_nbytes_para_ann_training = thermal_num_training_samples * itemsize * para_dim
     thermal_nbytes_dofs_ann_training = thermal_num_training_samples * itemsize * \
         len(thermal_reduced_problem._basis_functions)
@@ -892,8 +891,8 @@ if thermal_cpu_group0_comm != MPI.COMM_NULL:
     thermal_valid_dataloader = DataLoader(customDataset, shuffle=False)
 
     thermal_path = "thermal_model.pth"
-    save_model(thermal_model, thermal_path)
-    # load_model(thermal_model, thermal_path)
+    # save_model(thermal_model, thermal_path)
+    load_model(thermal_model, thermal_path)
 
     model_synchronise(thermal_model, verbose=True)
 
@@ -901,7 +900,7 @@ if thermal_cpu_group0_comm != MPI.COMM_NULL:
     thermal_training_loss = list()
     thermal_validation_loss = list()
 
-    thermal_max_epochs = 20#000
+    thermal_max_epochs = 20 #000
     thermal_min_validation_loss = None
     thermal_start_epoch = 0
     thermal_checkpoint_path = "thermal_checkpoint"
@@ -995,6 +994,7 @@ for i in thermal_error_analysis_indices:
     print(f"Error analysis {i+1} of {thermal_error_analysis_set.shape[0]}, Error: {thermal_error_numpy[i]}")
 
 world_comm.Barrier()
+
 # ### Thermal Error analysis ends ###
 
 mechanical_problem_parametric = \
@@ -1113,7 +1113,7 @@ itemsize = MPI.DOUBLE.Get_size()
 
 if world_comm.rank == 0:
     mechanical_ann_input_set = generate_ann_input_set(samples=ann_samples)
-    np.random.shuffle(mechanical_ann_input_set)
+    # np.random.shuffle(mechanical_ann_input_set)
     mechanical_nbytes_para_ann_training = mechanical_num_training_samples * itemsize * para_dim
     mechanical_nbytes_dofs_ann_training = mechanical_num_training_samples * itemsize * \
         len(mechanical_reduced_problem._basis_functions)
@@ -1200,7 +1200,7 @@ mechanical_reduced_problem.output_range[1] = \
 
 print("\n")
 
-mechanical_cpu_group0_procs = world_comm.group.Incl([4, 5, 6, 7])
+mechanical_cpu_group0_procs = world_comm.group.Incl([4]) # ([4, 5, 6, 7])
 mechanical_cpu_group0_comm = world_comm.Create_group(mechanical_cpu_group0_procs)
 
 # ANN model
@@ -1219,15 +1219,15 @@ if mechanical_cpu_group0_comm != MPI.COMM_NULL:
 
     customDataset = CustomPartitionedDataset(mechanical_reduced_problem, mechanical_input_training_set,
                                              mechanical_output_training_set, mechanical_training_set_indices_cpu)
-    mechanical_train_dataloader = DataLoader(customDataset, batch_size=10, shuffle=False)# shuffle=True)
+    mechanical_train_dataloader = DataLoader(customDataset, batch_size=40, shuffle=False)# shuffle=True)
 
     customDataset = CustomPartitionedDataset(mechanical_reduced_problem, mechanical_input_validation_set,
                                             mechanical_output_validation_set, mechanical_validation_set_indices_cpu)
     mechanical_valid_dataloader = DataLoader(customDataset, shuffle=False)
 
     mechanical_path = "mechanical_model.pth"
-    save_model(mechanical_model, mechanical_path)
-    # load_model(mechanical_model, mechanical_path)
+    # save_model(mechanical_model, mechanical_path)
+    load_model(mechanical_model, mechanical_path)
 
     model_synchronise(mechanical_model, verbose=True)
 
@@ -1235,7 +1235,7 @@ if mechanical_cpu_group0_comm != MPI.COMM_NULL:
     mechanical_training_loss = list()
     mechanical_validation_loss = list()
 
-    mechanical_max_epochs = 20#000
+    mechanical_max_epochs = 20 # 20000
     mechanical_min_validation_loss = None
     mechanical_start_epoch = 0
     mechanical_checkpoint_path = "mechanical_checkpoint"
@@ -1277,7 +1277,7 @@ if mechanical_cpu_group0_comm != MPI.COMM_NULL:
 
     os.system(f"rm {mechanical_checkpoint_path}")
 
-mechanical_model_root_process = 0
+mechanical_model_root_process = 4
 share_model(mechanical_model, world_comm, mechanical_model_root_process)
 world_comm.Barrier()
 # ### Mechanical ANN ends ###

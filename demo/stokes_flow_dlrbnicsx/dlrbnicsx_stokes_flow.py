@@ -435,7 +435,7 @@ print(f"Pressure eigenvalues: {positive_eigenvalues_p}")
 # Creating dataset
 
 
-def generate_ann_input_set(samples=[3, 3]):
+def generate_ann_input_set(samples=ann_samples):
     # Select samples from the parameter space for ANN
     training_set_0 = np.linspace(0.5, 1., samples[0])
     training_set_1 = np.linspace(0.5, 1., samples[1])
@@ -615,11 +615,8 @@ for epochs in range(start_epoch_p, max_epochs_p):
 end_time = time.time()
 elapsed_time = end_time - start_time
 
-
 os.system(f"rm {checkpoint_path_u}")
 os.system(f"rm {checkpoint_path_p}")
-
-# TODO fix online_nn and error_analysis as N != reduced_problem._basis_functions but reduced_problem._basis_functions_p or reduced_problem._basis_functions_u
 
 # Error analysis dataset
 print("\n")

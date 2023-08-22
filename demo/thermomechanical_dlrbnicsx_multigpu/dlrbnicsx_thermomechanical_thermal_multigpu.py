@@ -782,7 +782,7 @@ itemsize = MPI.DOUBLE.Get_size()
 
 if world_comm.rank == 0:
     thermal_ann_input_set = generate_ann_input_set(samples=ann_samples)
-    np.random.shuffle(thermal_ann_input_set)
+    # np.random.shuffle(thermal_ann_input_set)
     thermal_nbytes_para_ann_training = thermal_num_training_samples * itemsize * para_dim
     thermal_nbytes_dofs_ann_training = thermal_num_training_samples * itemsize * \
         len(thermal_reduced_problem._basis_functions)
@@ -891,7 +891,7 @@ if thermal_gpu_group0_comm != MPI.COMM_NULL:
     customDataset = CustomPartitionedDatasetGpu(thermal_reduced_problem, thermal_input_training_set,
                                              thermal_output_training_set, thermal_training_set_indices_gpu,
                                              cuda_rank_list[thermal_gpu_group0_comm.rank])
-    thermal_train_dataloader = DataLoader(customDataset, batch_size=10, shuffle=False)# shuffle=True)
+    thermal_train_dataloader = DataLoader(customDataset, batch_size=40, shuffle=False)# shuffle=True)
 
     customDataset = CustomPartitionedDatasetGpu(thermal_reduced_problem, thermal_input_validation_set,
                                             thermal_output_validation_set, thermal_validation_set_indices_gpu,
@@ -899,8 +899,8 @@ if thermal_gpu_group0_comm != MPI.COMM_NULL:
     thermal_valid_dataloader = DataLoader(customDataset, shuffle=False)
 
     thermal_path = "thermal_model.pth"
-    save_model(thermal_model, thermal_path)
-    # load_model(thermal_model, thermal_path)
+    # save_model(thermal_model, thermal_path)
+    load_model(thermal_model, thermal_path)
 
     model_to_gpu(thermal_model, cuda_rank=cuda_rank_list[thermal_gpu_group0_comm.rank])
     model_synchronise(thermal_model, verbose=True)
@@ -909,7 +909,7 @@ if thermal_gpu_group0_comm != MPI.COMM_NULL:
     thermal_training_loss = list()
     thermal_validation_loss = list()
 
-    thermal_max_epochs = 20#000
+    thermal_max_epochs = 20 # 20000
     thermal_min_validation_loss = None
     thermal_start_epoch = 0
     thermal_checkpoint_path = "thermal_checkpoint"
@@ -1123,7 +1123,7 @@ itemsize = MPI.DOUBLE.Get_size()
 
 if world_comm.rank == 0:
     mechanical_ann_input_set = generate_ann_input_set(samples=ann_samples)
-    np.random.shuffle(mechanical_ann_input_set)
+    # np.random.shuffle(mechanical_ann_input_set)
     mechanical_nbytes_para_ann_training = mechanical_num_training_samples * itemsize * para_dim
     mechanical_nbytes_dofs_ann_training = mechanical_num_training_samples * itemsize * \
         len(mechanical_reduced_problem._basis_functions)
@@ -1232,7 +1232,7 @@ if mechanical_gpu_group0_comm != MPI.COMM_NULL:
     customDataset = CustomPartitionedDatasetGpu(mechanical_reduced_problem, mechanical_input_training_set,
                                              mechanical_output_training_set, mechanical_training_set_indices_gpu,
                                              cuda_rank_list[mechanical_gpu_group0_comm.rank])
-    mechanical_train_dataloader = DataLoader(customDataset, batch_size=10, shuffle=False)# shuffle=True)
+    mechanical_train_dataloader = DataLoader(customDataset, batch_size=40, shuffle=False)# shuffle=True)
 
     customDataset = CustomPartitionedDatasetGpu(mechanical_reduced_problem, mechanical_input_validation_set,
                                             mechanical_output_validation_set, mechanical_validation_set_indices_gpu,
@@ -1240,8 +1240,8 @@ if mechanical_gpu_group0_comm != MPI.COMM_NULL:
     mechanical_valid_dataloader = DataLoader(customDataset, shuffle=False)
 
     mechanical_path = "mechanical_model.pth"
-    save_model(mechanical_model, mechanical_path)
-    # load_model(mechanical_model, mechanical_path)
+    # save_model(mechanical_model, mechanical_path)
+    load_model(mechanical_model, mechanical_path)
 
     model_to_gpu(mechanical_model, cuda_rank=cuda_rank_list[mechanical_gpu_group0_comm.rank])
     model_synchronise(mechanical_model, verbose=True)
@@ -1250,7 +1250,7 @@ if mechanical_gpu_group0_comm != MPI.COMM_NULL:
     mechanical_training_loss = list()
     mechanical_validation_loss = list()
 
-    mechanical_max_epochs = 20#000
+    mechanical_max_epochs = 20 # 20000
     mechanical_min_validation_loss = None
     mechanical_start_epoch = 0
     mechanical_checkpoint_path = "mechanical_checkpoint"
@@ -1293,9 +1293,58 @@ if mechanical_gpu_group0_comm != MPI.COMM_NULL:
     model_to_cpu(mechanical_model)
     os.system(f"rm {mechanical_checkpoint_path}")
 
-mechanical_model_root_process = 0
+mechanical_model_root_process = 1
 share_model(mechanical_model, world_comm, mechanical_model_root_process)
 world_comm.Barrier()
+# ### Mechanical ANN ends ###
+
+# ### Mechanical Error analysis starts ###
+
+print("\n")
+print("Generating error analysis (only input/parameters) dataset")
+print("\n")
+
+mechanical_error_analysis_num_para = np.product(error_analysis_samples)
+itemsize = MPI.DOUBLE.Get_size()
+
+if world_comm.rank == 0:
+    mechanical_nbytes_para = mechanical_error_analysis_num_para * itemsize * para_dim
+    mechanical_nbytes_error = mechanical_error_analysis_num_para * itemsize
+else:
+    mechanical_nbytes_para = 0
+    mechanical_nbytes_error = 0
+
+win6 = MPI.Win.Allocate_shared(mechanical_nbytes_para, itemsize,
+                               comm=world_comm)
+buf6, itemsize = win6.Shared_query(0)
+mechanical_error_analysis_set = \
+    np.ndarray(buffer=buf6, dtype="d",
+               shape=(mechanical_error_analysis_num_para,
+                      para_dim))
+
+win7 = MPI.Win.Allocate_shared(mechanical_nbytes_error, itemsize,
+                               comm=world_comm)
+buf7, itemsize = win7.Shared_query(0)
+mechanical_error_numpy = np.ndarray(buffer=buf7, dtype="d",
+                         shape=(mechanical_error_analysis_num_para))
+
+if world_comm.rank == 0:
+    mechanical_error_analysis_set[:, :] = generate_ann_input_set(samples=error_analysis_samples)
+
+world_comm.Barrier()
+
+mechanical_error_analysis_indices = np.arange(world_comm.rank,
+                                   mechanical_error_analysis_set.shape[0],
+                                   world_comm.size)
+for i in mechanical_error_analysis_indices:
+    mechanical_error_numpy[i] = error_analysis(mechanical_reduced_problem, mechanical_problem_parametric,
+                                    mechanical_error_analysis_set[i, :], mechanical_model,
+                                    len(mechanical_reduced_problem._basis_functions),
+                                    online_nn)
+    print(f"Error analysis (Mechanical) {i+1} of {mechanical_error_analysis_set.shape[0]}, Error: {mechanical_error_numpy[i]}")
+
+world_comm.Barrier()
+
 # ### Mechanical Error analysis ends ###
 
 # ### Online phase ###
