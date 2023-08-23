@@ -19,13 +19,16 @@ import os
 from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
 from dlrbnicsx.activation_function.activation_function_factory \
     import Tanh
-from dlrbnicsx.dataset.custom_partitioned_dataset \
-    import CustomPartitionedDataset
+from dlrbnicsx.dataset.custom_partitioned_dataset_gpu \
+    import CustomPartitionedDatasetGpu
 from dlrbnicsx.interface.wrappers import DataLoader, save_model, \
-    load_model, save_checkpoint, load_checkpoint, model_synchronise, \
-    init_cpu_process_group, get_optimiser, get_loss_func, share_model
+    load_model, model_synchronise, init_gpu_process_group, model_to_gpu, \
+    model_to_cpu, save_checkpoint, load_checkpoint, get_optimiser, \
+    get_loss_func, share_model
+from dlrbnicsx.train_validate_test.train_validate_test_multigpu \
+    import train_nn, validate_nn
 from dlrbnicsx.train_validate_test.train_validate_test_distributed \
-    import train_nn, validate_nn, online_nn, error_analysis
+    import online_nn, error_analysis
 
 
 class ProblemOnDeformedDomain(abc.ABC):
@@ -607,8 +610,8 @@ reduced_problem.output_range_p[1] = max(np.max(output_training_set_p), np.max(ou
 
 print("\n")
 
-cpu_group0_procs = world_comm.group.Incl([0, 1])
-cpu_group0_comm = world_comm.Create_group(cpu_group0_procs)
+gpu_group0_procs = world_comm.group.Incl([0]) # ([0, 1, 2, 3])
+gpu_group0_comm = world_comm.Create_group(gpu_group0_procs)
 
 # ANN model
 model_u = HiddenLayersNet(input_training_set.shape[1], [30, 30],
@@ -616,26 +619,30 @@ model_u = HiddenLayersNet(input_training_set.shape[1], [30, 30],
 model_p = HiddenLayersNet(input_training_set.shape[1], [15, 15],
                           len(reduced_problem._basis_functions_p), Tanh())
 
-if cpu_group0_comm != MPI.COMM_NULL:
-    init_cpu_process_group(cpu_group0_comm)
+if gpu_group0_comm != MPI.COMM_NULL:
 
-    training_set_indices_cpu_u = np.arange(cpu_group0_comm.rank,
+    cuda_rank_list = [0, 1, 2, 3]
+    init_gpu_process_group(gpu_group0_comm)
+
+    training_set_indices_gpu_u = np.arange(gpu_group0_comm.rank,
                                            input_training_set.shape[0],
-                                           cpu_group0_comm.size)
-    validation_set_indices_cpu_u = np.arange(cpu_group0_comm.rank,
+                                           gpu_group0_comm.size)
+    validation_set_indices_gpu_u = np.arange(gpu_group0_comm.rank,
                                              input_validation_set.shape[0],
-                                             cpu_group0_comm.size)
+                                             gpu_group0_comm.size)
 
-    customDataset = CustomPartitionedDataset(reduced_problem, input_training_set,
-                                             output_training_set_u, training_set_indices_cpu_u,
+    customDataset = CustomPartitionedDatasetGpu(reduced_problem, input_training_set,
+                                             output_training_set_u, training_set_indices_gpu_u,
+                                             cuda_rank_list[gpu_group0_comm.rank],
                                              input_scaling_range=reduced_problem.input_scaling_range_u,
                                              output_scaling_range=reduced_problem.output_scaling_range_u,
                                              input_range=reduced_problem.input_range_u,
                                              output_range=reduced_problem.output_range_u, verbose=False)
-    train_dataloader_u = DataLoader(customDataset, batch_size=3, shuffle=False)# shuffle=True)
+    train_dataloader_u = DataLoader(customDataset, batch_size=6, shuffle=False)# shuffle=True)
 
-    customDataset = CustomPartitionedDataset(reduced_problem, input_validation_set,
-                                             output_validation_set_u, validation_set_indices_cpu_u,
+    customDataset = CustomPartitionedDatasetGpu(reduced_problem, input_validation_set,
+                                             output_validation_set_u, validation_set_indices_gpu_u,
+                                             cuda_rank_list[gpu_group0_comm.rank],
                                              input_scaling_range=reduced_problem.input_scaling_range_u,
                                              output_scaling_range=reduced_problem.output_scaling_range_u,
                                              input_range=reduced_problem.input_range_u,
@@ -646,6 +653,7 @@ if cpu_group0_comm != MPI.COMM_NULL:
     # save_model(model_u, path)
     load_model(model_u, path)
 
+    model_to_gpu(model_u, cuda_rank=cuda_rank_list[gpu_group0_comm.rank])
     model_synchronise(model_u, verbose=True)
 
     # Training of ANN
@@ -678,7 +686,9 @@ if cpu_group0_comm != MPI.COMM_NULL:
         training_loss_u.append(current_training_loss)
         current_validation_loss = validate_nn(reduced_problem,
                                               valid_dataloader_u,
-                                              model_u, loss_fn_u)
+                                              model_u,
+                                              cuda_rank_list[gpu_group0_comm.rank],
+                                              loss_fn_u)
         validation_loss_u.append(current_validation_loss)
         if epochs > 0 and current_validation_loss > min_validation_loss_u \
         and reduced_problem.regularisation_u == "EarlyStopping":
@@ -689,35 +699,41 @@ if cpu_group0_comm != MPI.COMM_NULL:
         min_validation_loss_u = min(validation_loss_u)
     end_time = time.time()
     elapsed_time_u = end_time - start_time
+    model_to_cpu(model_u)
+    os.system(f"rm {checkpoint_path_u}")
 
 model_root_process = 0
 share_model(model_u, world_comm, model_root_process)
 
 print("\n")
 
-cpu_group1_procs = world_comm.group.Incl([2, 3])
-cpu_group1_comm = world_comm.Create_group(cpu_group1_procs)
+gpu_group1_procs = world_comm.group.Incl([2]) # ([2, 3])
+gpu_group1_comm = world_comm.Create_group(gpu_group1_procs)
 
-if cpu_group1_comm != MPI.COMM_NULL:
-    init_cpu_process_group(cpu_group1_comm)
+if gpu_group1_comm != MPI.COMM_NULL:
 
-    training_set_indices_cpu_p = np.arange(cpu_group1_comm.rank,
+    cuda_rank_list = [0, 1, 2, 3]
+    init_gpu_process_group(gpu_group1_comm)
+
+    training_set_indices_gpu_p = np.arange(gpu_group1_comm.rank,
                                            input_training_set.shape[0],
-                                           cpu_group1_comm.size)
-    validation_set_indices_cpu_p = np.arange(cpu_group1_comm.rank,
+                                           gpu_group1_comm.size)
+    validation_set_indices_gpu_p = np.arange(gpu_group1_comm.rank,
                                              input_validation_set.shape[0],
-                                             cpu_group1_comm.size)
+                                             gpu_group1_comm.size)
 
-    customDataset = CustomPartitionedDataset(reduced_problem, input_training_set,
-                                             output_training_set_p, training_set_indices_cpu_p,
+    customDataset = CustomPartitionedDatasetGpu(reduced_problem, input_training_set,
+                                             output_training_set_p, training_set_indices_gpu_p,
+                                             cuda_rank_list[gpu_group1_comm.rank],
                                              input_scaling_range=reduced_problem.input_scaling_range_p,
                                              output_scaling_range=reduced_problem.output_scaling_range_p,
                                              input_range=reduced_problem.input_range_p,
                                              output_range=reduced_problem.output_range_p, verbose=False)
-    train_dataloader_p = DataLoader(customDataset, batch_size=3, shuffle=False)# shuffle=True)
+    train_dataloader_p = DataLoader(customDataset, batch_size=6, shuffle=False)# shuffle=True)
 
-    customDataset = CustomPartitionedDataset(reduced_problem, input_validation_set,
-                                             output_validation_set_p, validation_set_indices_cpu_p,
+    customDataset = CustomPartitionedDatasetGpu(reduced_problem, input_validation_set,
+                                             output_validation_set_p, validation_set_indices_gpu_p,
+                                             cuda_rank_list[gpu_group1_comm.rank],
                                              input_scaling_range=reduced_problem.input_scaling_range_p,
                                              output_scaling_range=reduced_problem.output_scaling_range_p,
                                              input_range=reduced_problem.input_range_p,
@@ -728,6 +744,7 @@ if cpu_group1_comm != MPI.COMM_NULL:
     # save_model(model_p, path)
     load_model(model_p, path)
 
+    model_to_gpu(model_p, cuda_rank=cuda_rank_list[gpu_group1_comm.rank])
     model_synchronise(model_p, verbose=True)
 
     # Training of ANN
@@ -760,7 +777,9 @@ if cpu_group1_comm != MPI.COMM_NULL:
         training_loss_p.append(current_training_loss)
         current_validation_loss = validate_nn(reduced_problem,
                                               valid_dataloader_p,
-                                              model_p, loss_fn_p)
+                                              model_p,
+                                              cuda_rank_list[gpu_group1_comm.rank],
+                                              loss_fn_p)
         validation_loss_p.append(current_validation_loss)
         if epochs > 0 and current_validation_loss > min_validation_loss_p \
         and reduced_problem.regularisation_p == "EarlyStopping":
@@ -771,17 +790,12 @@ if cpu_group1_comm != MPI.COMM_NULL:
         min_validation_loss_p = min(validation_loss_p)
     end_time = time.time()
     elapsed_time_p = end_time - start_time
-
-
+    model_to_cpu(model_p)
+    os.system(f"rm {checkpoint_path_p}")
 
 model_root_process = 2
 share_model(model_p, world_comm, model_root_process)
 
-if cpu_group0_comm != MPI.COMM_NULL:
-    os.system(f"rm {checkpoint_path_u}")
-
-if cpu_group1_comm != MPI.COMM_NULL:
-    os.system(f"rm {checkpoint_path_p}")
 
 # Error analysis dataset
 print("\n")

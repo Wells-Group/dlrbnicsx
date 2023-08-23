@@ -532,7 +532,7 @@ load_model(model_u, path)
 training_loss_u = list()
 validation_loss_u = list()
 
-max_epochs_u = 1 # 50 # 20000
+max_epochs_u = 50 # 20000
 min_validation_loss_u = None
 start_epoch_u = 0
 checkpoint_path_u = "checkpoint_u"
@@ -578,7 +578,7 @@ load_model(model_p, path)
 training_loss_p = list()
 validation_loss_p = list()
 
-max_epochs_p = 1 # 50 # 20000
+max_epochs_p = 50 # 20000
 min_validation_loss_p = None
 start_epoch_p = 0
 checkpoint_path_p = "checkpoint_p"
