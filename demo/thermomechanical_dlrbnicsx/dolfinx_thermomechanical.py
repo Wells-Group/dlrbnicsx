@@ -47,7 +47,7 @@ sym_T = sympy.Symbol("sym_T") #  Sympy symbol for spline interpolation
 # i.e. set reset_reference=True and is_deformation=True
 # Parameter tuple (D_0, D_1, t_0, t_1)
 mu_ref = [0.6438, 0.4313, 1., 0.5]  # reference geometry
-mu = [0.45, 0.56, 0.9, 0.7] # [0.8, 0.55, 0.8, 0.4]  # Parametric geometry
+mu = mu_ref # [0.45, 0.56, 0.9, 0.7] # [0.8, 0.55, 0.8, 0.4]  # Parametric geometry
 
 bc_list_geometric = list()
 
@@ -816,14 +816,18 @@ dofs_bottom_31 = dolfinx.fem.locate_dofs_topological(VM.sub(1), gdim-1, boundari
 dofs_sym_5 = dolfinx.fem.locate_dofs_topological(VM.sub(0), gdim-1, boundaries.find(5))
 dofs_sym_9 = dolfinx.fem.locate_dofs_topological(VM.sub(0), gdim-1, boundaries.find(9))
 dofs_sym_12 = dolfinx.fem.locate_dofs_topological(VM.sub(0), gdim-1, boundaries.find(12))
+dofs_bottom_1_2 = dolfinx.fem.locate_dofs_topological(VM.sub(0), gdim-1, boundaries.find(1))
+dofs_bottom_31_2 = dolfinx.fem.locate_dofs_topological(VM.sub(0), gdim-1, boundaries.find(31))
 
 bc_bottom_1 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_bottom_1, VM.sub(1))
 bc_bottom_31 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_bottom_31, VM.sub(1))
 bc_sym_5 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_sym_5, VM.sub(0))
 bc_sym_9 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_sym_9, VM.sub(0))
 bc_sym_12 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_sym_12, VM.sub(0))
+bc_bottom_1_2 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_bottom_1_2, VM.sub(0))
+bc_bottom_31_2 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_bottom_31_2, VM.sub(0))
 
-bcsM = [bc_bottom_1, bc_bottom_31, bc_sym_5, bc_sym_9, bc_sym_12]
+bcsM = [bc_bottom_1, bc_bottom_31, bc_sym_5, bc_sym_9, bc_sym_12, bc_bottom_1_2, bc_bottom_31_2]
 
 with HarmonicMeshMotion(mesh, boundaries, bc_markers_list,
                         bc_list_geometric, reset_reference=True,
