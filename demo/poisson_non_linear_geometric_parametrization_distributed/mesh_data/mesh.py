@@ -7,12 +7,13 @@ import dolfinx
 gmsh.initialize('', False)
 
 lc = 0.04
+lc_fine = 0.005
 gdim = 2
 
 gmsh.model.geo.addPoint(0., 0., 0., lc, 1)
 gmsh.model.geo.addPoint(1., 0., 0., lc, 2)
-gmsh.model.geo.addPoint(1., 1., 0., lc, 3)
-gmsh.model.geo.addPoint(0., 1., 0., lc, 4)
+gmsh.model.geo.addPoint(1., 1., 0., lc_fine, 3)
+gmsh.model.geo.addPoint(0., 1., 0., lc_fine, 4)
 
 gmsh.model.geo.addLine(1, 2, 1)
 gmsh.model.geo.addLine(2, 3, 2)

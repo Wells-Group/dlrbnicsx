@@ -308,9 +308,9 @@ para_dim = 2
 num_dofs_u = solution_vel_mu.x.array.shape[0]
 num_dofs_p = solution_pre_mu.x.array.shape[0]
 
-pod_samples = [3, 3]
-ann_samples = [3, 4]
-error_analysis_samples = [4, 3]
+pod_samples = [5, 5]
+ann_samples = [7, 7]
+error_analysis_samples = [4, 4]
 num_snapshots = np.product(pod_samples)
 
 if world_comm.rank == 0:
@@ -325,7 +325,7 @@ else:
 # POD Starts ###
 
 
-def generate_training_set(samples=pod_samples):  # (samples=[6, 6]):
+def generate_training_set(samples=pod_samples):
     # Select input samples for POD
     training_set_0 = np.linspace(0.5, 1., samples[0])
     training_set_1 = np.linspace(0.5, 1., samples[1])
@@ -490,7 +490,7 @@ itemsize = MPI.DOUBLE.Get_size()
 
 if world_comm.rank == 0:
     ann_input_set = generate_ann_input_set(samples=ann_samples)
-    # np.random.shuffle(ann_input_set)
+    np.random.shuffle(ann_input_set)
     nbytes_para_ann_training = num_training_samples * itemsize * para_dim
     nbytes_dofs_ann_training_u = num_training_samples * itemsize * \
         len(reduced_problem._basis_functions_u)
@@ -632,7 +632,7 @@ if cpu_group0_comm != MPI.COMM_NULL:
                                              output_scaling_range=reduced_problem.output_scaling_range_u,
                                              input_range=reduced_problem.input_range_u,
                                              output_range=reduced_problem.output_range_u, verbose=False)
-    train_dataloader_u = DataLoader(customDataset, batch_size=3, shuffle=False)# shuffle=True)
+    train_dataloader_u = DataLoader(customDataset, batch_size=3, shuffle=True)
 
     customDataset = CustomPartitionedDataset(reduced_problem, input_validation_set,
                                              output_validation_set_u, validation_set_indices_cpu_u,
@@ -643,8 +643,8 @@ if cpu_group0_comm != MPI.COMM_NULL:
     valid_dataloader_u = DataLoader(customDataset, shuffle=False)
 
     path = "model_u.pth"
-    # save_model(model_u, path)
-    load_model(model_u, path)
+    save_model(model_u, path)
+    # load_model(model_u, path)
 
     model_synchronise(model_u, verbose=True)
 
@@ -652,7 +652,7 @@ if cpu_group0_comm != MPI.COMM_NULL:
     training_loss_u = list()
     validation_loss_u = list()
 
-    max_epochs_u = 50 # 20000
+    max_epochs_u = 20000
     min_validation_loss_u = None
     start_epoch = 0
     checkpoint_path_u = "checkpoint_u"
@@ -672,7 +672,7 @@ if cpu_group0_comm != MPI.COMM_NULL:
         if epochs > 0 and epochs % checkpoint_epoch_u == 0:
             save_checkpoint(checkpoint_path_u, epochs, model_u, optimiser_u,
                             min_validation_loss_u)
-        print(f"Epoch: {epochs+1}/{max_epochs_u}")
+        print(f"Epoch (Velocity): {epochs+1}/{max_epochs_u}")
         current_training_loss = train_nn(reduced_problem, train_dataloader_u,
                                          model_u, loss_fn_u, optimiser_u)
         training_loss_u.append(current_training_loss)
@@ -689,9 +689,6 @@ if cpu_group0_comm != MPI.COMM_NULL:
         min_validation_loss_u = min(validation_loss_u)
     end_time = time.time()
     elapsed_time_u = end_time - start_time
-
-model_root_process = 0
-share_model(model_u, world_comm, model_root_process)
 
 print("\n")
 
@@ -714,7 +711,7 @@ if cpu_group1_comm != MPI.COMM_NULL:
                                              output_scaling_range=reduced_problem.output_scaling_range_p,
                                              input_range=reduced_problem.input_range_p,
                                              output_range=reduced_problem.output_range_p, verbose=False)
-    train_dataloader_p = DataLoader(customDataset, batch_size=3, shuffle=False)# shuffle=True)
+    train_dataloader_p = DataLoader(customDataset, batch_size=3, shuffle=True)
 
     customDataset = CustomPartitionedDataset(reduced_problem, input_validation_set,
                                              output_validation_set_p, validation_set_indices_cpu_p,
@@ -725,8 +722,8 @@ if cpu_group1_comm != MPI.COMM_NULL:
     valid_dataloader_p = DataLoader(customDataset, shuffle=False)
 
     path = "model_p.pth"
-    # save_model(model_p, path)
-    load_model(model_p, path)
+    save_model(model_p, path)
+    # load_model(model_p, path)
 
     model_synchronise(model_p, verbose=True)
 
@@ -734,7 +731,7 @@ if cpu_group1_comm != MPI.COMM_NULL:
     training_loss_p = list()
     validation_loss_p = list()
 
-    max_epochs_p = 50 # 20000
+    max_epochs_p = 20000
     min_validation_loss_p = None
     start_epoch = 0
     checkpoint_path_p = "checkpoint_p"
@@ -754,7 +751,7 @@ if cpu_group1_comm != MPI.COMM_NULL:
         if epochs > 0 and epochs % checkpoint_epoch_p == 0:
             save_checkpoint(checkpoint_path_p, epochs, model_p, optimiser_p,
                             min_validation_loss_p)
-        print(f"Epoch: {epochs+1}/{max_epochs_p}")
+        print(f"Epoch (Pressure): {epochs+1}/{max_epochs_p}")
         current_training_loss = train_nn(reduced_problem, train_dataloader_p,
                                          model_p, loss_fn_p, optimiser_p)
         training_loss_p.append(current_training_loss)
@@ -772,10 +769,13 @@ if cpu_group1_comm != MPI.COMM_NULL:
     end_time = time.time()
     elapsed_time_p = end_time - start_time
 
+world_comm.Barrier()
 
+model_root_process_u = 0
+share_model(model_u, world_comm, model_root_process_u)
 
-model_root_process = 2
-share_model(model_p, world_comm, model_root_process)
+model_root_process_p = 2
+share_model(model_p, world_comm, model_root_process_p)
 
 if cpu_group0_comm != MPI.COMM_NULL:
     os.system(f"rm {checkpoint_path_u}")
@@ -794,7 +794,7 @@ else:
 
 world_comm.Bcast(error_analysis_set_u, root=0)
 
-world_comm.Barrier()
+# world_comm.Barrier()
 error_numpy_u = np.zeros(error_analysis_set_u.shape[0])
 error_numpy_recv_u = np.zeros(error_analysis_set_u.shape[0])
 indices = np.arange(rank, error_analysis_set_u.shape[0], size)
