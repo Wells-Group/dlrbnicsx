@@ -157,9 +157,9 @@ class PODANNReducedProblem(abc.ABC):
         self.input_range = \
             np.array([[0.2, -0.2, 1.], [0.3, -0.4, 4.]])
         self.output_range = [-6., 3.]
-        self.loss_fn = "MSE"
-        self.learning_rate = 1e-5
-        self.optimizer = "Adam"
+        #self.loss_fn = "MSE"
+        #self.learning_rate = 1e-5
+        #self.optimizer = "Adam"
         self.regularisation = "EarlyStopping"
 
     def _inner_product_action(self, fun_j):
@@ -299,7 +299,7 @@ eigenvalues, modes, _ = \
     rbnicsx.backends.\
     proper_orthogonal_decomposition(snapshots_matrix,
                                     reduced_problem._inner_product_action,
-                                    N=Nmax, tol=1e-10)
+                                    N=Nmax, tol=1e-6)
 
 reduced_problem._basis_functions.extend(modes)
 reduced_size = len(reduced_problem._basis_functions)
@@ -581,15 +581,18 @@ world_comm.Barrier()
 if world_comm.rank == 0:
     # Online phase at parameter online_mu
     # online_mu = np.array([0.25, -0.3, 2.5])
-    online_mu = np.array([0.25, -0.3, 3.])
+    online_mu = np.array([0.25, 0.3, 3.])
+    fem_start_time = time.time()
     fem_solution = problem_parametric.solve(online_mu)
+    fem_end_time = time.time()
     # First compute the RB solution using online_nn.
     # Next this solution is reconstructed on FE space
+    rb_start_time = time.time()
     rb_solution = \
         reduced_problem.reconstruct_solution(
             online_nn(reduced_problem, problem_parametric, online_mu, model,
                       len(reduced_problem._basis_functions)))
-
+    rb_end_time = time.time()
 
     # Post processing
     fem_online_file \
@@ -628,6 +631,10 @@ if world_comm.rank == 0:
                                 "w") as solution_file:
             solution_file.write_mesh(mesh)
             solution_file.write_function(error_function)
+    print(f"FEM time: {fem_end_time - fem_start_time}")
+    print(f"RB time: {rb_end_time - rb_start_time}")
+    print(f"Speedup: {(fem_end_time - fem_start_time)/(rb_end_time - rb_start_time)}")
 
 if cpu_group0_comm != MPI.COMM_NULL:
+    save_model(model, "trained_model.pth")
     print(f"Rank {cpu_group0_comm.rank}, Training time: {elapsed_time}")

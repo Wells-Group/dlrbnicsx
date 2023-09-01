@@ -779,9 +779,11 @@ share_model(model_p, world_comm, model_root_process_p)
 
 if cpu_group0_comm != MPI.COMM_NULL:
     os.system(f"rm {checkpoint_path_u}")
+    save_model(model_u, "trained_model_u.pth")
 
 if cpu_group1_comm != MPI.COMM_NULL:
     os.system(f"rm {checkpoint_path_p}")
+    save_model(model_p, "trained_model_p.pth")
 
 # Error analysis dataset
 print("\n")
@@ -864,13 +866,16 @@ if rank == 0:
     online_mu = np.array([0.8, 0.9])
 
     # Compute FEM solution
+    fem_start_time = time.time()
     (solution_u, solution_p) = problem_parametric.solve(online_mu)
+    fem_end_time = time.time()
 
     solution_p1 = dolfinx.fem.Function(Q)
     solution_p2 = dolfinx.fem.Function(Q)
     solution_p1.x.array[:] = -solution_p.x.array
 
     # Compute RB solution
+    rb_start_time_u = time.time()
     rb_solution_u = \
         reduced_problem.reconstruct_solution_u(online_nn(reduced_problem,
                                                          problem_parametric,
@@ -880,6 +885,9 @@ if rank == 0:
                                                          output_scaling_range=reduced_problem.output_scaling_range_u,
                                                          input_range=reduced_problem.input_range_u,
                                                          output_range=reduced_problem.output_range_u))
+    rb_end_time_u = time.time()
+
+    rb_start_time_p = time.time()
     rb_solution_p = \
         reduced_problem.reconstruct_solution_p(online_nn(reduced_problem,
                                                          problem_parametric,
@@ -889,6 +897,7 @@ if rank == 0:
                                                          output_scaling_range=reduced_problem.output_scaling_range_p,
                                                          input_range=reduced_problem.input_range_p,
                                                          output_range=reduced_problem.output_range_p))
+    rb_end_time_p = time.time()
 
     solution_p2.x.array[:] = -rb_solution_p.x.array
 
@@ -948,3 +957,7 @@ if rank == 0:
     print(rb_solution_p.x.array)
     print(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(rb_solution_u, rb_solution_u) * ufl.dx)))
     print(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(rb_solution_p, rb_solution_p) * ufl.dx)))
+    print(f"FEM time: {fem_end_time - fem_start_time}")
+    print(f"RB time (Velocity): {rb_end_time_u - rb_start_time_u}")
+    print(f"RB time (Pressure): {rb_end_time_p - rb_start_time_p}")
+    print(f"Speedup: {(fem_end_time - fem_start_time)/((rb_end_time_u - rb_start_time_u) + (rb_end_time_p - rb_start_time_p))}")

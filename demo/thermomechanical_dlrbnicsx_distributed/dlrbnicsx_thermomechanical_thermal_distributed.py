@@ -195,7 +195,7 @@ class ThermalProblemOnDeformedDomain(abc.ABC):
     def solve(self, mu):
         vT = self._test
         self.mu = mu
-        self.temperature_field.x.array[:] = 350.
+        self.temperature_field.x.array[:] = 300.
         with MeshDeformationWrapperClass(self._mesh, self._boundaries,
                                          self.mu_ref, self.mu):
             x = ufl.SpatialCoordinate(self._mesh)
@@ -306,6 +306,7 @@ class MechanicalProblemOnDeformedDomain(abc.ABC):
         self._omega_5_cells = self._subdomains.find(5)
         self._omega_6_cells = self._subdomains.find(6)
         self._omega_7_cells = self._subdomains.find(7)
+        self.temperature_field = dolfinx.fem.Function(self._thermalproblem._VT)
         x = ufl.SpatialCoordinate(self._mesh)
         # NOTE Placeholder for ymax, Updated at each new parameter
         self._ymax = dolfinx.fem.Constant(mesh, PETSc.ScalarType(0.))
@@ -387,14 +388,24 @@ class MechanicalProblemOnDeformedDomain(abc.ABC):
         dofs_sym_5 = dolfinx.fem.locate_dofs_topological(self._VM.sub(0), self._mesh.geometry.dim-1, self._boundaries.find(5))
         dofs_sym_9 = dolfinx.fem.locate_dofs_topological(self._VM.sub(0), self._mesh.geometry.dim-1, self._boundaries.find(9))
         dofs_sym_12 = dolfinx.fem.locate_dofs_topological(self._VM.sub(0), self._mesh.geometry.dim-1, self._boundaries.find(12))
+        dofs_top_18 = dolfinx.fem.locate_dofs_topological(self._VM.sub(0), self._mesh.geometry.dim-1, self._boundaries.find(18))
+        dofs_top_28 = dolfinx.fem.locate_dofs_topological(self._VM.sub(0), self._mesh.geometry.dim-1, self._boundaries.find(28))
+        dofs_top_19 = dolfinx.fem.locate_dofs_topological(self._VM.sub(1), self._mesh.geometry.dim-1, self._boundaries.find(19))
+        dofs_top_27 = dolfinx.fem.locate_dofs_topological(self._VM.sub(1), self._mesh.geometry.dim-1, self._boundaries.find(27))
+        dofs_top_29 = dolfinx.fem.locate_dofs_topological(self._VM.sub(1), self._mesh.geometry.dim-1, self._boundaries.find(29))
 
         bc_bottom_1 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_bottom_1, self._VM.sub(1))
         bc_bottom_31 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_bottom_31, self._VM.sub(1))
         bc_sym_5 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_sym_5, self._VM.sub(0))
         bc_sym_9 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_sym_9, self._VM.sub(0))
         bc_sym_12 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_sym_12, self._VM.sub(0))
+        bc_top_18 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_top_18, self._VM.sub(0))
+        bc_top_28 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_top_28, self._VM.sub(0))
+        bc_top_19 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_top_19, self._VM.sub(1))
+        bc_top_27 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_top_27, self._VM.sub(1))
+        bc_top_29 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_top_29, self._VM.sub(1))
 
-        self._bcsM = [bc_bottom_1, bc_bottom_31, bc_sym_5, bc_sym_9, bc_sym_12]
+        self._bcsM = [bc_bottom_1, bc_bottom_31, bc_sym_5, bc_sym_9, bc_sym_12, bc_top_18, bc_top_28, bc_top_19, bc_top_27, bc_top_29]
 
     def young_modulus_eval_1(self, x):
         tree = dolfinx.geometry.bb_tree(self._mesh, self._mesh.geometry.dim)
@@ -457,7 +468,7 @@ class MechanicalProblemOnDeformedDomain(abc.ABC):
         x = ufl.SpatialCoordinate(self._mesh)
         vM = self._test
         n_vec = ufl.FacetNormal(self._mesh)
-        lM = (self.temperature_field - self._T0) * self._young_modulus_func/(1 - 2 * self._poisson_ratio_func) * self._thermal_expansion_coefficient_func * (vM[0].dx(0) + vM[1].dx(1) + vM[0]/x[0]) * x[0] * ufl.dx - self._rho * self._g * (self._ymax - x[1]) * ufl.dot(vM, n_vec) * x[0] * self._ds_sf
+        lM = (self.temperature_field - self._T0) * self._young_modulus_func /((1 - 2 * self._poisson_ratio_func)) * self._thermal_expansion_coefficient_func * (vM[0].dx(0) + vM[1].dx(1) + vM[0]/x[0]) * x[0] * ufl.dx - self._rho * self._g * (self._ymax - x[1]) * ufl.dot(vM, n_vec) * x[0] * self._ds_sf
         return dolfinx.fem.form(lM)
 
     def solve(self, mu):
@@ -466,7 +477,7 @@ class MechanicalProblemOnDeformedDomain(abc.ABC):
         # the mesh gets deformed twice for thermal problem
         # 1. One in solve of thermal problem
         # 2. Other in solve of mehcanical problem
-        self.temperature_field = self._thermalproblem.solve(self.mu)
+        self.temperature_field.x.array[:] = self._thermalproblem.solve(self.mu).x.array.copy()
         print(f"Temperature field norm: {self._thermalproblem.inner_product_action(self.temperature_field)(self.temperature_field)}")
         with MeshDeformationWrapperClass(self._mesh, self._boundaries,
                                          self.mu_ref, self.mu):
@@ -638,9 +649,9 @@ solution_mu = thermal_problem_parametric.solve(mu)
 
 itemsize = MPI.DOUBLE.Get_size()
 para_dim = 4
-pod_samples = [3, 4, 3, 4]
-ann_samples = [4, 3, 4, 3]
-error_analysis_samples = [2, 2, 2, 2]
+pod_samples = [4, 5, 4, 5]
+ann_samples = [5, 4, 5, 4]
+error_analysis_samples = [3, 4, 4, 3]
 thermal_num_dofs = solution_mu.x.array.shape[0]
 num_snapshots = np.product(pod_samples)
 nbytes_para = itemsize * num_snapshots * para_dim
@@ -659,7 +670,7 @@ def generate_training_set(samples=pod_samples):
                                                    training_set_3)))
     return training_set
 
-
+'''
 win0 = MPI.Win.Allocate_shared(nbytes_para, itemsize, comm=MPI.COMM_WORLD)
 buf0, itemsize = win0.Shared_query(0)
 thermal_training_set = np.ndarray(buffer=buf0, dtype="d", shape=(num_snapshots, para_dim))
@@ -709,7 +720,7 @@ thermal_eigenvalues, thermal_modes, _ = \
     rbnicsx.backends.\
     proper_orthogonal_decomposition(snapshots_matrix,
                                     thermal_reduced_problem._inner_product_action,
-                                    N=Nmax, tol=1e-10)
+                                    N=Nmax, tol=1e-6)
 thermal_reduced_problem._basis_functions.extend(thermal_modes)
 thermal_reduced_size = len(thermal_reduced_problem._basis_functions)
 print("")
@@ -738,7 +749,7 @@ if world_comm.rank == 0:
     plt.savefig("eigenvalue_decay")
 
 print(f"Thermal eigenvalues: {thermal_positive_eigenvalues}")
-
+'''
 # ### # Thermal POD Ends ###
 
 # ### Thermal ANN starts ###
@@ -769,7 +780,7 @@ def generate_ann_output_set(problem, reduced_problem, input_set,
         solution = problem.solve(input_set[i, :])
         output_set[i, :] = reduced_problem.project_snapshot(solution,
                                                             rb_size).array
-
+'''
 thermal_num_ann_input_samples = np.product(ann_samples)
 thermal_num_training_samples = int(0.7 * thermal_num_ann_input_samples)
 thermal_num_validation_samples = \
@@ -848,6 +859,7 @@ thermal_validation_set_indices = \
 world_comm.Barrier()
 
 # Training dataset
+
 generate_ann_output_set(thermal_problem_parametric, thermal_reduced_problem,
                         thermal_input_training_set, thermal_output_training_set,
                         thermal_training_set_indices, mode="Training")
@@ -884,15 +896,15 @@ if thermal_cpu_group0_comm != MPI.COMM_NULL:
 
     customDataset = CustomPartitionedDataset(thermal_reduced_problem, thermal_input_training_set,
                                              thermal_output_training_set, thermal_training_set_indices_cpu)
-    thermal_train_dataloader = DataLoader(customDataset, batch_size=10, shuffle=False)# shuffle=True)
+    thermal_train_dataloader = DataLoader(customDataset, batch_size=10, shuffle=True)
 
     customDataset = CustomPartitionedDataset(thermal_reduced_problem, thermal_input_validation_set,
                                             thermal_output_validation_set, thermal_validation_set_indices_cpu)
     thermal_valid_dataloader = DataLoader(customDataset, shuffle=False)
 
     thermal_path = "thermal_model.pth"
-    # save_model(thermal_model, thermal_path)
-    load_model(thermal_model, thermal_path)
+    save_model(thermal_model, thermal_path)
+    # load_model(thermal_model, thermal_path)
 
     model_synchronise(thermal_model, verbose=True)
 
@@ -900,13 +912,13 @@ if thermal_cpu_group0_comm != MPI.COMM_NULL:
     thermal_training_loss = list()
     thermal_validation_loss = list()
 
-    thermal_max_epochs = 20 #000
+    thermal_max_epochs = 20000
     thermal_min_validation_loss = None
     thermal_start_epoch = 0
     thermal_checkpoint_path = "thermal_checkpoint"
     thermal_checkpoint_epoch = 10
 
-    thermal_learning_rate = 1e-4
+    thermal_learning_rate = 1e-6
     thermal_optimiser = get_optimiser(thermal_model, "Adam", thermal_learning_rate)
     thermal_loss_fn = get_loss_func("MSE", reduction="sum")
 
@@ -947,6 +959,57 @@ share_model(thermal_model, world_comm, thermal_model_root_process)
 world_comm.Barrier()
 
 # ### Thermal ANN ends ###
+
+if world_comm.rank == 0:
+    online_mu = np.array([0.45, 0.56, 0.9, 0.7])
+    thermal_fem_solution = thermal_problem_parametric.solve(online_mu)
+    thermal_rb_solution = \
+        thermal_reduced_problem.reconstruct_solution(
+            online_nn(thermal_reduced_problem, thermal_problem_parametric,
+                    online_mu, thermal_model,
+                    len(thermal_reduced_problem._basis_functions)))
+
+
+    thermal_fem_online_file \
+        = "dlrbnicsx_solution_thermomechanical/thermal_fem_online_mu_computed.xdmf"
+    with MeshDeformationWrapperClass(mesh, facet_tags, mu_ref,
+                            online_mu):
+        with dolfinx.io.XDMFFile(mesh.comm, thermal_fem_online_file,
+                                "w") as thermal_solution_file:
+            thermal_solution_file.write_mesh(mesh)
+            thermal_solution_file.write_function(thermal_fem_solution)
+
+    thermal_rb_online_file \
+        = "dlrbnicsx_solution_thermomechanical/thermal_rb_online_mu_computed.xdmf"
+    with MeshDeformationWrapperClass(mesh, facet_tags, mu_ref,
+                            online_mu):
+        with dolfinx.io.XDMFFile(mesh.comm, thermal_rb_online_file,
+                                "w") as thermal_solution_file:
+            # NOTE scatter_forward not considered for online solution
+            thermal_solution_file.write_mesh(mesh)
+            thermal_solution_file.write_function(thermal_rb_solution)
+
+    thermal_error_function = dolfinx.fem.Function(thermal_problem_parametric._VT)
+    thermal_error_function.x.array[:] = \
+        thermal_fem_solution.x.array - thermal_rb_solution.x.array
+    thermal_fem_rb_error_file \
+        = "dlrbnicsx_solution_thermomechanical/thermal_fem_rb_error_computed.xdmf"
+    with MeshDeformationWrapperClass(mesh, facet_tags, mu_ref,
+                            online_mu):
+        with dolfinx.io.XDMFFile(mesh.comm, thermal_fem_rb_error_file,
+                                "w") as thermal_solution_file:
+            thermal_solution_file.write_mesh(mesh)
+            thermal_solution_file.write_function(thermal_error_function)
+
+    with MeshDeformationWrapperClass(mesh, facet_tags, mu_ref,
+                            online_mu):
+        print(thermal_reduced_problem.norm_error(thermal_fem_solution, thermal_rb_solution))
+        print(thermal_reduced_problem.compute_norm(thermal_error_function))
+
+    print(thermal_reduced_problem.norm_error(thermal_fem_solution, thermal_rb_solution))
+    print(thermal_reduced_problem.compute_norm(thermal_error_function))
+
+exit()
 
 # ### Thermal Error analysis starts ###
 
@@ -996,7 +1059,7 @@ for i in thermal_error_analysis_indices:
 world_comm.Barrier()
 
 # ### Thermal Error analysis ends ###
-
+'''
 mechanical_problem_parametric = \
     MechanicalProblemOnDeformedDomain(mesh, cell_tags, facet_tags,
                                       thermal_problem_parametric)
@@ -1072,7 +1135,7 @@ mechanical_eigenvalues, mechanical_modes, _ = \
     rbnicsx.backends.\
     proper_orthogonal_decomposition(snapshots_matrix,
                                     mechanical_reduced_problem._inner_product_action,
-                                    N=Nmax, tol=1e-10)
+                                    N=Nmax, tol=1e-6)
 mechanical_reduced_problem._basis_functions.extend(mechanical_modes)
 mechanical_reduced_size = len(mechanical_reduced_problem._basis_functions)
 print("")
@@ -1113,7 +1176,7 @@ itemsize = MPI.DOUBLE.Get_size()
 
 if world_comm.rank == 0:
     mechanical_ann_input_set = generate_ann_input_set(samples=ann_samples)
-    # np.random.shuffle(mechanical_ann_input_set)
+    np.random.shuffle(mechanical_ann_input_set)
     mechanical_nbytes_para_ann_training = mechanical_num_training_samples * itemsize * para_dim
     mechanical_nbytes_dofs_ann_training = mechanical_num_training_samples * itemsize * \
         len(mechanical_reduced_problem._basis_functions)
@@ -1200,7 +1263,7 @@ mechanical_reduced_problem.output_range[1] = \
 
 print("\n")
 
-mechanical_cpu_group0_procs = world_comm.group.Incl([4]) # ([4, 5, 6, 7])
+mechanical_cpu_group0_procs = world_comm.group.Incl([4, 5, 6, 7])
 mechanical_cpu_group0_comm = world_comm.Create_group(mechanical_cpu_group0_procs)
 
 # ANN model
@@ -1219,15 +1282,15 @@ if mechanical_cpu_group0_comm != MPI.COMM_NULL:
 
     customDataset = CustomPartitionedDataset(mechanical_reduced_problem, mechanical_input_training_set,
                                              mechanical_output_training_set, mechanical_training_set_indices_cpu)
-    mechanical_train_dataloader = DataLoader(customDataset, batch_size=40, shuffle=False)# shuffle=True)
+    mechanical_train_dataloader = DataLoader(customDataset, batch_size=5, shuffle=True)
 
     customDataset = CustomPartitionedDataset(mechanical_reduced_problem, mechanical_input_validation_set,
                                             mechanical_output_validation_set, mechanical_validation_set_indices_cpu)
     mechanical_valid_dataloader = DataLoader(customDataset, shuffle=False)
 
     mechanical_path = "mechanical_model.pth"
-    # save_model(mechanical_model, mechanical_path)
-    load_model(mechanical_model, mechanical_path)
+    save_model(mechanical_model, mechanical_path)
+    # load_model(mechanical_model, mechanical_path)
 
     model_synchronise(mechanical_model, verbose=True)
 
@@ -1235,13 +1298,13 @@ if mechanical_cpu_group0_comm != MPI.COMM_NULL:
     mechanical_training_loss = list()
     mechanical_validation_loss = list()
 
-    mechanical_max_epochs = 20 # 20000
+    mechanical_max_epochs = 20000
     mechanical_min_validation_loss = None
     mechanical_start_epoch = 0
     mechanical_checkpoint_path = "mechanical_checkpoint"
     mechanical_checkpoint_epoch = 10
 
-    mechanical_learning_rate = 1e-4
+    mechanical_learning_rate = 1e-6
     mechanical_optimiser = get_optimiser(mechanical_model, "Adam", mechanical_learning_rate)
     mechanical_loss_fn = get_loss_func("MSE", reduction="sum")
 
@@ -1335,6 +1398,7 @@ world_comm.Barrier()
 
 if world_comm.rank == 0:
     online_mu = np.array([0.45, 0.56, 0.9, 0.7])
+    '''
     thermal_fem_solution = thermal_problem_parametric.solve(online_mu)
     thermal_rb_solution = \
         thermal_reduced_problem.reconstruct_solution(
@@ -1381,6 +1445,7 @@ if world_comm.rank == 0:
 
     print(thermal_reduced_problem.norm_error(thermal_fem_solution, thermal_rb_solution))
     print(thermal_reduced_problem.compute_norm(thermal_error_function))
+    '''
 
     mechanical_fem_solution = mechanical_problem_parametric.solve(online_mu)
     mechanical_rb_solution = \
@@ -1429,8 +1494,10 @@ if world_comm.rank == 0:
     print(mechanical_reduced_problem.norm_error(mechanical_fem_solution, mechanical_rb_solution))
     print(mechanical_reduced_problem.compute_norm(mechanical_error_function))
 
+'''
 if thermal_cpu_group0_comm != MPI.COMM_NULL:
     print(f"Training time (Thermal): {thermal_elapsed_time}")
+'''
 
 if mechanical_cpu_group0_comm != MPI.COMM_NULL:
     print(f"Training time (Mechanical): {mechanical_elapsed_time}")
