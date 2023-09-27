@@ -514,7 +514,7 @@ if cpu_group0_comm != MPI.COMM_NULL:
                                               valid_dataloader,
                                               model, loss_fn)
         validation_loss.append(current_validation_loss)
-        if epochs > 0 and current_validation_loss > min_validation_loss \
+        if epochs > 0 and current_validation_loss > 1.01 * min_validation_loss \
         and reduced_problem.regularisation == "EarlyStopping":
             # 1% safety margin against min_validation_loss
             # before invoking early stopping criteria
@@ -581,7 +581,7 @@ world_comm.Barrier()
 if world_comm.rank == 0:
     # Online phase at parameter online_mu
     # online_mu = np.array([0.25, -0.3, 2.5])
-    online_mu = np.array([0.25, 0.3, 3.])
+    online_mu = np.array([0.25, -0.3, 3.])
     fem_start_time = time.time()
     fem_solution = problem_parametric.solve(online_mu)
     fem_end_time = time.time()

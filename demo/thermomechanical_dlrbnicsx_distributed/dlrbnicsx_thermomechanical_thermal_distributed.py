@@ -670,7 +670,7 @@ def generate_training_set(samples=pod_samples):
                                                    training_set_3)))
     return training_set
 
-'''
+
 win0 = MPI.Win.Allocate_shared(nbytes_para, itemsize, comm=MPI.COMM_WORLD)
 buf0, itemsize = win0.Shared_query(0)
 thermal_training_set = np.ndarray(buffer=buf0, dtype="d", shape=(num_snapshots, para_dim))
@@ -749,7 +749,7 @@ if world_comm.rank == 0:
     plt.savefig("eigenvalue_decay")
 
 print(f"Thermal eigenvalues: {thermal_positive_eigenvalues}")
-'''
+
 # ### # Thermal POD Ends ###
 
 # ### Thermal ANN starts ###
@@ -780,7 +780,7 @@ def generate_ann_output_set(problem, reduced_problem, input_set,
         solution = problem.solve(input_set[i, :])
         output_set[i, :] = reduced_problem.project_snapshot(solution,
                                                             rb_size).array
-'''
+
 thermal_num_ann_input_samples = np.product(ann_samples)
 thermal_num_training_samples = int(0.7 * thermal_num_ann_input_samples)
 thermal_num_validation_samples = \
@@ -881,7 +881,7 @@ thermal_cpu_group0_procs = world_comm.group.Incl([0, 1, 2, 3])
 thermal_cpu_group0_comm = world_comm.Create_group(thermal_cpu_group0_procs)
 
 # ANN model
-thermal_model = HiddenLayersNet(thermal_training_set.shape[1], [35, 35],
+thermal_model = HiddenLayersNet(thermal_training_set.shape[1], [25, 25, 25],
                         len(thermal_reduced_problem._basis_functions), Tanh())
 
 if thermal_cpu_group0_comm != MPI.COMM_NULL:
@@ -1009,8 +1009,6 @@ if world_comm.rank == 0:
     print(thermal_reduced_problem.norm_error(thermal_fem_solution, thermal_rb_solution))
     print(thermal_reduced_problem.compute_norm(thermal_error_function))
 
-exit()
-
 # ### Thermal Error analysis starts ###
 
 print("\n")
@@ -1059,7 +1057,8 @@ for i in thermal_error_analysis_indices:
 world_comm.Barrier()
 
 # ### Thermal Error analysis ends ###
-'''
+exit()
+
 mechanical_problem_parametric = \
     MechanicalProblemOnDeformedDomain(mesh, cell_tags, facet_tags,
                                       thermal_problem_parametric)
@@ -1267,7 +1266,7 @@ mechanical_cpu_group0_procs = world_comm.group.Incl([4, 5, 6, 7])
 mechanical_cpu_group0_comm = world_comm.Create_group(mechanical_cpu_group0_procs)
 
 # ANN model
-mechanical_model = HiddenLayersNet(mechanical_training_set.shape[1], [35, 35],
+mechanical_model = HiddenLayersNet(mechanical_training_set.shape[1], [35, 35, 35],
                         len(mechanical_reduced_problem._basis_functions), Tanh())
 
 if mechanical_cpu_group0_comm != MPI.COMM_NULL:
