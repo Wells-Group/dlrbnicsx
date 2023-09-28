@@ -15,8 +15,8 @@ h = 1
 extrusion = gmsh.model.occ.extrude([(2, surface)], 0, 0, h)
 gmsh.model.occ.synchronize()
 
-gmsh.option.setNumber("Mesh.MeshSizeMin", 0.05)
-gmsh.option.setNumber("Mesh.MeshSizeMax", 0.1)
+gmsh.option.setNumber("Mesh.MeshSizeMin", 0.1)
+gmsh.option.setNumber("Mesh.MeshSizeMax", 0.2)
 gmsh.option.setNumber("Mesh.Algorithm", 5)
 gmsh.model.mesh.generate(gdim)
 gmsh.model.mesh.setOrder(1)
