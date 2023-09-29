@@ -9,7 +9,8 @@ import numpy as np
 mesh = create_unit_square(MPI.COMM_WORLD, 3, 3,
                           cell_type=CellType.quadrilateral)
 gdim = mesh.geometry.dim
-V = VectorFunctionSpace(mesh, ("Lagrange", 2))
+V = VectorFunctionSpace(mesh, ("Lagrange", 1))
+# NOTE or FunctionSpace instead of VectorFunctionSpace
 
 mesh.topology.create_connectivity(mesh.topology.dim - 1,
                                   mesh.topology.dim)
@@ -27,12 +28,13 @@ ad_list = create_adjacencylist(pattern.graph[0],
 print(ad_list)
 
 boundary_dofs = locate_dofs_topological(V, mesh.geometry.dim-1, facets)
-# print(boundary_dofs)
+print(boundary_dofs)
+
+print(V.tabulate_dof_coordinates())
 
 '''
 # NOTE s
-1. create_adjacencylist has been replaced by adjacencylist in updated dolfinx
-2. The graph here is NOT after bc application. If the node is in boundary,
+1. Create_adjacencylist has been replaced by adjacencylist in updated dolfinx
+2. The graph here is NOT after bc application. If the dof is on boundary,
 ignore connections and only consider self connection
-3. TODO check where dof_indices or node_indices is important
 '''
