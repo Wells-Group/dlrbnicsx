@@ -1057,7 +1057,6 @@ for i in thermal_error_analysis_indices:
 world_comm.Barrier()
 
 # ### Thermal Error analysis ends ###
-exit()
 
 mechanical_problem_parametric = \
     MechanicalProblemOnDeformedDomain(mesh, cell_tags, facet_tags,
