@@ -6,7 +6,7 @@ gmsh.initialize('', False)
 gdim = 2
 
 # Omega_1 Standard Carbon
-lc1 = 0.2
+lc1 = 0.3# 0.2
 gmsh.model.geo.addPoint(0., 0., 0., lc1, 1)
 gmsh.model.geo.addPoint(5.9501, 0., 0., lc1, 2)
 gmsh.model.geo.addPoint(5.9501, 1., 0., lc1, 3)

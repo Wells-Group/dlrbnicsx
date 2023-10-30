@@ -227,7 +227,7 @@ class ThermalProblemOnDeformedDomain(abc.ABC):
                 self._thermal_conductivity_func.x.array[self._omega_7_cells] = self._thermal_conductivity_func_7.x.array[self._omega_7_cells]
                 self._thermal_conductivity_func_diff.x.array[self._omega_7_cells] = self._thermal_conductivity_func_diff_7.x.array[self._omega_7_cells]
 
-                residual = abs(mesh.comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(self._thermal_conductivity_func * ufl.grad(self.temperature_field),
+                residual = abs(self._mesh.comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(self._thermal_conductivity_func * ufl.grad(self.temperature_field),
                                                                                                             ufl.grad(vT)) * x[0] * ufl.dx +
                 self._h_cf * ufl.inner(self.temperature_field - self._T_f, vT) * x[0] * self._ds_sf + self._h_cbottom * ufl.inner(self.temperature_field - self._T_bottom, vT) * x[0] * self._ds_bottom + self._h_cout * ufl.inner(self.temperature_field - self._T_out, vT) * x[0] * self._ds_out)), op=MPI.SUM))
 
@@ -274,9 +274,9 @@ class ThermalProblemOnDeformedDomain(abc.ABC):
                 # print(solution_field.x.array)
 
                 update_abs = \
-                    (np.sqrt(mesh.comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(solution_field - self.temperature_field,
+                    (np.sqrt(self._mesh.comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(solution_field - self.temperature_field,
                                                                                             solution_field - self.temperature_field) * x[0] * ufl.dx)), op=MPI.SUM)))/\
-                    (np.sqrt(mesh.comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(self.temperature_field, self.temperature_field) * x[0] * ufl.dx)), op=MPI.SUM)))
+                    (np.sqrt(self._mesh.comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(self.temperature_field, self.temperature_field) * x[0] * ufl.dx)), op=MPI.SUM)))
 
                 print(f"Absolute update: {update_abs}")
 
@@ -627,7 +627,7 @@ if __name__ == "__main__":
                 load_checkpoint(thermal_checkpoint_path, thermal_model, thermal_optimiser)
 
         import time
-        start_time = time.time()
+        start_time = MPI.Wtime()
         for thermal_epochs in range(thermal_start_epoch, thermal_max_epochs):
             if thermal_epochs > 0 and thermal_epochs % thermal_checkpoint_epoch == 0:
                 save_checkpoint(thermal_checkpoint_path, thermal_epochs,
@@ -649,7 +649,7 @@ if __name__ == "__main__":
                 print(f"Early stopping criteria invoked at epoch: {thermal_epochs+1}")
                 break
             thermal_min_validation_loss = min(thermal_validation_loss)
-        end_time = time.time()
+        end_time = MPI.Wtime()
         thermal_elapsed_time = end_time - start_time
 
         os.system(f"rm {thermal_checkpoint_path}")
@@ -720,6 +720,8 @@ if __name__ == "__main__":
               f"RB error: {thermal_error_numpy[i]}, " +
               f"Projection error: {thermal_projection_error_numpy[i]}")
 
+    world_comm.Barrier()
+
     # ### Thermal ANN starts ###
 
     # Online phase
@@ -783,3 +785,8 @@ if __name__ == "__main__":
 
     if thermal_cpu_group0_comm != MPI.COMM_NULL:
         print(f"Training time (Thermal): {thermal_elapsed_time}")
+
+    if world_comm.rank == 0:
+        np.save("thermal_error_analysis_set.npy", thermal_error_analysis_set)
+        np.save("thermal_rb_error.npy", thermal_error_numpy)
+        np.save("thermal_projection_error.npy", thermal_projection_error_numpy)
