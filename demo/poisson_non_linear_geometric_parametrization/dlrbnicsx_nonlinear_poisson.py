@@ -134,8 +134,8 @@ class ProblemOnDeformedDomain(abc.ABC):
 class PODANNReducedProblem(abc.ABC):
     '''
     TODO
-    Mesh deformation at reconstruct_solution,
-    compute_norm, project_snapshot (??)
+    Mesh deformation at reconstruct_solution (No),
+    compute_norm (Yes), project_snapshot (Yes) (??)
     '''
     """Define a linear projection-based problem, and solve it with KSP."""
 
@@ -158,7 +158,7 @@ class PODANNReducedProblem(abc.ABC):
         self.regularisation = "EarlyStopping"
 
     def reconstruct_solution(self, reduced_solution):
-        """Reconstructed reduced solution on the high fidelity space."""
+        """Reconstruction of reduced solution on the high fidelity space."""
         return self._basis_functions[:reduced_solution.size] * \
             reduced_solution
 
@@ -221,8 +221,6 @@ with CustomMeshDeformation(mesh, facet_tags,
 
 
 # POD Starts ###
-
-
 def generate_training_set(samples=[3, 3, 3]):#(samples=[4, 4, 4]):
     training_set_0 = np.linspace(0.2, 0.3, samples[0])
     training_set_1 = np.linspace(-0.2, -0.4, samples[1])
@@ -293,6 +291,20 @@ plt.tight_layout()
 # plt.show()
 
 # POD Ends ###
+
+with CustomMeshDeformation(mesh, facet_tags,
+                           problem_parametric._boundary_markers,
+                           problem_parametric._bcs_geometric, mu,
+                           reset_reference=True,
+                           is_deformation=True) as mesh_class:
+    rb_test_solution = reduced_problem.project_snapshot(solution_mu, len(reduced_problem._basis_functions))
+    fem_recreated_solution = reduced_problem.reconstruct_solution(rb_test_solution)
+    print(mesh.comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(fem_recreated_solution, fem_recreated_solution)*ufl.dx)), op=MPI.SUM))
+
+fem_recreated_solution = reduced_problem.reconstruct_solution(rb_test_solution)
+print(mesh.comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(fem_recreated_solution, fem_recreated_solution)*ufl.dx)), op=MPI.SUM))
+
+exit()
 
 # 5. ANN implementation
 

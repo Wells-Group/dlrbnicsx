@@ -175,9 +175,9 @@ class PODANNReducedProblem(abc.ABC):
     def compute_norm(self, function):
         """Compute the norm of a function inner product
         on the reference domain."""
-        # return np.sqrt(self._inner_product_action(function)(function))
-        return np.sqrt(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(function, function) * ufl.dx +\
-            ufl.inner(ufl.grad(function), ufl.grad(function)) * ufl.dx)))
+        return np.sqrt(self._inner_product_action(function)(function))
+        # return np.sqrt(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(function, function) * ufl.dx +\
+        #     ufl.inner(ufl.grad(function), ufl.grad(function)) * ufl.dx)))
 
     def project_snapshot(self, solution, N):
         return self._project_snapshot(solution, N)
@@ -450,7 +450,7 @@ reduced_problem.output_range[1] = max(np.max(output_training_set), np.max(output
 
 print("\n")
 
-cpu_group0_procs = world_comm.group.Incl([0, 1, 2, 3])
+cpu_group0_procs = world_comm.group.Incl([0, 1])
 cpu_group0_comm = world_comm.Create_group(cpu_group0_procs)
 
 # ANN model
