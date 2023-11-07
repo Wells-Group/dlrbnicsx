@@ -106,24 +106,13 @@ bc_sym_x_1 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_sym_x_1, V.sub(2
 dofs_sym_x_2 = dolfinx.fem.locate_dofs_topological(V.sub(2).sub(0), gdim-1, facet_tags.find(6))
 bc_sym_x_2 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_sym_x_2, V.sub(2).sub(0))
 
-'''
 def center_marker(x):
-    atol = 4.5980e-3
-    return np.logical_and(np.isclose(1.e6 * x[0], 0., atol=0.), np.isclose(1.e6 * x[1], 0., atol=atol))
+    return np.logical_and(np.isclose(x[0], np.zeros_like(x[0]), atol=1.e-10), np.isclose(x[1], np.zeros_like(x[1]), atol=1.e-10))
 
-center_facets = dolfinx.mesh.locate_entities_boundary(mesh, gdim - 1, center_marker)
-center_disp_dofs = dolfinx.fem.locate_dofs_topological(V.sub(2).sub(1), gdim - 1, center_facets)
-'''
+center_disp_dofs = dolfinx.fem.locate_dofs_geometrical((V.sub(2).sub(1), U), center_marker)
+print(center_disp_dofs)
 
-print(f"Rank: {mesh.comm.rank}, {np.where(U.tabulate_dof_coordinates()[:, 0]**2 + U.tabulate_dof_coordinates()[:, 1]**2 < 1e-27)}")
-
-if mesh.comm.rank == 4:
-    center_disp_dofs = np.array([2688]).astype(np.int32)
-    print(U.tabulate_dof_coordinates()[center_disp_dofs, :])
-else:
-    center_disp_dofs = np.array([]).astype(np.int32)
-
-bc_center = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), center_disp_dofs, V.sub(2).sub(1))
+bc_center = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), center_disp_dofs[0], V.sub(2).sub(1))
 
 bc = [bc_center, bc_sym_x_1, bc_sym_x_2]
 
@@ -137,7 +126,7 @@ solver = NewtonSolver(mesh.comm, problem)
 solver.convergence_criterion = "incremental"
 solver.rtol = 1.e-6
 # solver.atol = 1.e-10
-solver.max_it = 500
+solver.max_it = 20
 dolfinx.log.set_log_level(dolfinx.log.LogLevel.INFO)
 
 if k > 1:
@@ -171,7 +160,7 @@ for i in range(num_steps):
     solution_file.write_function(theta_current, current_time)
     solution_file.write_function(mu_current, current_time)
     solution_file.write_function(disp_current, current_time)
-    
+
     # print(mesh.comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(ufl.dot(sol_current.sub(2), n_vec), ufl.dot(sol_current.sub(2), n_vec))*(ds(5) + ds(6)))), op=MPI.SUM))
 
     sigma_func.interpolate(sigma_expr)

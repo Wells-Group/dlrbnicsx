@@ -1,57 +1,59 @@
+from mpi4py import MPI
+import dolfinx
 import gmsh
 
-from mpi4py import MPI
+comm = MPI.COMM_WORLD
 
-import dolfinx
+gmsh.initialize("", False)
 
-gmsh.initialize('', False)
-
-lc = 0.04
 gdim = 2
 
-gmsh.model.geo.addPoint(0., 0., 0., lc, 1)
-gmsh.model.geo.addPoint(1., 0., 0., lc, 2)
-gmsh.model.geo.addPoint(1., 1., 0., lc, 3)
-gmsh.model.geo.addPoint(0., 1., 0., lc, 4)
+A = gmsh.model.occ.addPoint(0., 0., 0., 0.12)
+B = gmsh.model.occ.addPoint(1., 0., 0., 0.18)
+C = gmsh.model.occ.addPoint(1., 1., 0., 0.10)
+D = gmsh.model.occ.addPoint(0., 1., 0., 0.15)
 
-gmsh.model.geo.addLine(1, 2, 1)
-gmsh.model.geo.addLine(2, 3, 2)
-gmsh.model.geo.addLine(3, 4, 3)
-gmsh.model.geo.addLine(4, 1, 4)
+AB = gmsh.model.occ.addLine(A, B)
+BC = gmsh.model.occ.addLine(B, C)
+CD = gmsh.model.occ.addLine(C, D)
+DA = gmsh.model.occ.addLine(D, A)
 
-gmsh.model.geo.addCurveLoop([1, 2, 3, 4], 1)
-gmsh.model.geo.addPlaneSurface([1], 1)
+ABCDA = gmsh.model.occ.addCurveLoop([AB, BC, CD, DA])
+rectangle = gmsh.model.occ.addPlaneSurface([ABCDA])
 
-gmsh.model.geo.synchronize()
+gmsh.model.occ.synchronize()
 
+gmsh.option.setNumber("Mesh.Algorithm", 8)
+gmsh.option.setNumber("Mesh.RecombinationAlgorithm", 2)
+gmsh.option.setNumber("Mesh.RecombineAll", 1)
+gmsh.option.setNumber("Mesh.SubdivisionAlgorithm", 1)
+gmsh.option.setNumber("Mesh.MeshSizeMin", 0.01)
+gmsh.option.setNumber("Mesh.MeshSizeMax", 0.3)
 gmsh.model.mesh.generate(gdim)
-gmsh.model.mesh.setOrder(2)
+gmsh.model.mesh.setOrder(1)
 gmsh.model.mesh.optimize("Netgen")
 
-# Extract edges and surfaces to add physical groups
 surfaces = gmsh.model.getEntities(dim=gdim)
-edges = gmsh.model.getBoundary(surfaces)
+edges = gmsh.model.getEntities(dim=gdim-1)
 
-# Subdomains markings
-for i in range(1, len(surfaces)+1):
-    gmsh.model.addPhysicalGroup(gdim, [surfaces[i-1][1]], surfaces[i-1][1])
-# External boundaries markings
+gmsh.model.addPhysicalGroup(gdim, [surfaces[0][1]], 1)
 for i in range(1, len(edges)+1):
-    gmsh.model.addPhysicalGroup(gdim-1, [edges[i-1][1]], edges[i-1][1])
+    gmsh.model.addPhysicalGroup(gdim-1, [edges[i-1][1]],
+                                edges[i-1][1])
+
+gmsh.model.occ.remove(gmsh.model.getEntities(dim=gdim-1))
+gmsh.model.occ.remove(gmsh.model.getEntities(dim=gdim))
 
 gmsh.write("mesh.msh")
-
 gmsh.fltk.run()
 
-gmsh.finalize()
-
-# Import mesh in dolfinx
 gmsh_model_rank = 0
-mesh_comm = MPI.COMM_WORLD
-mesh, cell_tags, facet_tags = dolfinx.io.gmshio.read_from_msh(
-    "mesh.msh", mesh_comm, gmsh_model_rank, gdim=gdim)
+mesh_comm = comm
+mesh, subdomains, boundaries = \
+    dolfinx.io.gmshio.read_from_msh("mesh.msh", mesh_comm,
+                                    gmsh_model_rank, gdim=gdim)
 
-with dolfinx.io.XDMFFile(MPI.COMM_WORLD, "mesh.xdmf", "w") as mesh_file_xdmf:
+with dolfinx.io.XDMFFile(mesh.comm, "mesh.xdmf", "w") as mesh_file_xdmf:
     mesh_file_xdmf.write_mesh(mesh)
-    mesh_file_xdmf.write_meshtags(cell_tags, mesh.geometry)
-    mesh_file_xdmf.write_meshtags(facet_tags, mesh.geometry)
+    mesh_file_xdmf.write_meshtags(subdomains, mesh.geometry)
+    mesh_file_xdmf.write_meshtags(boundaries, mesh.geometry)
