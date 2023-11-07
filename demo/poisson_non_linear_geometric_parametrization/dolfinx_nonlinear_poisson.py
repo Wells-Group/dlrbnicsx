@@ -4,6 +4,8 @@ import numpy as np
 from mpi4py import MPI
 
 import dolfinx
+from dolfinx.fem.petsc import NonlinearProblem
+from dolfinx.nls.petsc import NewtonSolver
 
 from mdfenicsx.mesh_motion_classes import HarmonicMeshMotion
 
@@ -63,8 +65,10 @@ bcs = list()
 
 # Problem setup
 V = dolfinx.fem.FunctionSpace(mesh, ("CG", 2))
+# Analytical or Dirichlet function
 u_D = dolfinx.fem.Function(V)
 
+# Actual solution
 uh = dolfinx.fem.Function(V)
 v = ufl.TestFunction(V)
 
@@ -76,17 +80,17 @@ for i in boundary_markers:
     dofs = dolfinx.fem.locate_dofs_topological(V, gdim-1, facet_tags.find(i))
     bcs.append(dolfinx.fem.dirichletbc(u_D, dofs))
 
-problem = dolfinx.fem.petsc.NonlinearProblem(F, uh, bcs=bcs)
+problem = NonlinearProblem(F, uh, bcs=bcs)
 
 # Deform mesh, solve the problem and post processing
 with CustomMeshDeformation(mesh, facet_tags, boundary_markers,
      [u_bc_bottom, u_bc_right, u_bc_top, u_bc_left], mu,
       reset_reference=True, is_deformation=True) as mesh_class:
 
-    solver = dolfinx.nls.petsc.NewtonSolver(mesh.comm, problem)
+    solver = NewtonSolver(mesh.comm, problem)
     solver.convergence_criterion = "incremental"
 
-    solver.rtol = 1e-6
+    solver.rtol = 1e-10
     solver.report = True
     ksp = solver.krylov_solver
     ksp.setFromOptions()
@@ -102,8 +106,12 @@ with CustomMeshDeformation(mesh, facet_tags, boundary_markers,
     error = np.sqrt(dolfinx.fem.assemble_scalar(
                     dolfinx.fem.form(ufl.inner(uh - u_D, uh - u_D) * ufl.dx
                                      + ufl.inner(ufl.grad(uh - u_D),
-                                     ufl.grad(uh - u_D)) * ufl.dx)))
-    print(f"Error: {error}")
+                                     ufl.grad(uh - u_D)) * ufl.dx))) / \
+            np.sqrt(dolfinx.fem.assemble_scalar(
+                    dolfinx.fem.form(ufl.inner(u_D, u_D) * ufl.dx
+                                     + ufl.inner(ufl.grad(u_D),
+                                                 ufl.grad(u_D)) * ufl.dx)))
+    print(f"FEM relative error: {error}")
     u_error = dolfinx.fem.Function(V)
     u_error.x.array[:] = abs(uh.x.array - u_D.x.array)
 

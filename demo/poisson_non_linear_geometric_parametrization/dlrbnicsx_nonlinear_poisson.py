@@ -1,4 +1,6 @@
 import dolfinx
+from dolfinx.fem.petsc import NonlinearProblem
+from dolfinx.nls.petsc import NewtonSolver
 import ufl
 
 import rbnicsx
@@ -72,8 +74,7 @@ class ProblemOnDeformedDomain(abc.ABC):
         bcs = list()
         for i in self._boundary_markers:
             dofs = \
-                dolfinx.fem.locate_dofs_topological(self._V,
-                                                    self.gdim-1,
+                dolfinx.fem.locate_dofs_topological(self._V, self.gdim-1,
                                                     self._boundaries.find(i))
             bcs.append(dolfinx.fem.dirichletbc
                        (self._dirichletFunc, dofs))
@@ -93,12 +94,12 @@ class ProblemOnDeformedDomain(abc.ABC):
     @property
     def set_problem(self):
         problemNonlinear = \
-            dolfinx.fem.petsc.NonlinearProblem(self.residual_term,
-                                               self._solution,
-                                               bcs=self.assemble_bcs)
+            NonlinearProblem(self.residual_term, self._solution,
+                             bcs=self.assemble_bcs)
         return problemNonlinear
 
     def solve(self, mu):
+        self.mu = mu
         self._bcs_geometric = \
             [lambda x: (0.*x[1], mu[0]*np.sin(x[0]*np.pi)),
              lambda x: (0.*x[0], 0.*x[1]),
@@ -118,7 +119,7 @@ class ProblemOnDeformedDomain(abc.ABC):
             solver.report = True
             ksp = solver.krylov_solver
             ksp.setFromOptions()
-            # dolfinx.log.set_log_level(dolfinx.log.LogLevel.INFO)
+            dolfinx.log.set_log_level(dolfinx.log.LogLevel.INFO)
 
             self._dirichletFunc.interpolate(lambda x:
                                             x[1] * np.sin(x[0] * np.pi)
@@ -135,11 +136,12 @@ class PODANNReducedProblem(abc.ABC):
     '''
     TODO
     Mesh deformation at reconstruct_solution (No),
-    compute_norm (Yes), project_snapshot (Yes) (??)
+    compute_norm (Yes if not vector l2), project_snapshot (Yes) (??)
     '''
     """Define a linear projection-based problem, and solve it with KSP."""
 
     def __init__(self, problem) -> None:
+        self.problem = problem
         self._basis_functions = rbnicsx.backends.FunctionsList(problem._V)
         u, v = ufl.TrialFunction(problem._V), ufl.TestFunction(problem._V)
         self._inner_product = ufl.inner(u, v) * ufl.dx +\
@@ -157,6 +159,11 @@ class PODANNReducedProblem(abc.ABC):
         self.optimizer = "Adam"
         self.regularisation = "EarlyStopping"
 
+    def _inner_product_action(self, fun_j):
+        def _(fun_i):
+            return fun_i.vector.dot(fun_j.vector)
+        return _
+
     def reconstruct_solution(self, reduced_solution):
         """Reconstruction of reduced solution on the high fidelity space."""
         return self._basis_functions[:reduced_solution.size] * \
@@ -168,7 +175,9 @@ class PODANNReducedProblem(abc.ABC):
         return np.sqrt(self._inner_product_action(function)(function))
 
     def project_snapshot(self, solution, N):
-        return self._project_snapshot(solution, N)
+        with self.problem._meshDeformationContext(self.problem._mesh, self.problem._boundaries,
+             self.problem._boundary_markers, self.problem._bcs_geometric, self.problem.mu) as mesh_class:
+            return self._project_snapshot(solution, N)
 
     def _project_snapshot(self, solution, N):
         projected_snapshot = rbnicsx.online.create_vector(N)
@@ -221,7 +230,7 @@ with CustomMeshDeformation(mesh, facet_tags,
 
 
 # POD Starts ###
-def generate_training_set(samples=[3, 3, 3]):#(samples=[4, 4, 4]):
+def generate_training_set(samples=[5, 5, 5]):#(samples=[4, 4, 4]):
     training_set_0 = np.linspace(0.2, 0.3, samples[0])
     training_set_1 = np.linspace(-0.2, -0.4, samples[1])
     training_set_2 = np.linspace(1., 4., samples[2])
@@ -263,7 +272,7 @@ eigenvalues, modes, _ = \
     rbnicsx.backends.\
     proper_orthogonal_decomposition(snapshots_matrix,
                                     reduced_problem._inner_product_action,
-                                    N=Nmax, tol=1.e-10)
+                                    N=Nmax, tol=1.e-6)
 reduced_problem._basis_functions.extend(modes)
 reduced_size = len(reduced_problem._basis_functions)
 print("")
@@ -304,8 +313,6 @@ with CustomMeshDeformation(mesh, facet_tags,
 fem_recreated_solution = reduced_problem.reconstruct_solution(rb_test_solution)
 print(mesh.comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(fem_recreated_solution, fem_recreated_solution)*ufl.dx)), op=MPI.SUM))
 
-exit()
-
 # 5. ANN implementation
 
 
@@ -332,8 +339,10 @@ def generate_ann_output_set(problem, reduced_problem,
         else:
             print(f"{mode} parameter number {i+1} of {input_set.shape[0]}")
             print(f"Parameter: {input_set[i,:]}")
+
+        fem_snapshot = problem.solve(input_set[i, :])
         output_set[i, :] = \
-            reduced_problem.project_snapshot(problem.solve(input_set[i, :]),
+            reduced_problem.project_snapshot(fem_snapshot,
                                              len(reduced_problem._basis_functions)).array.astype("f")
     return output_set
 
@@ -359,18 +368,18 @@ output_validation_set = ann_output_set[num_training_samples:, :]
 
 customDataset = CustomDataset(reduced_problem,
                               input_training_set, output_training_set)
-train_dataloader = DataLoader(customDataset, batch_size=40, shuffle=False)# shuffle=True)
+train_dataloader = DataLoader(customDataset, batch_size=40, shuffle=True)
 
 customDataset = CustomDataset(reduced_problem,
                               input_validation_set, output_validation_set)
-valid_dataloader = DataLoader(customDataset, shuffle=False)
+valid_dataloader = DataLoader(customDataset, batch_size=output_validation_set.shape[0], shuffle=False)
 
 # ANN model
 model = HiddenLayersNet(training_set.shape[1], [35, 35],
                         len(reduced_problem._basis_functions), Tanh())
 
 path = "model.pth"
-# save_model(model, path)
+save_model(model, path)
 load_model(model, path)
 
 
@@ -421,7 +430,7 @@ os.system(f"rm {checkpoint_path}")
 print("\n")
 print("Generating error analysis (only input/parameters) dataset")
 print("\n")
-error_analysis_set = generate_ann_input_set(samples=[5, 5, 5])
+error_analysis_set = generate_ann_input_set(samples=[6, 4, 6])
 error_numpy = np.zeros(error_analysis_set.shape[0])
 
 for i in range(error_analysis_set.shape[0]):
