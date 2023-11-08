@@ -450,32 +450,11 @@ reduced_problem.output_range[1] = max(np.max(output_training_set), np.max(output
 
 print("\n")
 
-cpu_group0_procs = world_comm.group.Incl([0, 1, 2, 3])
+cpu_group0_procs = world_comm.group.Incl([0, 1])
 cpu_group0_comm = world_comm.Create_group(cpu_group0_procs)
 
 # ANN model
-model0 = HiddenLayersNet(training_set.shape[1], [35, 35],
-                        len(reduced_problem._basis_functions), Tanh())
-
-cpu_group1_procs = world_comm.group.Incl([4, 5, 6, 7])
-cpu_group1_comm = world_comm.Create_group(cpu_group1_procs)
-
-# ANN model
-model1 = HiddenLayersNet(training_set.shape[1], [30, 30],
-                        len(reduced_problem._basis_functions), Tanh())
-
-cpu_group2_procs = world_comm.group.Incl([8, 9, 10, 11])
-cpu_group2_comm = world_comm.Create_group(cpu_group2_procs)
-
-# ANN model
-model2 = HiddenLayersNet(training_set.shape[1], [25, 25],
-                        len(reduced_problem._basis_functions), Tanh())
-
-cpu_group3_procs = world_comm.group.Incl([12, 13, 14, 15])
-cpu_group3_comm = world_comm.Create_group(cpu_group3_procs)
-
-# ANN model
-model3 = HiddenLayersNet(training_set.shape[1], [15, 15],
+model = HiddenLayersNet(training_set.shape[1], [35, 35],
                         len(reduced_problem._basis_functions), Tanh())
 
 if cpu_group0_comm != MPI.COMM_NULL:
@@ -494,13 +473,13 @@ if cpu_group0_comm != MPI.COMM_NULL:
 
     customDataset = CustomPartitionedDataset(reduced_problem, input_validation_set,
                                             output_validation_set, validation_set_indices_cpu)
-    valid_dataloader = DataLoader(customDataset, batch_size=validation_set_indices_cpu.shape[0], shuffle=False)
+    valid_dataloader = DataLoader(customDataset, shuffle=False)
 
-    path = "model0.pth"
-    save_model(model0, path)
-    # load_model(model0, path)
+    path = "model.pth"
+    save_model(model, path)
+    # load_model(model, path)
 
-    model_synchronise(model0, verbose=True)
+    model_synchronise(model, verbose=True)
 
     # Training of ANN
     training_loss = list()
@@ -509,31 +488,31 @@ if cpu_group0_comm != MPI.COMM_NULL:
     max_epochs = 20000
     min_validation_loss = None
     start_epoch = 0
-    checkpoint_path = "checkpoint0"
+    checkpoint_path = "checkpoint"
     checkpoint_epoch = 10
 
     learning_rate = 1.e-4
-    optimiser = get_optimiser(model0, "Adam", learning_rate)
+    optimiser = get_optimiser(model, "Adam", learning_rate)
     loss_fn = get_loss_func("MSE", reduction="sum")
 
     if os.path.exists(checkpoint_path):
         start_epoch, min_validation_loss = \
-            load_checkpoint(checkpoint_path, model0, optimiser)
+            load_checkpoint(checkpoint_path, model, optimiser)
 
     import time
     start_time = time.time()
     for epochs in range(start_epoch, max_epochs):
         if epochs > 0 and epochs % checkpoint_epoch == 0:
-            save_checkpoint(checkpoint_path, epochs, model0, optimiser,
+            save_checkpoint(checkpoint_path, epochs, model, optimiser,
                             min_validation_loss)
         print(f"Epoch: {epochs+1}/{max_epochs}")
         current_training_loss = train_nn(reduced_problem,
                                          train_dataloader,
-                                         model0, loss_fn, optimiser)
+                                         model, loss_fn, optimiser)
         training_loss.append(current_training_loss)
         current_validation_loss = validate_nn(reduced_problem,
                                               valid_dataloader,
-                                              model0, loss_fn)
+                                              model, loss_fn)
         validation_loss.append(current_validation_loss)
         if epochs > 0 and current_validation_loss > 1.01 * min_validation_loss \
         and reduced_problem.regularisation == "EarlyStopping":
@@ -547,246 +526,9 @@ if cpu_group0_comm != MPI.COMM_NULL:
 
     os.system(f"rm {checkpoint_path}")
 
-if cpu_group1_comm != MPI.COMM_NULL:
-    init_cpu_process_group(cpu_group1_comm)
-
-    training_set_indices_cpu = np.arange(cpu_group1_comm.rank,
-                                         input_training_set.shape[0],
-                                         cpu_group1_comm.size)
-    validation_set_indices_cpu = np.arange(cpu_group1_comm.rank,
-                                           input_validation_set.shape[0],
-                                           cpu_group1_comm.size)
-
-    customDataset = CustomPartitionedDataset(reduced_problem, input_training_set,
-                                             output_training_set, training_set_indices_cpu)
-    train_dataloader = DataLoader(customDataset, batch_size=50, shuffle=True)
-
-    customDataset = CustomPartitionedDataset(reduced_problem, input_validation_set,
-                                             output_validation_set, validation_set_indices_cpu)
-    valid_dataloader = DataLoader(customDataset, batch_size=validation_set_indices_cpu.shape[0], shuffle=False)
-
-    path = "model1.pth"
-    save_model(model1, path)
-    # load_model(model1, path)
-
-    model_synchronise(model1, verbose=True)
-
-    # Training of ANN
-    training_loss = list()
-    validation_loss = list()
-
-    max_epochs = 20000
-    min_validation_loss = None
-    start_epoch = 0
-    checkpoint_path = "checkpoint1"
-    checkpoint_epoch = 10
-
-    learning_rate = 1.e-4
-    optimiser = get_optimiser(model1, "Adam", learning_rate)
-    loss_fn = get_loss_func("MSE", reduction="sum")
-
-    if os.path.exists(checkpoint_path):
-        start_epoch, min_validation_loss = \
-            load_checkpoint(checkpoint_path, model1, optimiser)
-
-    import time
-    start_time = time.time()
-    for epochs in range(start_epoch, max_epochs):
-        if epochs > 0 and epochs % checkpoint_epoch == 0:
-            save_checkpoint(checkpoint_path, epochs, model1, optimiser,
-                            min_validation_loss)
-        print(f"Epoch: {epochs+1}/{max_epochs}")
-        current_training_loss = train_nn(reduced_problem,
-                                         train_dataloader,
-                                         model1, loss_fn, optimiser)
-        training_loss.append(current_training_loss)
-        current_validation_loss = validate_nn(reduced_problem,
-                                              valid_dataloader,
-                                              model1, loss_fn)
-        validation_loss.append(current_validation_loss)
-        if epochs > 0 and current_validation_loss > 1.01 * min_validation_loss \
-        and reduced_problem.regularisation == "EarlyStopping":
-            # 1% safety margin against min_validation_loss
-            # before invoking early stopping criteria
-            print(f"Early stopping criteria invoked at epoch: {epochs+1}")
-            break
-        min_validation_loss = min(validation_loss)
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-
-    os.system(f"rm {checkpoint_path}")
-
-if cpu_group2_comm != MPI.COMM_NULL:
-    init_cpu_process_group(cpu_group2_comm)
-
-    training_set_indices_cpu = np.arange(cpu_group2_comm.rank,
-                                         input_training_set.shape[0],
-                                         cpu_group2_comm.size)
-    validation_set_indices_cpu = np.arange(cpu_group2_comm.rank,
-                                           input_validation_set.shape[0],
-                                           cpu_group2_comm.size)
-
-    customDataset = CustomPartitionedDataset(reduced_problem, input_training_set,
-                                             output_training_set, training_set_indices_cpu)
-    train_dataloader = DataLoader(customDataset, batch_size=50, shuffle=True)
-
-    customDataset = CustomPartitionedDataset(reduced_problem, input_validation_set,
-                                             output_validation_set, validation_set_indices_cpu)
-    valid_dataloader = DataLoader(customDataset, batch_size=validation_set_indices_cpu.shape[0], shuffle=False)
-
-    path = "model2.pth"
-    save_model(model2, path)
-    # load_model(model2, path)
-
-    model_synchronise(model2, verbose=True)
-
-    # Training of ANN
-    training_loss = list()
-    validation_loss = list()
-
-    max_epochs = 20000
-    min_validation_loss = None
-    start_epoch = 0
-    checkpoint_path = "checkpoint2"
-    checkpoint_epoch = 10
-
-    learning_rate = 1.e-4
-    optimiser = get_optimiser(model2, "Adam", learning_rate)
-    loss_fn = get_loss_func("MSE", reduction="sum")
-
-    if os.path.exists(checkpoint_path):
-        start_epoch, min_validation_loss = \
-            load_checkpoint(checkpoint_path, model2, optimiser)
-
-    import time
-    start_time = time.time()
-    for epochs in range(start_epoch, max_epochs):
-        if epochs > 0 and epochs % checkpoint_epoch == 0:
-            save_checkpoint(checkpoint_path, epochs, model2, optimiser,
-                            min_validation_loss)
-        print(f"Epoch: {epochs+1}/{max_epochs}")
-        current_training_loss = train_nn(reduced_problem,
-                                         train_dataloader,
-                                         model2, loss_fn, optimiser)
-        training_loss.append(current_training_loss)
-        current_validation_loss = validate_nn(reduced_problem,
-                                              valid_dataloader,
-                                              model2, loss_fn)
-        validation_loss.append(current_validation_loss)
-        if epochs > 0 and current_validation_loss > 1.01 * min_validation_loss \
-        and reduced_problem.regularisation == "EarlyStopping":
-            # 1% safety margin against min_validation_loss
-            # before invoking early stopping criteria
-            print(f"Early stopping criteria invoked at epoch: {epochs+1}")
-            break
-        min_validation_loss = min(validation_loss)
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-
-    os.system(f"rm {checkpoint_path}")
-
-if cpu_group3_comm != MPI.COMM_NULL:
-    init_cpu_process_group(cpu_group3_comm)
-
-    training_set_indices_cpu = np.arange(cpu_group3_comm.rank,
-                                         input_training_set.shape[0],
-                                         cpu_group3_comm.size)
-    validation_set_indices_cpu = np.arange(cpu_group3_comm.rank,
-                                           input_validation_set.shape[0],
-                                           cpu_group3_comm.size)
-
-    customDataset = CustomPartitionedDataset(reduced_problem, input_training_set,
-                                             output_training_set, training_set_indices_cpu)
-    train_dataloader = DataLoader(customDataset, batch_size=50, shuffle=True)
-
-    customDataset = CustomPartitionedDataset(reduced_problem, input_validation_set,
-                                             output_validation_set, validation_set_indices_cpu)
-    valid_dataloader = DataLoader(customDataset, batch_size=validation_set_indices_cpu.shape[0], shuffle=False)
-
-    path = "model3.pth"
-    save_model(model3, path)
-    # load_model(model3, path)
-
-    model_synchronise(model3, verbose=True)
-
-    # Training of ANN
-    training_loss = list()
-    validation_loss = list()
-
-    max_epochs = 20000
-    min_validation_loss = None
-    start_epoch = 0
-    checkpoint_path = "checkpoint3"
-    checkpoint_epoch = 10
-
-    learning_rate = 1.e-4
-    optimiser = get_optimiser(model3, "Adam", learning_rate)
-    loss_fn = get_loss_func("MSE", reduction="sum")
-
-    if os.path.exists(checkpoint_path):
-        start_epoch, min_validation_loss = \
-            load_checkpoint(checkpoint_path, model3, optimiser)
-
-    import time
-    start_time = time.time()
-    for epochs in range(start_epoch, max_epochs):
-        if epochs > 0 and epochs % checkpoint_epoch == 0:
-            save_checkpoint(checkpoint_path, epochs, model3, optimiser,
-                            min_validation_loss)
-        print(f"Epoch: {epochs+1}/{max_epochs}")
-        current_training_loss = train_nn(reduced_problem,
-                                         train_dataloader,
-                                         model3, loss_fn, optimiser)
-        training_loss.append(current_training_loss)
-        current_validation_loss = validate_nn(reduced_problem,
-                                              valid_dataloader,
-                                              model3, loss_fn)
-        validation_loss.append(current_validation_loss)
-        if epochs > 0 and current_validation_loss > 1.01 * min_validation_loss \
-        and reduced_problem.regularisation == "EarlyStopping":
-            # 1% safety margin against min_validation_loss
-            # before invoking early stopping criteria
-            print(f"Early stopping criteria invoked at epoch: {epochs+1}")
-            break
-        min_validation_loss = min(validation_loss)
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-
-    os.system(f"rm {checkpoint_path}")
-
+model_root_process = 0
+share_model(model, world_comm, model_root_process)
 world_comm.Barrier()
-
-model0_root_process = 0
-share_model(model0, world_comm, model0_root_process)
-
-model1_root_process = 4
-share_model(model1, world_comm, model1_root_process)
-
-model2_root_process = 8
-share_model(model2, world_comm, model2_root_process)
-
-model3_root_process = 12
-share_model(model3, world_comm, model3_root_process)
-
-if cpu_group0_comm != MPI.COMM_NULL:
-    save_model(model0, "trained_model0.pth")
-    print(f"Rank {cpu_group0_comm.rank}, Training time: {elapsed_time}")
-    cpu_group0_comm.Free()
-
-if cpu_group1_comm != MPI.COMM_NULL:
-    save_model(model1, "trained_model1.pth")
-    print(f"Rank {cpu_group1_comm.rank}, Training time: {elapsed_time}")
-    cpu_group1_comm.Free()
-
-if cpu_group2_comm != MPI.COMM_NULL:
-    save_model(model2, "trained_model2.pth")
-    print(f"Rank {cpu_group2_comm.rank}, Training time: {elapsed_time}")
-    cpu_group2_comm.Free()
-
-if cpu_group3_comm != MPI.COMM_NULL:
-    save_model(model3, "trained_model3.pth")
-    print(f"Rank {cpu_group3_comm.rank}, Training time: {elapsed_time}")
-    cpu_group3_comm.Free()
 
 # Error analysis dataset
 print("\n")
@@ -814,25 +556,7 @@ error_analysis_set = \
 win7 = MPI.Win.Allocate_shared(nbytes_error, itemsize,
                                comm=world_comm)
 buf7, itemsize = win7.Shared_query(0)
-error_numpy0 = np.ndarray(buffer=buf7, dtype="d",
-                         shape=(error_analysis_num_para))
-
-win8 = MPI.Win.Allocate_shared(nbytes_error, itemsize,
-                               comm=world_comm)
-buf8, itemsize = win8.Shared_query(0)
-error_numpy1 = np.ndarray(buffer=buf8, dtype="d",
-                         shape=(error_analysis_num_para))
-
-win9 = MPI.Win.Allocate_shared(nbytes_error, itemsize,
-                               comm=world_comm)
-buf9, itemsize = win9.Shared_query(0)
-error_numpy2 = np.ndarray(buffer=buf9, dtype="d",
-                         shape=(error_analysis_num_para))
-
-win10 = MPI.Win.Allocate_shared(nbytes_error, itemsize,
-                               comm=world_comm)
-buf10, itemsize = win10.Shared_query(0)
-error_numpy3 = np.ndarray(buffer=buf10, dtype="d",
+error_numpy = np.ndarray(buffer=buf7, dtype="d",
                          shape=(error_analysis_num_para))
 
 if world_comm.rank == 0:
@@ -844,27 +568,13 @@ error_analysis_indices = np.arange(world_comm.rank,
                                    error_analysis_set.shape[0],
                                    world_comm.size)
 for i in error_analysis_indices:
-    # NOTE Inefficient as parametric problem is solved in each error_analysis call
-    error_numpy0[i] = error_analysis(reduced_problem, problem_parametric,
-                                    error_analysis_set[i, :], model0,
+    error_numpy[i] = error_analysis(reduced_problem, problem_parametric,
+                                    error_analysis_set[i, :], model,
                                     len(reduced_problem._basis_functions),
                                     online_nn)
-    error_numpy1[i] = error_analysis(reduced_problem, problem_parametric,
-                                    error_analysis_set[i, :], model1,
-                                    len(reduced_problem._basis_functions),
-                                    online_nn)
-    error_numpy2[i] = error_analysis(reduced_problem, problem_parametric,
-                                    error_analysis_set[i, :], model2,
-                                    len(reduced_problem._basis_functions),
-                                    online_nn)
-    error_numpy3[i] = error_analysis(reduced_problem, problem_parametric,
-                                    error_analysis_set[i, :], model3,
-                                    len(reduced_problem._basis_functions),
-                                    online_nn)
-    print(f"Error analysis {i+1} of {error_analysis_set.shape[0]}, Error0: {error_numpy0[i]}")
-    print(f"Error analysis {i+1} of {error_analysis_set.shape[0]}, Error1: {error_numpy1[i]}")
-    print(f"Error analysis {i+1} of {error_analysis_set.shape[0]}, Error2: {error_numpy2[i]}")
-    print(f"Error analysis {i+1} of {error_analysis_set.shape[0]}, Error3: {error_numpy3[i]}")
+    print(f"Error analysis {i+1} of {error_analysis_set.shape[0]}, Error: {error_numpy[i]}")
+
+world_comm.Barrier()
 
 # Online phase at parameter online_mu
 
@@ -872,21 +582,21 @@ if world_comm.rank == 0:
     # Online phase at parameter online_mu
     # online_mu = np.array([0.25, -0.3, 2.5])
     online_mu = np.array([0.25, -0.3, 3.])
-    fem_start_time_0 = time.time()
+    fem_start_time = time.time()
     fem_solution = problem_parametric.solve(online_mu)
-    fem_end_time_0 = time.time()
+    fem_end_time = time.time()
     # First compute the RB solution using online_nn.
     # Next this solution is reconstructed on FE space
-    rb_start_time_0 = time.time()
+    rb_start_time = time.time()
     rb_solution = \
         reduced_problem.reconstruct_solution(
-            online_nn(reduced_problem, problem_parametric, online_mu, model0,
+            online_nn(reduced_problem, problem_parametric, online_mu, model,
                       len(reduced_problem._basis_functions)))
-    rb_end_time_0 = time.time()
+    rb_end_time = time.time()
 
     # Post processing
     fem_online_file \
-        = "dlrbnicsx_solution_nonlinear_poisson_0/fem_online_mu_computed.xdmf"
+        = "dlrbnicsx_solution_nonlinear_poisson/fem_online_mu_computed.xdmf"
     with HarmonicMeshMotion(mesh, facet_tags,
                             problem_parametric._boundary_markers,
                             problem_parametric._bcs_geometric,
@@ -897,7 +607,7 @@ if world_comm.rank == 0:
             solution_file.write_function(fem_solution)
 
     rb_online_file \
-        = "dlrbnicsx_solution_nonlinear_poisson_0/rb_online_mu_computed.xdmf"
+        = "dlrbnicsx_solution_nonlinear_poisson/rb_online_mu_computed.xdmf"
     with HarmonicMeshMotion(mesh, facet_tags,
                             problem_parametric._boundary_markers,
                             problem_parametric._bcs_geometric,
@@ -912,7 +622,7 @@ if world_comm.rank == 0:
     error_function.x.array[:] = \
         abs(fem_solution.x.array - rb_solution.x.array)
     fem_rb_error_file \
-        = "dlrbnicsx_solution_nonlinear_poisson_0/fem_rb_error_computed.xdmf"
+        = "dlrbnicsx_solution_nonlinear_poisson/fem_rb_error_computed.xdmf"
     with HarmonicMeshMotion(mesh, facet_tags,
                             problem_parametric._boundary_markers,
                             problem_parametric._bcs_geometric,
@@ -921,6 +631,10 @@ if world_comm.rank == 0:
                                 "w") as solution_file:
             solution_file.write_mesh(mesh)
             solution_file.write_function(error_function)
-    print(f"FEM time 0: {fem_end_time_0 - fem_start_time_0}")
-    print(f"RB time 0: {rb_end_time_0 - rb_start_time_0}")
-    print(f"Speedup 0: {(fem_end_time_0 - fem_start_time_0)/(rb_end_time_0 - rb_start_time_0)}")
+    print(f"FEM time: {fem_end_time - fem_start_time}")
+    print(f"RB time: {rb_end_time - rb_start_time}")
+    print(f"Speedup: {(fem_end_time - fem_start_time)/(rb_end_time - rb_start_time)}")
+
+if cpu_group0_comm != MPI.COMM_NULL:
+    save_model(model, "trained_model.pth")
+    print(f"Rank {cpu_group0_comm.rank}, Training time: {elapsed_time}")
