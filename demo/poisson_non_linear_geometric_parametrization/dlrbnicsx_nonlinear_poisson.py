@@ -119,7 +119,7 @@ class ProblemOnDeformedDomain(abc.ABC):
             solver.report = True
             ksp = solver.krylov_solver
             ksp.setFromOptions()
-            dolfinx.log.set_log_level(dolfinx.log.LogLevel.INFO)
+            # dolfinx.log.set_log_level(dolfinx.log.LogLevel.INFO)
 
             self._dirichletFunc.interpolate(lambda x:
                                             x[1] * np.sin(x[0] * np.pi)
@@ -128,7 +128,7 @@ class ProblemOnDeformedDomain(abc.ABC):
             assert (converged)
             solution.x.array[:] = self._solution.x.array.copy()
             # print(f"Computed solution array: {solution.x.array}")
-            print(f"Number of interations: {n:d}")
+            print(f"Number of iterations: {n:d}")
             return solution
 
 
@@ -146,9 +146,9 @@ class PODANNReducedProblem(abc.ABC):
         u, v = ufl.TrialFunction(problem._V), ufl.TestFunction(problem._V)
         self._inner_product = ufl.inner(u, v) * ufl.dx +\
             ufl.inner(ufl.grad(u), ufl.grad(v)) * ufl.dx
-        self._inner_product_action = \
-            rbnicsx.backends.bilinear_form_action(self._inner_product,
-                                                  part="real")
+        # self._inner_product_action = \
+        #     rbnicsx.backends.bilinear_form_action(self._inner_product,
+        #                                           part="real")
         self.input_scaling_range = [-1., 1.]
         self.output_scaling_range = [-1., 1.]
         self.input_range = \
@@ -197,7 +197,9 @@ class PODANNReducedProblem(abc.ABC):
         return projected_snapshot
 
     def norm_error(self, u, v):
-        return self.compute_norm(u-v)/self.compute_norm(u)
+        absolute_error = dolfinx.fem.Function(self.problem._V)
+        absolute_error.x.array[:] = u.x.array - v.x.array
+        return self.compute_norm(absolute_error)/self.compute_norm(u)
 
 
 # Read unit square mesh with Triangular elements
@@ -349,7 +351,7 @@ def generate_ann_output_set(problem, reduced_problem,
 
 # Training dataset
 ann_input_set = generate_ann_input_set(samples=[6, 6, 7])
-# np.random.shuffle(ann_input_set)
+np.random.shuffle(ann_input_set)
 ann_output_set = generate_ann_output_set(problem_parametric, reduced_problem,
                                          ann_input_set, mode="Training")
 
@@ -379,7 +381,7 @@ model = HiddenLayersNet(training_set.shape[1], [35, 35],
                         len(reduced_problem._basis_functions), Tanh())
 
 path = "model.pth"
-save_model(model, path)
+# save_model(model, path)
 load_model(model, path)
 
 
@@ -503,3 +505,4 @@ print(reduced_problem.norm_error(fem_solution, rb_solution))
 print(reduced_problem.compute_norm(error_function))
 
 print(f"Training time: {elapsed_time}")
+np.save("fem_rb_error.npy", error_numpy)
