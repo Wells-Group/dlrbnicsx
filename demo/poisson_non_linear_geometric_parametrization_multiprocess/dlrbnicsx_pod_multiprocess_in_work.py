@@ -1,7 +1,10 @@
 import abc
+
 import ufl
 import dolfinx
-# from petsc4py import PETSc
+from dolfinx.fem.petsc import NonlinearProblem
+from dolfinx.nls.petsc import NewtonSolver
+
 from mpi4py import MPI
 import numpy as np
 import itertools
@@ -31,7 +34,8 @@ class CustomMeshDeformation(HarmonicMeshMotion):
         self._mesh.geometry.x[:, :gdim] += \
             self.shape_parametrization.x.array.\
             reshape(self._reference_coordinates.shape[0], gdim)
-        self._mesh.geometry.x[:, 0] -= min(self._mesh.geometry.x[:, 0])
+        self._mesh.geometry.x[:, 0] -= \
+            self._mesh.comm.allreduce(min(self._mesh.geometry.x[:, 0]), op=MPI.MIN)
 
 
 class ProblemOnDeformedDomain(abc.ABC):
@@ -77,9 +81,8 @@ class ProblemOnDeformedDomain(abc.ABC):
     @property
     def set_problem(self):
         problemNonlinear = \
-            dolfinx.fem.petsc.NonlinearProblem(self.residual_term,
-                                               self._solution,
-                                               bcs=self.assemble_bcs)
+            NonlinearProblem(self.residual_term, self._solution,
+                             bcs=self.assemble_bcs)
         return problemNonlinear
 
     def solve(self, mu):
@@ -93,8 +96,7 @@ class ProblemOnDeformedDomain(abc.ABC):
         with self._meshDeformationContext(self._mesh, self._boundaries,
                                           self._boundary_markers,
                                           self._bcs_geometric, mu):
-            solver = dolfinx.nls.petsc.NewtonSolver(self._mesh.comm,
-                                                    problemNonlinear)
+            solver = NewtonSolver(self._mesh.comm, problemNonlinear)
             solver.convergence_criterion = "incremental"
             solver.rtol = 1.e-6
             solver.report = True
@@ -106,20 +108,24 @@ class ProblemOnDeformedDomain(abc.ABC):
             n, converged = solver.solve(self._solution)
             assert (converged)
             solution.x.array[:] = self._solution.x.array.copy()
-            print(f"Computed solution array: {solution.x.array}")
-            print(f"Number of interations: {n:d}")
+            # print(f"Computed solution array: {solution.x.array}")
+            print(f"Number of iterations: {n:d}")
             return solution
 
+def compute_inner_product(fun_j):
+    def inner_func(fun_i):
+        return fun_i.vector.dot(fun_j.vector)
+    return inner_func
 
 # Read unit square mesh with Triangular elements
 world_comm = MPI.COMM_WORLD
 world_rank = world_comm.rank
 world_size = world_comm.size
 
-group0_procs = world_comm.group.Incl([0, 1, 2, 3])  # world_comm.group.Incl([0, 1])
+group0_procs = world_comm.group.Incl([0, 1])
 gpu_group0_comm = world_comm.Create_group(group0_procs)
 
-group1_procs = world_comm.group.Incl([4, 5, 6, 7])  # world_comm.group.Incl([2, 3])
+group1_procs = world_comm.group.Incl([2, 3])
 gpu_group1_comm = world_comm.Create_group(group1_procs)
 
 gpu_comm_list = [gpu_group0_comm, gpu_group1_comm]
@@ -128,24 +134,22 @@ for i in range(len(gpu_comm_list)):
     if gpu_comm_list[i] != MPI.COMM_NULL:
         print(f"Process {world_rank}, gpu comm list: {i}")
 
-# exit()
-
 if gpu_group0_comm != MPI.COMM_NULL:
 
-    fem0_procs = gpu_group0_comm.group.Incl([0, 1])  # gpu_group0_comm.group.Incl([0])
+    fem0_procs = gpu_group0_comm.group.Incl([0])
     fem0_procs_comm = gpu_group0_comm.Create_group(fem0_procs)
 
-    fem1_procs = gpu_group0_comm.group.Incl([2, 3])  # gpu_group0_comm.group.Incl([1])
+    fem1_procs = gpu_group0_comm.group.Incl([1])
     fem1_procs_comm = gpu_group0_comm.Create_group(fem1_procs)
 
     cuda_num = 0
 
 if gpu_group1_comm != MPI.COMM_NULL:
 
-    fem2_procs = gpu_group1_comm.group.Incl([0, 1])  # gpu_group1_comm.group.Incl([0])
+    fem2_procs = gpu_group1_comm.group.Incl([0])
     fem2_procs_comm = gpu_group1_comm.Create_group(fem2_procs)
 
-    fem3_procs = gpu_group1_comm.group.Incl([2, 3])  # gpu_group1_comm.group.Incl([1])
+    fem3_procs = gpu_group1_comm.group.Incl([1])
     fem3_procs_comm = gpu_group1_comm.Create_group(fem3_procs)
 
     cuda_num = 1
@@ -192,7 +196,7 @@ solution_norm = \
     mesh.comm.allreduce(dolfinx.fem.assemble_scalar
                         (dolfinx.fem.form(ufl.inner(solution, solution) *
                                           ufl.dx)), op=MPI.SUM)
-print(f"Rank: {world_rank}, Solution norm: {solution_norm}, dofs: {solution.x.array}")
+print(f"Rank: {world_rank}, Solution norm: {solution_norm}")
 
 itemsize = MPI.DOUBLE.Get_size()
 num_snapshots = 64
@@ -227,63 +231,10 @@ world_comm.barrier()
 
 for i in range(len(gpu_comm_list)):
     if gpu_comm_list[i] != MPI.COMM_NULL:
-        gpu_indices = np.arange(i, num_snapshots, len(gpu_comm_list))
-        print(f"World rank: {world_comm.rank}, GPU indices {gpu_indices}")
-
-world_comm.barrier()
-
-for j in range(len(fem_comm_list)):
-    if fem_comm_list[j] != MPI.COMM_NULL:
-        cpu_indices = gpu_indices[np.arange(j, len(gpu_indices), len(fem_comm_list))]
-        print(f"World rank: {world_comm.rank}, CPU indices {cpu_indices}")
-        print(f"World rank: {world_comm.rank}, Local fem para matrix: {para_matrix[cpu_indices, :]}")
-
-world_comm.barrier()
-
-for k in range(len(cpu_indices)):
-    snapshot = dolfinx.fem.Function(problem._V)
-    snapshot.x.array[:] = problem.solve(mu).x.array
-    print(f"World rank: {world_comm.rank} \n snapshot array: {snapshot.x.array}")
-
-
-Nmax = 10
-
-print(rbnicsx.io.TextBox("POD offline phase begins", fill="="))
-print("")
-
-print("set up snapshots matrix")
-snapshots_matrix = rbnicsx.backends.FunctionsList(problem._V)
-
-# print("set up reduced problem")
-# reduced_problem = PODANNReducedProblem(problem)
-
-print("")
-
-for mu_index in cpu_indices:
-    print(rbnicsx.io.TextLine(str(mu_index+1), fill="#"))
-
-    print("Parameter number ", (mu_index+1), "of", num_snapshots)
-    mu = para_matrix[mu_index, :]
-    print("high fidelity solve for mu =", mu)
-    snapshot = problem.solve(mu)
-
-    print("update snapshots matrix")
-    snapshots_matrix.append(snapshot)
-
-    print("")
-
-world_comm.barrier()
-
-print("===========================================")
-
-print(rbnicsx.io.TextLine("perform POD", fill="#"))
-reduced_inner_product_action = \
-    rbnicsx.backends.bilinear_form_action(problem._inner_product,
-                                          part="real")
-eigenvalues, modes, _ = rbnicsx.backends.proper_orthogonal_decomposition(
-    snapshots_matrix, reduced_inner_product_action, N=Nmax, tol=1e-6)
-
-# print(f"Rank {world_comm.rank}, Eigenvalues: {eigenvalues[:Nmax]}")
+        gpu_indices = np.arange(i, para_matrix.shape[0], len(gpu_comm_list))
+        for j in range(len(fem_comm_list)):
+            if fem_comm_list[j] != MPI.COMM_NULL:
+                cpu_indices = gpu_indices[np.arange(j, gpu_indices.shape[0], len(fem_comm_list))]
 
 func_empty = dolfinx.fem.Function(problem._V)
 rstart, rend = func_empty.vector.getOwnershipRange()
@@ -299,7 +250,8 @@ world_comm.barrier()
 win0 = MPI.Win.Allocate_shared(nbytes, itemsize, comm=MPI.COMM_WORLD)
 buf0, itemsize = win0.Shared_query(0)
 snapshot_arrays = np.ndarray(buffer=buf0, dtype="d", shape=(num_snapshots, num_dofs))
-
+snapshots_matrix = rbnicsx.backends.FunctionsList(problem._V)
+Nmax = 10
 
 for j in range(len(fem_comm_list)):
     if fem_comm_list[j] != MPI.COMM_NULL:
@@ -309,18 +261,6 @@ for j in range(len(fem_comm_list)):
             snapshot_arrays[mu_index, rstart:rend] = solution.vector[rstart:rend]
 
 world_comm.barrier()
-
-reduced_inner_product_action = \
-    rbnicsx.backends.bilinear_form_action(problem._inner_product,
-                                          part="real")
-
-
-def compute_inner_product(fun_j):
-    def inner_func(fun_i):
-        return fun_i.vector.dot(fun_j.vector)
-
-    return inner_func
-
 
 for j in range(len(fem_comm_list)):
     if fem_comm_list[j] != MPI.COMM_NULL:
@@ -335,6 +275,14 @@ world_comm.barrier()
 
 eigenvalues, modes, _ = \
     rbnicsx.backends.proper_orthogonal_decomposition(
-        snapshots_matrix, reduced_inner_product_action, N=Nmax, tol=1e-6)
+        snapshots_matrix, compute_inner_product, N=Nmax, tol=1e-6)
 
-print(f"Rank {world_comm.rank}, Eigenvalues: {eigenvalues[:Nmax]}")
+## TODO check eigenvalues in serial and parallel by replacing
+# compute_inner_product with problem._inner_product_action
+'''
+eigenvalues, modes, _ = \
+    rbnicsx.backends.proper_orthogonal_decomposition(
+        snapshots_matrix, problem._inner_product_action, N=Nmax, tol=1e-6)
+'''
+
+print(f"My Rank {world_comm.rank}, Eigenvalues: {eigenvalues[:Nmax]}")
