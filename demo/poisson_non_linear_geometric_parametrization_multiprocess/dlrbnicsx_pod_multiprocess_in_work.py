@@ -110,49 +110,151 @@ class ProblemOnDeformedDomain(abc.ABC):
             solution.x.array[:] = self._solution.x.array.copy()
             # print(f"Computed solution array: {solution.x.array}")
             print(f"Number of iterations: {n:d}")
-            return solution
+        return solution
 
-def compute_inner_product(fun_j):
-    def inner_func(fun_i):
-        return fun_i.vector.dot(fun_j.vector)
-    return inner_func
+class PODANNReducedProblem(abc.ABC):
+    '''
+    # TODO
+    # Mesh deformation at reconstruct_solution,
+    # compute_norm, project_snapshot (??)
+    '''
+    """Define a linear projection-based problem, and solve it with KSP."""
+
+    def __init__(self, problem) -> None:
+        self._basis_functions = rbnicsx.backends.FunctionsList(problem._V)
+        self.problem = problem
+        u, v = ufl.TrialFunction(problem._V), ufl.TestFunction(problem._V)
+        self._inner_product = ufl.inner(u, v) * ufl.dx +\
+            ufl.inner(ufl.grad(u), ufl.grad(v)) * ufl.dx
+        self._inner_product_action = \
+           rbnicsx.backends.bilinear_form_action(self._inner_product,
+                                                 part="real")
+        self.input_scaling_range = [-1., 1.]
+        self.output_scaling_range = [-1., 1.]
+        self.input_range = \
+            np.array([[0.2, -0.2, 1.], [0.3, -0.4, 4.]])
+        self.output_range = [-6., 3.]
+        #self.loss_fn = "MSE"
+        #self.learning_rate = 1e-5
+        #self.optimizer = "Adam"
+        self.regularisation = "EarlyStopping"
+
+    '''
+    def _inner_product_action(self, fun_j):
+        def _(fun_i):
+            return fun_i.vector.dot(fun_j.vector)
+        return _
+    '''
+
+    def reconstruct_solution(self, reduced_solution):
+        """Reconstructed reduced solution on the high fidelity space."""
+        return self._basis_functions[:reduced_solution.size] * \
+            reduced_solution
+
+    def compute_norm(self, function):
+        """Compute the norm of a function inner product
+        on the reference domain."""
+        return np.sqrt(self._inner_product_action(function)(function))
+        # return np.sqrt(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(function, function) * ufl.dx +\
+        #     ufl.inner(ufl.grad(function), ufl.grad(function)) * ufl.dx)))
+
+    def project_snapshot(self, solution, N):
+        return self._project_snapshot(solution, N)
+
+    def _project_snapshot(self, solution, N):
+        projected_snapshot = rbnicsx.online.create_vector(N)
+        A = rbnicsx.backends.\
+            project_matrix(self._inner_product_action,
+                           self._basis_functions[:N])
+        F = rbnicsx.backends.\
+            project_vector(self._inner_product_action(solution),
+                           self._basis_functions[:N])
+        ksp = PETSc.KSP()
+        ksp.create(projected_snapshot.comm)
+        ksp.setOperators(A)
+        ksp.setType("preonly")
+        ksp.getPC().setType("lu")
+        ksp.setFromOptions()
+        ksp.solve(F, projected_snapshot)
+
+        return projected_snapshot
+
+    def norm_error(self, u, v):
+        absolute_error = dolfinx.fem.Function(self.problem._V)
+        absolute_error.x.array[:] = u.x.array - v.x.array
+        return self.compute_norm(absolute_error)/self.compute_norm(u) # self.compute_norm(u-v)/self.compute_norm(u)
 
 # Read unit square mesh with Triangular elements
 world_comm = MPI.COMM_WORLD
 world_rank = world_comm.rank
 world_size = world_comm.size
 
-group0_procs = world_comm.group.Incl([0, 1])
-gpu_group0_comm = world_comm.Create_group(group0_procs)
+if world_comm.size == 8:
+    group0_procs = world_comm.group.Incl([0, 1, 2, 3])
+    gpu_group0_comm = world_comm.Create_group(group0_procs)
 
-group1_procs = world_comm.group.Incl([2, 3])
-gpu_group1_comm = world_comm.Create_group(group1_procs)
+    group1_procs = world_comm.group.Incl([4, 5, 6, 7])
+    gpu_group1_comm = world_comm.Create_group(group1_procs)
 
-gpu_comm_list = [gpu_group0_comm, gpu_group1_comm]
+    gpu_comm_list = [gpu_group0_comm, gpu_group1_comm]
 
-for i in range(len(gpu_comm_list)):
-    if gpu_comm_list[i] != MPI.COMM_NULL:
-        print(f"Process {world_rank}, gpu comm list: {i}")
+    for i in range(len(gpu_comm_list)):
+        if gpu_comm_list[i] != MPI.COMM_NULL:
+            print(f"Process {world_rank}, gpu comm list: {i}")
 
-if gpu_group0_comm != MPI.COMM_NULL:
+    if gpu_group0_comm != MPI.COMM_NULL:
 
-    fem0_procs = gpu_group0_comm.group.Incl([0])
-    fem0_procs_comm = gpu_group0_comm.Create_group(fem0_procs)
+        fem0_procs = gpu_group0_comm.group.Incl([0, 1])
+        fem0_procs_comm = gpu_group0_comm.Create_group(fem0_procs)
 
-    fem1_procs = gpu_group0_comm.group.Incl([1])
-    fem1_procs_comm = gpu_group0_comm.Create_group(fem1_procs)
+        fem1_procs = gpu_group0_comm.group.Incl([2, 3])
+        fem1_procs_comm = gpu_group0_comm.Create_group(fem1_procs)
 
-    cuda_num = 0
+        cuda_num = 0
 
-if gpu_group1_comm != MPI.COMM_NULL:
+    if gpu_group1_comm != MPI.COMM_NULL:
 
-    fem2_procs = gpu_group1_comm.group.Incl([0])
-    fem2_procs_comm = gpu_group1_comm.Create_group(fem2_procs)
+        fem2_procs = gpu_group1_comm.group.Incl([0, 1])
+        fem2_procs_comm = gpu_group1_comm.Create_group(fem2_procs)
 
-    fem3_procs = gpu_group1_comm.group.Incl([1])
-    fem3_procs_comm = gpu_group1_comm.Create_group(fem3_procs)
+        fem3_procs = gpu_group1_comm.group.Incl([2, 3])
+        fem3_procs_comm = gpu_group1_comm.Create_group(fem3_procs)
 
-    cuda_num = 1
+        cuda_num = 1
+elif world_comm.size == 4:
+    group0_procs = world_comm.group.Incl([0, 1])
+    gpu_group0_comm = world_comm.Create_group(group0_procs)
+
+    group1_procs = world_comm.group.Incl([2, 3])
+    gpu_group1_comm = world_comm.Create_group(group1_procs)
+
+    gpu_comm_list = [gpu_group0_comm, gpu_group1_comm]
+
+    for i in range(len(gpu_comm_list)):
+        if gpu_comm_list[i] != MPI.COMM_NULL:
+            print(f"Process {world_rank}, gpu comm list: {i}")
+
+    if gpu_group0_comm != MPI.COMM_NULL:
+
+        fem0_procs = gpu_group0_comm.group.Incl([0])
+        fem0_procs_comm = gpu_group0_comm.Create_group(fem0_procs)
+
+        fem1_procs = gpu_group0_comm.group.Incl([1])
+        fem1_procs_comm = gpu_group0_comm.Create_group(fem1_procs)
+
+        cuda_num = 0
+
+    if gpu_group1_comm != MPI.COMM_NULL:
+
+        fem2_procs = gpu_group1_comm.group.Incl([0])
+        fem2_procs_comm = gpu_group1_comm.Create_group(fem2_procs)
+
+        fem3_procs = gpu_group1_comm.group.Incl([1])
+        fem3_procs_comm = gpu_group1_comm.Create_group(fem3_procs)
+
+        cuda_num = 1
+else:
+    raise NotImplementedError("Please use 4 or 8 processes")
 
 if gpu_group0_comm != MPI.COMM_NULL:
     if fem0_procs_comm != MPI.COMM_NULL:
@@ -192,10 +294,15 @@ mesh, cell_tags, facet_tags = \
 problem = ProblemOnDeformedDomain(mesh, cell_tags, facet_tags,
                                   CustomMeshDeformation)
 solution = problem.solve(mu)
+
 solution_norm = \
     mesh.comm.allreduce(dolfinx.fem.assemble_scalar
                         (dolfinx.fem.form(ufl.inner(solution, solution) *
+                                          ufl.dx + ufl.inner(ufl.grad(solution), ufl.grad(solution)) *
                                           ufl.dx)), op=MPI.SUM)
+print(f"Rank: {world_rank}, Solution norm: {solution_norm}")
+
+solution_norm = problem._inner_product_action(solution)(solution)
 print(f"Rank: {world_rank}, Solution norm: {solution_norm}")
 
 itemsize = MPI.DOUBLE.Get_size()
@@ -268,21 +375,49 @@ for j in range(len(fem_comm_list)):
             solution_empty = dolfinx.fem.Function(problem._V)
             rstart, rend = solution_empty.vector.getOwnershipRange()
             solution_empty.vector[rstart:rend] = snapshot_arrays[i, rstart:rend]
+            solution_empty.vector.assemble()
             snapshots_matrix.append(solution_empty)
 
+print("Set up reduced problem")
+reduced_problem = PODANNReducedProblem(problem)
 
-world_comm.barrier()
+print("")
 
-eigenvalues, modes, _ = \
-    rbnicsx.backends.proper_orthogonal_decomposition(
-        snapshots_matrix, compute_inner_product, N=Nmax, tol=1e-6)
+print(rbnicsx.io.TextLine("Perform POD", fill="#"))
 
 ## TODO check eigenvalues in serial and parallel by replacing
 # compute_inner_product with problem._inner_product_action
-'''
+
 eigenvalues, modes, _ = \
     rbnicsx.backends.proper_orthogonal_decomposition(
-        snapshots_matrix, problem._inner_product_action, N=Nmax, tol=1e-6)
-'''
+        snapshots_matrix, reduced_problem._inner_product_action, N=Nmax, tol=1e-6)
 
 print(f"My Rank {world_comm.rank}, Eigenvalues: {eigenvalues[:Nmax]}")
+
+cor_mat = np.zeros([5, 5])
+for i in range(59, 64):
+    for j in range(59, 64):
+        if i == j:
+            print(f"val: {i}, {reduced_problem._inner_product_action(snapshots_matrix[i])(snapshots_matrix[j])}, {mesh.comm.allreduce(np.linalg.norm(snapshots_matrix[i].vector)**2, op=MPI.SUM)}")
+            cor_mat[i - 59, j - 59] = reduced_problem._inner_product_action(snapshots_matrix[i])(snapshots_matrix[j])
+
+for i in range(len(snapshots_matrix)):
+    if i > 58:
+        print(i, para_matrix[i, :], reduced_problem._inner_product_action(snapshots_matrix[i])(snapshots_matrix[i]), mesh.comm.allreduce(np.linalg.norm(snapshots_matrix[i].vector)**2, op=MPI.SUM))
+
+print(np.diag(cor_mat))
+
+solution_ref = problem.solve(para_matrix[59, :])
+print(reduced_problem._inner_product_action(solution_ref)(solution_ref), mesh.comm.allreduce(np.linalg.norm(solution_ref.vector)**2, op=MPI.SUM))
+
+solution_ref = problem.solve(para_matrix[60, :])
+print(reduced_problem._inner_product_action(solution_ref)(solution_ref), mesh.comm.allreduce(np.linalg.norm(solution_ref.vector)**2, op=MPI.SUM))
+
+solution_ref = problem.solve(para_matrix[61, :])
+print(reduced_problem._inner_product_action(solution_ref)(solution_ref), mesh.comm.allreduce(np.linalg.norm(solution_ref.vector)**2, op=MPI.SUM))
+
+solution_ref = problem.solve(para_matrix[62, :])
+print(reduced_problem._inner_product_action(solution_ref)(solution_ref), mesh.comm.allreduce(np.linalg.norm(solution_ref.vector)**2, op=MPI.SUM))
+
+solution_ref = problem.solve(para_matrix[63, :])
+print(reduced_problem._inner_product_action(solution_ref)(solution_ref), mesh.comm.allreduce(np.linalg.norm(solution_ref.vector)**2, op=MPI.SUM))
