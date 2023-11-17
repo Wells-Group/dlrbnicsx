@@ -35,7 +35,7 @@ class CustomMeshDeformation(HarmonicMeshMotion):
             self.shape_parametrization.x.array.\
             reshape(self._reference_coordinates.shape[0], gdim)
         self._mesh.geometry.x[:, 0] -= \
-            self._mesh.comm.allreduce(min(self._mesh.geometry.x[:, 0]), op=MPI.MIN)
+           self._mesh.comm.allreduce(min(self._mesh.geometry.x[:, 0]), op=MPI.MIN)
 
 
 class ProblemOnDeformedDomain(abc.ABC):
@@ -253,6 +253,15 @@ elif world_comm.size == 4:
         fem3_procs_comm = gpu_group1_comm.Create_group(fem3_procs)
 
         cuda_num = 1
+elif world_comm.size == 1:
+    gpu_group0_comm = MPI.COMM_NULL
+    gpu_group1_comm = MPI.COMM_NULL
+    mu = np.array([0.2, -0.2, 1.])
+    mesh_comm = MPI.COMM_WORLD
+    cuda_num = 0
+    gpu_comm_list = [gpu_group0_comm, gpu_group1_comm]
+    fem_comm_list = [MPI.COMM_WORLD]
+
 else:
     raise NotImplementedError("Please use 4 or 8 processes")
 
@@ -343,6 +352,9 @@ for i in range(len(gpu_comm_list)):
             if fem_comm_list[j] != MPI.COMM_NULL:
                 cpu_indices = gpu_indices[np.arange(j, gpu_indices.shape[0], len(fem_comm_list))]
 
+if world_comm.size == 1:
+    cpu_indices = np.arange(0, para_matrix.shape[0])
+
 func_empty = dolfinx.fem.Function(problem._V)
 rstart, rend = func_empty.vector.getOwnershipRange()
 num_dofs = mesh.comm.allreduce(rend, op=MPI.MAX) - mesh.comm.allreduce(rstart, op=MPI.MIN)
@@ -375,6 +387,7 @@ for j in range(len(fem_comm_list)):
             solution_empty = dolfinx.fem.Function(problem._V)
             rstart, rend = solution_empty.vector.getOwnershipRange()
             solution_empty.vector[rstart:rend] = snapshot_arrays[i, rstart:rend]
+            solution_empty.x.scatter_forward()
             solution_empty.vector.assemble()
             snapshots_matrix.append(solution_empty)
 
@@ -385,39 +398,8 @@ print("")
 
 print(rbnicsx.io.TextLine("Perform POD", fill="#"))
 
-## TODO check eigenvalues in serial and parallel by replacing
-# compute_inner_product with problem._inner_product_action
-
 eigenvalues, modes, _ = \
     rbnicsx.backends.proper_orthogonal_decomposition(
         snapshots_matrix, reduced_problem._inner_product_action, N=Nmax, tol=1e-6)
 
 print(f"My Rank {world_comm.rank}, Eigenvalues: {eigenvalues[:Nmax]}")
-
-cor_mat = np.zeros([5, 5])
-for i in range(59, 64):
-    for j in range(59, 64):
-        if i == j:
-            print(f"val: {i}, {reduced_problem._inner_product_action(snapshots_matrix[i])(snapshots_matrix[j])}, {mesh.comm.allreduce(np.linalg.norm(snapshots_matrix[i].vector)**2, op=MPI.SUM)}")
-            cor_mat[i - 59, j - 59] = reduced_problem._inner_product_action(snapshots_matrix[i])(snapshots_matrix[j])
-
-for i in range(len(snapshots_matrix)):
-    if i > 58:
-        print(i, para_matrix[i, :], reduced_problem._inner_product_action(snapshots_matrix[i])(snapshots_matrix[i]), mesh.comm.allreduce(np.linalg.norm(snapshots_matrix[i].vector)**2, op=MPI.SUM))
-
-print(np.diag(cor_mat))
-
-solution_ref = problem.solve(para_matrix[59, :])
-print(reduced_problem._inner_product_action(solution_ref)(solution_ref), mesh.comm.allreduce(np.linalg.norm(solution_ref.vector)**2, op=MPI.SUM))
-
-solution_ref = problem.solve(para_matrix[60, :])
-print(reduced_problem._inner_product_action(solution_ref)(solution_ref), mesh.comm.allreduce(np.linalg.norm(solution_ref.vector)**2, op=MPI.SUM))
-
-solution_ref = problem.solve(para_matrix[61, :])
-print(reduced_problem._inner_product_action(solution_ref)(solution_ref), mesh.comm.allreduce(np.linalg.norm(solution_ref.vector)**2, op=MPI.SUM))
-
-solution_ref = problem.solve(para_matrix[62, :])
-print(reduced_problem._inner_product_action(solution_ref)(solution_ref), mesh.comm.allreduce(np.linalg.norm(solution_ref.vector)**2, op=MPI.SUM))
-
-solution_ref = problem.solve(para_matrix[63, :])
-print(reduced_problem._inner_product_action(solution_ref)(solution_ref), mesh.comm.allreduce(np.linalg.norm(solution_ref.vector)**2, op=MPI.SUM))
