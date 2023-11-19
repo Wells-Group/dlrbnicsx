@@ -115,6 +115,11 @@ class ProblemOnDeformedDomain(abc.ABC):
         return solution
 
 class PODANNReducedProblem(abc.ABC):
+    '''
+    # TODO
+    # Mesh deformation at reconstruct_solution,
+    # compute_norm, project_snapshot (??)
+    '''
     """Define a linear projection-based problem, and solve it with KSP."""
 
     def __init__(self, problem) -> None:
@@ -152,6 +157,8 @@ class PODANNReducedProblem(abc.ABC):
         """Compute the norm of a function inner product
         on the reference domain."""
         return np.sqrt(self._inner_product_action(function)(function))
+        # return np.sqrt(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(function, function) * ufl.dx +\
+        #     ufl.inner(ufl.grad(function), ufl.grad(function)) * ufl.dx)))
 
     def project_snapshot(self, solution, N):
         return self._project_snapshot(solution, N)
@@ -185,55 +192,109 @@ world_rank = world_comm.rank
 world_size = world_comm.size
 
 if world_comm.size == 8:
+    group0_procs = world_comm.group.Incl([0, 1, 2, 3])
+    gpu_group0_comm = world_comm.Create_group(group0_procs)
 
-    fem0_procs = world_comm.group.Incl([0, 1])
-    fem0_procs_comm = world_comm.Create_group(fem0_procs)
+    group1_procs = world_comm.group.Incl([4, 5, 6, 7])
+    gpu_group1_comm = world_comm.Create_group(group1_procs)
 
-    fem1_procs = world_comm.group.Incl([2, 3])
-    fem1_procs_comm = world_comm.Create_group(fem1_procs)
+    gpu_comm_list = [gpu_group0_comm, gpu_group1_comm]
 
-    fem2_procs = world_comm.group.Incl([4, 5])
-    fem2_procs_comm = world_comm.Create_group(fem2_procs)
+    for i in range(len(gpu_comm_list)):
+        if gpu_comm_list[i] != MPI.COMM_NULL:
+            print(f"Process {world_rank}, gpu comm list: {i}")
 
-    fem3_procs = world_comm.group.Incl([6, 7])
-    fem3_procs_comm = world_comm.Create_group(fem3_procs)
+    if gpu_group0_comm != MPI.COMM_NULL:
 
-    mu = np.array([0.2, -0.2, 1.])
+        fem0_procs = gpu_group0_comm.group.Incl([0, 1])
+        fem0_procs_comm = gpu_group0_comm.Create_group(fem0_procs)
 
-    fem_comm_list = [fem0_procs_comm, fem1_procs_comm,
-                     fem2_procs_comm, fem3_procs_comm]
+        fem1_procs = gpu_group0_comm.group.Incl([2, 3])
+        fem1_procs_comm = gpu_group0_comm.Create_group(fem1_procs)
 
+        cuda_num = 0
+
+    if gpu_group1_comm != MPI.COMM_NULL:
+
+        fem2_procs = gpu_group1_comm.group.Incl([0, 1])
+        fem2_procs_comm = gpu_group1_comm.Create_group(fem2_procs)
+
+        fem3_procs = gpu_group1_comm.group.Incl([2, 3])
+        fem3_procs_comm = gpu_group1_comm.Create_group(fem3_procs)
+
+        cuda_num = 1
 elif world_comm.size == 4:
+    group0_procs = world_comm.group.Incl([0, 1])
+    gpu_group0_comm = world_comm.Create_group(group0_procs)
 
-    fem0_procs = world_comm.group.Incl([0])
-    fem0_procs_comm = world_comm.Create_group(fem0_procs)
+    group1_procs = world_comm.group.Incl([2, 3])
+    gpu_group1_comm = world_comm.Create_group(group1_procs)
 
-    fem1_procs = world_comm.group.Incl([1])
-    fem1_procs_comm = world_comm.Create_group(fem1_procs)
+    gpu_comm_list = [gpu_group0_comm, gpu_group1_comm]
 
-    fem2_procs = world_comm.group.Incl([2])
-    fem2_procs_comm = world_comm.Create_group(fem2_procs)
+    for i in range(len(gpu_comm_list)):
+        if gpu_comm_list[i] != MPI.COMM_NULL:
+            print(f"Process {world_rank}, gpu comm list: {i}")
 
-    fem3_procs = world_comm.group.Incl([3])
-    fem3_procs_comm = world_comm.Create_group(fem3_procs)
+    if gpu_group0_comm != MPI.COMM_NULL:
 
-    mu = np.array([0.2, -0.2, 1.])
+        fem0_procs = gpu_group0_comm.group.Incl([0])
+        fem0_procs_comm = gpu_group0_comm.Create_group(fem0_procs)
 
-    fem_comm_list = [fem0_procs_comm, fem1_procs_comm,
-                     fem2_procs_comm, fem3_procs_comm]
+        fem1_procs = gpu_group0_comm.group.Incl([1])
+        fem1_procs_comm = gpu_group0_comm.Create_group(fem1_procs)
 
+        cuda_num = 0
+
+    if gpu_group1_comm != MPI.COMM_NULL:
+
+        fem2_procs = gpu_group1_comm.group.Incl([0])
+        fem2_procs_comm = gpu_group1_comm.Create_group(fem2_procs)
+
+        fem3_procs = gpu_group1_comm.group.Incl([1])
+        fem3_procs_comm = gpu_group1_comm.Create_group(fem3_procs)
+
+        cuda_num = 1
 elif world_comm.size == 1:
-
+    gpu_group0_comm = MPI.COMM_NULL
+    gpu_group1_comm = MPI.COMM_NULL
     mu = np.array([0.2, -0.2, 1.])
+    mesh_comm = MPI.COMM_WORLD
+    cuda_num = 0
+    gpu_comm_list = [gpu_group0_comm, gpu_group1_comm]
     fem_comm_list = [MPI.COMM_WORLD]
 
 else:
     raise NotImplementedError("Please use 1, 4 or 8 processes")
 
+if gpu_group0_comm != MPI.COMM_NULL:
+    if fem0_procs_comm != MPI.COMM_NULL:
+        print(
+            f"Group 0: World rank {world_rank}, FEM 0 rank {fem0_procs_comm.rank}, Cuda number {cuda_num}")
+        mu = np.array([0.2, -0.2, 1.])
+        mesh_comm = fem0_procs_comm
 
-for comm_i in fem_comm_list:
-    if comm_i != MPI.COMM_NULL:
-        mesh_comm = comm_i
+    if fem1_procs_comm != MPI.COMM_NULL:
+        print(
+            f"Group 0: World rank {world_rank}, FEM 1 rank {fem1_procs_comm.rank}, Cuda number {cuda_num}")
+        mu = np.array([0.2, -0.2, 1.])  # np.array([0.3, -0.25, 1.5])
+        mesh_comm = fem1_procs_comm
+
+    fem_comm_list = [fem0_procs_comm, fem1_procs_comm]
+
+if gpu_group1_comm != MPI.COMM_NULL:
+    if fem2_procs_comm != MPI.COMM_NULL:
+        print(
+            f"Group 1: World rank {world_rank}, FEM 2 rank {fem2_procs_comm.rank}, Cuda number {cuda_num}")
+        mu = np.array([0.2, -0.2, 1.])  # np.array([0.28, -0.3, 2.3])
+        mesh_comm = fem2_procs_comm
+    if fem3_procs_comm != MPI.COMM_NULL:
+        print(
+            f"Group 1: World rank {world_rank}, FEM 3 rank {fem3_procs_comm.rank}, Cuda number {cuda_num}")
+        mu = np.array([0.2, -0.2, 1.])  # np.array([0.22, -0.4, 3.])
+        mesh_comm = fem3_procs_comm
+
+    fem_comm_list = [fem2_procs_comm, fem3_procs_comm]
 
 gdim = 2
 gmsh_model_rank = 0
@@ -243,22 +304,14 @@ mesh, cell_tags, facet_tags = \
 
 problem_parametric = ProblemOnDeformedDomain(mesh, cell_tags, facet_tags,
                                   CustomMeshDeformation)
-solution_mu = problem_parametric.solve(mu)
+solution = problem_parametric.solve(mu)
 
 itemsize = MPI.DOUBLE.Get_size()
 num_snapshots = 64
 para_dim = 3
-rstart, rend = solution_mu.vector.getOwnershipRange()
-num_dofs = mesh.comm.allreduce(rend, op=MPI.MAX) - mesh.comm.allreduce(rstart, op=MPI.MIN)
 
-pod_samples = [4, 4, 4]
-ann_samples = [6, 6, 7]
-error_analysis_samples = [6, 4, 6]
-num_snapshots = np.product(pod_samples)
-nbytes_para = itemsize * num_snapshots * para_dim
-nbytes_dofs = itemsize * num_snapshots * num_dofs
 
-def generate_training_set(samples=pod_samples):
+def generate_training_set(samples=[4, 4, 4]):
     training_set_0 = np.linspace(0.2, 0.3, samples[0])
     training_set_1 = np.linspace(-0.2, -0.3, samples[1])
     training_set_2 = np.linspace(1., 4., samples[2])
@@ -282,13 +335,21 @@ if world_comm.rank == 0:
 
 world_comm.barrier()
 
-for i in range(len(fem_comm_list)):
-    if fem_comm_list[i] != MPI.COMM_NULL:
-        cpu_indices = np.arange(i, para_matrix.shape[0], len(fem_comm_list))
+# print(f"Rank {world_comm.rank}, Para matrix {para_matrix}")
+
+for i in range(len(gpu_comm_list)):
+    if gpu_comm_list[i] != MPI.COMM_NULL:
+        gpu_indices = np.arange(i, para_matrix.shape[0], len(gpu_comm_list))
+        for j in range(len(fem_comm_list)):
+            if fem_comm_list[j] != MPI.COMM_NULL:
+                cpu_indices = gpu_indices[np.arange(j, gpu_indices.shape[0], len(fem_comm_list))]
+
+if world_comm.size == 1:
+    cpu_indices = np.arange(0, para_matrix.shape[0])
 
 func_empty = dolfinx.fem.Function(problem_parametric._V)
-# rstart, rend = func_empty.vector.getOwnershipRange()
-# num_dofs = mesh.comm.allreduce(rend, op=MPI.MAX) - mesh.comm.allreduce(rstart, op=MPI.MIN)
+rstart, rend = func_empty.vector.getOwnershipRange()
+num_dofs = mesh.comm.allreduce(rend, op=MPI.MAX) - mesh.comm.allreduce(rstart, op=MPI.MIN)
 
 if world_comm.rank == 0:
     nbytes = num_snapshots * num_dofs * itemsize
@@ -303,8 +364,8 @@ snapshot_arrays = np.ndarray(buffer=buf0, dtype="d", shape=(num_snapshots, num_d
 snapshots_matrix = rbnicsx.backends.FunctionsList(problem_parametric._V)
 Nmax = 10
 
-for i in range(len(fem_comm_list)):
-    if fem_comm_list[i] != MPI.COMM_NULL:
+for j in range(len(fem_comm_list)):
+    if fem_comm_list[j] != MPI.COMM_NULL:
         for mu_index in cpu_indices:
             solution = problem_parametric.solve(para_matrix[mu_index, :])
             rstart, rend = solution.vector.getOwnershipRange()
@@ -333,8 +394,7 @@ eigenvalues, modes, _ = \
     rbnicsx.backends.proper_orthogonal_decomposition(
         snapshots_matrix, reduced_problem._inner_product_action, N=Nmax, tol=1e-6)
 
-print(f"My Rank {world_comm.rank}, Eigenvalues: {eigenvalues[:Nmax]}")
-# exit()
+# print(f"My Rank {world_comm.rank}, Eigenvalues: {eigenvalues[:Nmax]}")
 
 reduced_problem._basis_functions.extend(modes)
 
@@ -364,126 +424,4 @@ if world_comm.rank == 0:
     plt.tight_layout()
     plt.savefig("eigenvalue_decay")
 
-# print(f"Eigenvalues: {positive_eigenvalues}")
-
-# ### POD Ends ###
-
-# ### ANN implementation ###
-def generate_ann_input_set(samples=ann_samples):
-    # Select samples from the parameter space for ANN
-    training_set_0 = np.linspace(0.2, 0.3, samples[0])
-    training_set_1 = np.linspace(-0.2, -0.3, samples[1])
-    training_set_2 = np.linspace(1., 4., samples[2])
-    training_set = np.array(list(itertools.product(training_set_0,
-                                                   training_set_1,
-                                                   training_set_2)))
-    return training_set
-
-
-def generate_ann_output_set(problem, reduced_problem, input_set,
-                            output_set, indices, mode=None):
-    # Solve the FE problem at given input_sets and
-    # project on the RB space
-    rb_size = len(reduced_problem._basis_functions)
-    for i in indices:
-        if mode is None:
-            print(f"Parameter {i+1}/{input_set.shape[0]}")
-        else:
-            print(f"{mode} parameter number {i+1}/{input_set.shape[0]}")
-        solution = problem.solve(input_set[i, :])
-        output_set[i, :] = reduced_problem.project_snapshot(solution,
-                                                            rb_size).array
-
-num_ann_input_samples = np.product(ann_samples)
-num_training_samples = int(0.7 * num_ann_input_samples)
-num_validation_samples = num_ann_input_samples - int(0.7 * num_ann_input_samples)
-itemsize = MPI.DOUBLE.Get_size()
-
-if world_comm.rank == 0:
-    ann_input_set = generate_ann_input_set(samples=ann_samples)
-    # np.random.shuffle(ann_input_set)
-    nbytes_para_ann_training = num_training_samples * itemsize * para_dim
-    nbytes_dofs_ann_training = num_training_samples * itemsize * \
-        len(reduced_problem._basis_functions)
-    nbytes_para_ann_validation = num_validation_samples * itemsize * para_dim
-    nbytes_dofs_ann_validation = num_validation_samples * itemsize * \
-        len(reduced_problem._basis_functions)
-else:
-    nbytes_para_ann_training = 0
-    nbytes_dofs_ann_training = 0
-    nbytes_para_ann_validation = 0
-    nbytes_dofs_ann_validation = 0
-
-world_comm.barrier()
-
-win2 = MPI.Win.Allocate_shared(nbytes_para_ann_training, itemsize,
-                               comm=MPI.COMM_WORLD)
-buf2, itemsize = win2.Shared_query(0)
-input_training_set = \
-    np.ndarray(buffer=buf2, dtype="d",
-               shape=(num_training_samples, para_dim))
-
-win3 = MPI.Win.Allocate_shared(nbytes_para_ann_validation, itemsize,
-                               comm=MPI.COMM_WORLD)
-buf3, itemsize = win3.Shared_query(0)
-input_validation_set = \
-    np.ndarray(buffer=buf3, dtype="d",
-               shape=(num_validation_samples, para_dim))
-
-win4 = MPI.Win.Allocate_shared(nbytes_dofs_ann_training, itemsize,
-                               comm=MPI.COMM_WORLD)
-buf4, itemsize = win4.Shared_query(0)
-output_training_set = \
-    np.ndarray(buffer=buf4, dtype="d",
-               shape=(num_training_samples,
-                      len(reduced_problem._basis_functions)))
-
-win5 = MPI.Win.Allocate_shared(nbytes_dofs_ann_validation, itemsize,
-                               comm=MPI.COMM_WORLD)
-buf5, itemsize = win5.Shared_query(0)
-output_validation_set = \
-    np.ndarray(buffer=buf5, dtype="d",
-               shape=(num_validation_samples,
-                      len(reduced_problem._basis_functions)))
-
-if world_comm.rank == 0:
-    input_training_set[:, :] = \
-        ann_input_set[:num_training_samples, :]
-    input_validation_set[:, :] = \
-        ann_input_set[num_training_samples:, :]
-    output_training_set[:, :] = \
-        np.zeros([num_training_samples,
-                  len(reduced_problem._basis_functions)])
-    output_validation_set[:, :] = \
-        np.zeros([num_validation_samples,
-                  len(reduced_problem._basis_functions)])
-
-world_comm.Barrier()
-
-for j in range(len(fem_comm_list)):
-    if fem_comm_list[j] != MPI.COMM_NULL:
-        training_set_indices = \
-            np.arange(j, input_training_set.shape[0], len(fem_comm_list))
-
-        validation_set_indices = \
-            np.arange(j, input_validation_set.shape[0], len(fem_comm_list))
-
-# world_comm.Barrier()
-
-# Training dataset
-generate_ann_output_set(problem_parametric, reduced_problem,
-                        input_training_set, output_training_set,
-                        training_set_indices, mode="Training")
-
-generate_ann_output_set(problem_parametric, reduced_problem,
-                        input_validation_set, output_validation_set,
-                        validation_set_indices, mode="Validation")
-
-world_comm.Barrier()
-
-reduced_problem.output_range[0] = min(np.min(output_training_set), np.min(output_validation_set))
-reduced_problem.output_range[1] = max(np.max(output_training_set), np.max(output_validation_set))
-
-print("\n")
-
-print(reduced_problem.output_range)
+print(f"Eigenvalues: {positive_eigenvalues}")
