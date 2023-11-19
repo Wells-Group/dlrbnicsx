@@ -10,6 +10,7 @@ from mpi4py import MPI
 import numpy as np
 import itertools
 import matplotlib.pyplot as plt
+import os
 
 import rbnicsx
 import rbnicsx.backends
@@ -17,6 +18,16 @@ import rbnicsx.online
 
 from mdfenicsx.mesh_motion_classes import HarmonicMeshMotion
 
+from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
+from dlrbnicsx.activation_function.activation_function_factory \
+    import Tanh, Sigmoid
+from dlrbnicsx.dataset.custom_partitioned_dataset \
+    import CustomPartitionedDataset
+from dlrbnicsx.interface.wrappers import DataLoader, save_model, \
+    load_model, save_checkpoint, load_checkpoint, model_synchronise, \
+    init_cpu_process_group, get_optimiser, get_loss_func, share_model
+from dlrbnicsx.train_validate_test.train_validate_test_distributed \
+    import train_nn, validate_nn, online_nn, error_analysis
 
 class CustomMeshDeformation(HarmonicMeshMotion):
     def __init__(self, mesh, boundaries, boundary_markers,
@@ -251,9 +262,9 @@ para_dim = 3
 rstart, rend = solution_mu.vector.getOwnershipRange()
 num_dofs = mesh.comm.allreduce(rend, op=MPI.MAX) - mesh.comm.allreduce(rstart, op=MPI.MIN)
 
-pod_samples = [4, 4, 4]
-ann_samples = [6, 6, 7]
-error_analysis_samples = [6, 4, 6]
+pod_samples = [4, 2, 4] # [4, 4, 4]
+ann_samples = [2, 4, 2] # [6, 6, 7]
+error_analysis_samples = [4, 4, 2] # [6, 4, 6]
 num_snapshots = np.product(pod_samples)
 nbytes_para = itemsize * num_snapshots * para_dim
 nbytes_dofs = itemsize * num_snapshots * num_dofs
@@ -486,4 +497,290 @@ reduced_problem.output_range[1] = max(np.max(output_training_set), np.max(output
 
 print("\n")
 
-print(reduced_problem.output_range)
+if world_comm.size == 8:
+    cpu_group0_procs = world_comm.group.Incl([0, 1])
+elif world_comm.size == 4:
+    cpu_group0_procs = world_comm.group.Incl([0])
+elif world_comm.size == 1:
+    cpu_group0_procs = world_comm.group.Incl([0])
+else:
+    raise NotImplementedError("Please use 1,4 or 8 processes")
+
+cpu_group0_comm = world_comm.Create_group(cpu_group0_procs)
+
+# ANN model
+model0 = HiddenLayersNet(input_training_set.shape[1], [35, 35],
+                         len(reduced_problem._basis_functions), Tanh())
+
+if world_comm.size == 8:
+    cpu_group1_procs = world_comm.group.Incl([2, 3])
+elif world_comm.size == 4:
+    cpu_group1_procs = world_comm.group.Incl([1])
+
+if world_comm.size != 1:
+    cpu_group1_comm = world_comm.Create_group(cpu_group1_procs)
+
+# ANN model
+model1 = HiddenLayersNet(input_training_set.shape[1], [30, 30],
+                         len(reduced_problem._basis_functions), Tanh())
+
+if world_comm.size == 8:
+    cpu_group2_procs = world_comm.group.Incl([4, 5])
+elif world_comm.size == 4:
+    cpu_group2_procs = world_comm.group.Incl([2])
+
+if world_comm.size != 1:
+    cpu_group2_comm = world_comm.Create_group(cpu_group2_procs)
+
+# ANN model
+model2 = HiddenLayersNet(input_training_set.shape[1], [25, 25],
+                         len(reduced_problem._basis_functions), Tanh())
+
+if world_comm.size == 8:
+    cpu_group3_procs = world_comm.group.Incl([6, 7])
+elif world_comm.size == 4:
+    cpu_group3_procs = world_comm.group.Incl([3])
+
+if world_comm.size != 1:
+    cpu_group3_comm = world_comm.Create_group(cpu_group3_procs)
+
+# ANN model
+model3 = HiddenLayersNet(input_training_set.shape[1], [15, 15],
+                         len(reduced_problem._basis_functions), Tanh())
+
+if world_comm.size == 8:
+    ann_comm_list = [cpu_group0_comm, cpu_group1_comm,
+                    cpu_group2_comm, cpu_group3_comm]
+    ann_model_list = [model0, model1, model2, model3]
+    path_list = ["model0.pth", "model1.pth",
+                 "model2.pth", "model3.pth"]
+    checkpoint_path_list = ["checkpoint0", "checkpoint1",
+                            "checkpoint2", "checkpoint3"]
+    model_root_process_list = [0, 3, 4, 7]
+    trained_model_path_list = ["trained_model0.pth", "trained_model1.pth",
+                               "trained_model2.pth", "trained_model3.pth"]
+elif world_comm.size == 4:
+    ann_comm_list = [cpu_group0_comm, cpu_group1_comm,
+                     cpu_group2_comm, cpu_group3_comm]
+    ann_model_list = [model0, model1, model2, model3]
+    path_list = ["model0.pth", "model1.pth",
+                 "model2.pth", "model3.pth"]
+    checkpoint_path_list = ["checkpoint0", "checkpoint1",
+                            "checkpoint2", "checkpoint3"]
+    model_root_process_list = [0, 1, 2, 3]
+    trained_model_path_list = ["trained_model0.pth", "trained_model1.pth",
+                               "trained_model2.pth", "trained_model3.pth"]
+elif world_comm.size == 1:
+    ann_comm_list = [cpu_group0_comm]
+    ann_model_list = [model0]
+    path_list = ["model0.pth"]
+    checkpoint_path_list = ["checkpoint0"]
+    model_root_process_list = [0]
+    trained_model_path_list = ["trained_model0.pth"]
+
+
+for j in range(len(ann_comm_list)):
+    if ann_comm_list[j] != MPI.COMM_NULL:
+        init_cpu_process_group(ann_comm_list[j])
+
+        training_set_indices_cpu = np.arange(ann_comm_list[j].rank,
+                                             input_training_set.shape[0],
+                                             ann_comm_list[j].size)
+        validation_set_indices_cpu = np.arange(ann_comm_list[j].rank,
+                                               input_validation_set.shape[0],
+                                               ann_comm_list[j].size)
+        
+        customDataset = CustomPartitionedDataset(reduced_problem, input_training_set,
+                                                 output_training_set, training_set_indices_cpu)
+        train_dataloader = DataLoader(customDataset, batch_size=input_training_set.shape[0], shuffle=False)# shuffle=True)
+
+        customDataset = CustomPartitionedDataset(reduced_problem, input_validation_set,
+                                                 output_validation_set, validation_set_indices_cpu)
+        valid_dataloader = DataLoader(customDataset, batch_size=input_validation_set.shape[0], shuffle=False)
+        
+        # save_model(ann_model_list[j], path_list[j])
+        load_model(ann_model_list[j], path_list[j])
+        
+        model_synchronise(ann_model_list[j], verbose=False)
+        
+        # Training of ANN
+        training_loss = list()
+        validation_loss = list()
+        
+        max_epochs = 2 # 20000
+        min_validation_loss = None
+        start_epoch = 0
+        checkpoint_epoch = 10
+        
+        learning_rate = 1.e-4
+        optimiser = get_optimiser(ann_model_list[j], "Adam", learning_rate)
+        loss_fn = get_loss_func("MSE", reduction="sum")
+    
+        if os.path.exists(checkpoint_path_list[j]):
+            start_epoch, min_validation_loss = \
+                load_checkpoint(checkpoint_path_list[j], ann_model_list[j], optimiser)
+        
+        import time
+        start_time = time.time()
+        for epochs in range(start_epoch, max_epochs):
+            if epochs > 0 and epochs % checkpoint_epoch == 0:
+                save_checkpoint(checkpoint_path_list[j], epochs,
+                                ann_model_list[j], optimiser,
+                                min_validation_loss)
+            print(f"Epoch: {epochs+1}/{max_epochs}")
+            current_training_loss = train_nn(reduced_problem,
+                                             train_dataloader,
+                                             ann_model_list[j],
+                                             loss_fn, optimiser)
+            training_loss.append(current_training_loss)
+            current_validation_loss = validate_nn(reduced_problem,
+                                                  valid_dataloader,
+                                                  ann_model_list[j],
+                                                  loss_fn)
+            validation_loss.append(current_validation_loss)
+            if epochs > 0 and current_validation_loss > 1.01 * min_validation_loss \
+            and reduced_problem.regularisation == "EarlyStopping":
+                # 1% safety margin against min_validation_loss
+                # before invoking early stopping criteria
+                print(f"Early stopping criteria invoked at epoch: {epochs+1}")
+                break
+            min_validation_loss = min(validation_loss)
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+
+        os.system(f"rm {checkpoint_path_list[j]}")
+
+world_comm.Barrier()
+
+for j in range(len(model_root_process_list)):
+    share_model(ann_model_list[j], world_comm, model_root_process_list[j])
+    save_model(ann_model_list[j], trained_model_path_list[j])
+
+# Error analysis dataset
+print("\n")
+print("Generating error analysis (only input/parameters) dataset")
+print("\n")
+
+error_analysis_num_para = np.product(error_analysis_samples)
+itemsize = MPI.DOUBLE.Get_size()
+
+if world_comm.rank == 0:
+    nbytes_para = error_analysis_num_para * itemsize * para_dim
+    nbytes_error = error_analysis_num_para * itemsize
+else:
+    nbytes_para = 0
+    nbytes_error = 0
+
+win6 = MPI.Win.Allocate_shared(nbytes_para, itemsize,
+                               comm=world_comm)
+buf6, itemsize = win6.Shared_query(0)
+error_analysis_set = \
+    np.ndarray(buffer=buf6, dtype="d",
+               shape=(error_analysis_num_para,
+                      para_dim))
+
+win7 = MPI.Win.Allocate_shared(nbytes_error, itemsize,
+                               comm=world_comm)
+buf7, itemsize = win7.Shared_query(0)
+error_numpy0 = np.ndarray(buffer=buf7, dtype="d",
+                         shape=(error_analysis_num_para))
+
+win8 = MPI.Win.Allocate_shared(nbytes_error, itemsize,
+                               comm=world_comm)
+buf8, itemsize = win8.Shared_query(0)
+error_numpy1 = np.ndarray(buffer=buf8, dtype="d",
+                         shape=(error_analysis_num_para))
+
+win9 = MPI.Win.Allocate_shared(nbytes_error, itemsize,
+                               comm=world_comm)
+buf9, itemsize = win9.Shared_query(0)
+error_numpy2 = np.ndarray(buffer=buf9, dtype="d",
+                         shape=(error_analysis_num_para))
+
+win10 = MPI.Win.Allocate_shared(nbytes_error, itemsize,
+                               comm=world_comm)
+buf10, itemsize = win10.Shared_query(0)
+error_numpy3 = np.ndarray(buffer=buf10, dtype="d",
+                         shape=(error_analysis_num_para))
+
+if world_comm.rank == 0:
+    error_analysis_set[:, :] = generate_ann_input_set(samples=error_analysis_samples)
+
+world_comm.Barrier()
+
+if world_comm.size != 1:
+    error_array_list = [error_numpy0, error_numpy1, error_numpy2, error_numpy3]
+else:
+    error_array_list = [error_numpy0]
+
+for j in range(len(fem_comm_list)):
+    error_analysis_indices = \
+        np.arange(j, error_analysis_set.shape[0], len(fem_comm_list))
+    for i in error_analysis_indices:
+        for array_num in range(len(error_array_list)):
+            error_array_list[array_num][i] = \
+                error_analysis(reduced_problem, problem_parametric,
+                               error_analysis_set[i, :],
+                               ann_model_list[array_num],
+                               len(reduced_problem._basis_functions),
+                               online_nn)
+            # print(f"Error analysis {i+1} of {error_analysis_set.shape[0]}, Model {array_num}, Error: {error_array_list[array_num][i]}")
+
+if fem_comm_list[0] != MPI.COMM_NULL:
+    # Online phase at parameter online_mu
+    # online_mu = np.array([0.25, -0.3, 2.5])
+    online_mu = np.array([0.25, -0.3, 3.])
+    fem_start_time_0 = time.time()
+    fem_solution = problem_parametric.solve(online_mu)
+    fem_end_time_0 = time.time()
+    # First compute the RB solution using online_nn.
+    # Next this solution is reconstructed on FE space
+    rb_start_time_0 = time.time()
+    rb_solution = \
+        reduced_problem.reconstruct_solution(
+            online_nn(reduced_problem, problem_parametric, online_mu, model0,
+                      len(reduced_problem._basis_functions)))
+    rb_end_time_0 = time.time()
+
+    # Post processing
+    fem_online_file \
+        = "dlrbnicsx_solution_nonlinear_poisson_0/fem_online_mu_computed.xdmf"
+    with HarmonicMeshMotion(mesh, facet_tags,
+                            problem_parametric._boundary_markers,
+                            problem_parametric._bcs_geometric,
+                            reset_reference=True) as mesh_class:
+        with dolfinx.io.XDMFFile(mesh.comm, fem_online_file,
+                                "w") as solution_file:
+            solution_file.write_mesh(mesh)
+            solution_file.write_function(fem_solution)
+
+    rb_online_file \
+        = "dlrbnicsx_solution_nonlinear_poisson_0/rb_online_mu_computed.xdmf"
+    with HarmonicMeshMotion(mesh, facet_tags,
+                            problem_parametric._boundary_markers,
+                            problem_parametric._bcs_geometric,
+                            reset_reference=True) as mesh_class:
+        with dolfinx.io.XDMFFile(mesh.comm, rb_online_file,
+                                "w") as solution_file:
+            # NOTE scatter_forward not considered for online solution
+            solution_file.write_mesh(mesh)
+            solution_file.write_function(rb_solution)
+
+    error_function = dolfinx.fem.Function(problem_parametric._V)
+    rstart, rend = error_function.vector.getOwnershipRange()
+    error_function.vector[rstart:rend] = \
+        abs(fem_solution.vector[rstart:rend] - rb_solution.vector[rstart:rend])
+    fem_rb_error_file \
+        = "dlrbnicsx_solution_nonlinear_poisson_0/fem_rb_error_computed.xdmf"
+    with HarmonicMeshMotion(mesh, facet_tags,
+                            problem_parametric._boundary_markers,
+                            problem_parametric._bcs_geometric,
+                            reset_reference=True) as mesh_class:
+        with dolfinx.io.XDMFFile(mesh.comm, fem_rb_error_file,
+                                "w") as solution_file:
+            solution_file.write_mesh(mesh)
+            solution_file.write_function(error_function)
+
+    print(f"FEM time 0: {fem_end_time_0 - fem_start_time_0}")
+    print(f"RB time 0: {rb_end_time_0 - rb_start_time_0}")
+    print(f"Speedup 0: {(fem_end_time_0 - fem_start_time_0)/(rb_end_time_0 - rb_start_time_0)}")
