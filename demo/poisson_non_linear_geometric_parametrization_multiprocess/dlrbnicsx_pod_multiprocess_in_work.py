@@ -598,8 +598,8 @@ for j in range(len(ann_comm_list)):
                                                  output_validation_set, validation_set_indices_cpu)
         valid_dataloader = DataLoader(customDataset, batch_size=input_validation_set.shape[0], shuffle=False)
         
-        # save_model(ann_model_list[j], path_list[j])
-        load_model(ann_model_list[j], path_list[j])
+        save_model(ann_model_list[j], path_list[j])
+        # load_model(ann_model_list[j], path_list[j])
         
         model_synchronise(ann_model_list[j], verbose=False)
         
