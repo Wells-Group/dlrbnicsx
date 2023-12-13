@@ -442,8 +442,7 @@ with HarmonicMeshMotion(mesh, boundaries, bc_markers_list,
 
 '''
 # TODO
-1. geometric parametrization
-2. dlrbnicx multiprocess format (serial, cpu parallel, gpu parallel)
-3. time measurements
-4. paper update
+1. dlrbnicx multiprocess format (serial, cpu parallel, gpu parallel)
+2. time measurements
+3. paper update
 '''
