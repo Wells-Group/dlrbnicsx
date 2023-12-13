@@ -54,10 +54,10 @@ q_top.x.array[:] = 0.
 # i.e. set reset_reference=True and is_deformation=True
 # Parameter tuple (D_0, D_1, t_0, t_1)
 mu_ref = [0.6438, 0.4313, 1., 0.5]  # reference geometry
-mu = mu_ref # [0.45, 0.56, 0.9, 0.7] # [0.8, 0.55, 0.8, 0.4]  # Parametric geometry
+mu = [0.8, 0.55, 0.8, 0.4] # [0.45, 0.56, 0.9, 0.7] # Parametric geometry
 
 def thermal_diffusivity_1(sym_T):
-    conditions = [ufl.le(sym_T, 293.), ufl.And(ufl.ge(sym_T, 293.), ufl.le(sym_T, 693.)), ufl.And(ufl.ge(sym_T, 673.), ufl.le(sym_T, 1273.)), ufl.ge(sym_T, 1273.)]
+    conditions = [ufl.le(sym_T, 293.), ufl.And(ufl.ge(sym_T, 293.), ufl.le(sym_T, 673.)), ufl.And(ufl.ge(sym_T, 673.), ufl.le(sym_T, 1273.)), ufl.ge(sym_T, 1273.)]
     interps = [8.17484662576687e-6*sym_T**2 - 0.00926193251533741*sym_T + 18.0819438190184, 8.17484662576687e-6*sym_T**2 - 0.00926193251533741*sym_T + 18.0819438190184, 1.76073619631904e-6*sym_T**2 - 0.000628539877300632*sym_T + 15.176807196319, 1.76073619631904e-6*sym_T**2 - 0.000628539877300632*sym_T + 15.176807196319]
     assert len(conditions) == len(interps)
     d_func = ufl.conditional(conditions[0], interps[0], interps[0])
@@ -67,7 +67,7 @@ def thermal_diffusivity_1(sym_T):
 
 def thermal_diffusivity_2(sym_T):
     conditions = [ufl.le(sym_T, 293.), ufl.And(ufl.ge(sym_T, 293.), ufl.le(sym_T, 693.)), ufl.And(ufl.ge(sym_T, 673.), ufl.le(sym_T, 1273.)), ufl.ge(sym_T, 1273.)]
-    interps = [8.17484662576687e-6*sym_T**2 - 0.00926193251533741*sym_T + 18.0819438190184, 8.17484662576687e-6*sym_T**2 - 0.00926193251533741*sym_T + 18.0819438190184, 1.76073619631904e-6*sym_T**2 - 0.000628539877300632*sym_T + 15.176807196319, 1.76073619631904e-6*sym_T**2 - 0.000628539877300632*sym_T + 15.176807196319]
+    interps = [0.000299054192229039*sym_T**2 - 0.36574217791411*sym_T + 130.838954780164, 0.000299054192229039*sym_T**2 - 0.36574217791411*sym_T + 130.838954780164, -1.10434560327197e-5*sym_T**2 + 0.0516492566462166*sym_T - 9.61326294938646, -1.10434560327197e-5*sym_T**2 + 0.0516492566462166*sym_T - 9.61326294938646]
     assert len(conditions) == len(interps)
     d_func = ufl.conditional(conditions[0], interps[0], interps[0])
     for i in range(1, len(conditions)):
@@ -94,7 +94,7 @@ def thermal_diffusivity_4(sym_T):
 
 def thermal_diffusivity_5(sym_T):
     conditions = [ufl.le(sym_T, 293.), ufl.And(ufl.ge(sym_T, 293.), ufl.le(sym_T, 693.)), ufl.And(ufl.ge(sym_T, 673.), ufl.le(sym_T, 1273.)), ufl.ge(sym_T, 1273.)]
-    interps = [8.17484662576687e-6*sym_T**2 - 0.00926193251533741*sym_T + 18.0819438190184, 8.17484662576687e-6*sym_T**2 - 0.00926193251533741*sym_T + 18.0819438190184, 1.76073619631904e-6*sym_T**2 - 0.000628539877300632*sym_T + 15.176807196319, 1.76073619631904e-6*sym_T**2 - 0.000628539877300632*sym_T + 15.176807196319]
+    interps = [3.08018064076346e-5*sym_T**2 - 0.0376497392638036*sym_T + 31.7270693260054, 3.08018064076346e-5*sym_T**2 - 0.0376497392638036*sym_T + 31.7270693260054, -2.79311520109062e-6*sym_T**2 + 0.00756902522154049*sym_T + 16.5109550766871, -2.79311520109062e-6*sym_T**2 + 0.00756902522154049*sym_T + 16.5109550766871]
     assert len(conditions) == len(interps)
     d_func = ufl.conditional(conditions[0], interps[0], interps[0])
     for i in range(1, len(conditions)):
@@ -112,7 +112,7 @@ def thermal_diffusivity_6(sym_T):
 
 def thermal_diffusivity_7(sym_T):
     conditions = [ufl.le(sym_T, 293.), ufl.And(ufl.ge(sym_T, 293.), ufl.le(sym_T, 693.)), ufl.And(ufl.ge(sym_T, 673.), ufl.le(sym_T, 1273.)), ufl.ge(sym_T, 1273.)]
-    interps = [8.17484662576687e-6*sym_T**2 - 0.00926193251533741*sym_T + 18.0819438190184, 8.17484662576687e-6*sym_T**2 - 0.00926193251533741*sym_T + 18.0819438190184, 1.76073619631904e-6*sym_T**2 - 0.000628539877300632*sym_T + 15.176807196319, 1.76073619631904e-6*sym_T**2 - 0.000628539877300632*sym_T + 15.176807196319]
+    interps = [0.000299054192229039*sym_T**2 - 0.36574217791411*sym_T + 130.838954780164, 0.000299054192229039*sym_T**2 - 0.36574217791411*sym_T + 130.838954780164, -1.10434560327197e-5*sym_T**2 + 0.0516492566462166*sym_T - 9.61326294938646, -1.10434560327197e-5*sym_T**2 + 0.0516492566462166*sym_T - 9.61326294938646]
     assert len(conditions) == len(interps)
     d_func = ufl.conditional(conditions[0], interps[0], interps[0])
     for i in range(1, len(conditions)):
@@ -122,10 +122,10 @@ def thermal_diffusivity_7(sym_T):
 a_T = \
     ufl.inner(thermal_diffusivity_1(uT_func) * ufl.grad(uT_func), ufl.grad(vT))  * x[0] * dx(1) + \
     ufl.inner(thermal_diffusivity_2(uT_func) * ufl.grad(uT_func), ufl.grad(vT))  * x[0] * dx(2) + \
-    ufl.inner(thermal_diffusivity_3(uT_func) * ufl.grad(uT_func), ufl.grad(vT))  * x[0] * dx(3) + \
-    ufl.inner(thermal_diffusivity_4(uT_func) * ufl.grad(uT_func), ufl.grad(vT))  * x[0] * dx(4) + \
+    ufl.inner(5.3 * ufl.grad(uT_func), ufl.grad(vT))  * x[0] * dx(3) + \
+    ufl.inner(4.75 * ufl.grad(uT_func), ufl.grad(vT))  * x[0] * dx(4) + \
     ufl.inner(thermal_diffusivity_5(uT_func) * ufl.grad(uT_func), ufl.grad(vT))  * x[0] * dx(5) + \
-    ufl.inner(thermal_diffusivity_6(uT_func) * ufl.grad(uT_func), ufl.grad(vT))  * x[0] * dx(6) + \
+    ufl.inner(45.6 * ufl.grad(uT_func), ufl.grad(vT))  * x[0] * dx(6) + \
     ufl.inner(thermal_diffusivity_7(uT_func) * ufl.grad(uT_func), ufl.grad(vT))  * x[0] * dx(7) + \
     ufl.inner(h_cf * uT_func, vT) * x[0] * ds_sf + \
     ufl.inner(h_cout * uT_func, vT) * x[0] * ds_out + \
@@ -136,30 +136,314 @@ l_T = \
     h_cbottom * vT * T_bottom * x[0] * ds_bottom - ufl.inner(q_top, vT) * x[0] * ds_top
 
 problem = NonlinearProblem(a_T - l_T, uT_func, bcs=[])
-solver = NewtonSolver(mesh.comm, problem)
-solver.convergence_criterion = "incremental"
 
-solver.rtol = 1e-10
-solver.report = True
-ksp = solver.krylov_solver
-ksp.setFromOptions()
-dolfinx.log.set_log_level(dolfinx.log.LogLevel.INFO)
+bc_list_geometric = list()
 
-n, converged = solver.solve(uT_func)
-# print(f"Computed solution array: {uT_func.x.array}")
-assert (converged)
-print(f"Number of interations: {n:d}")
 
-computed_file = "solution_nonlinear_thermomechanical_thermal/solution_computed.xdmf"
-with dolfinx.io.XDMFFile(mesh.comm, computed_file, "w") as solution_file:
-    solution_file.write_mesh(mesh)
-    solution_file.write_function(uT_func)
+def bc_1_geometric(x):
+    indices_0 = np.where((x[0] >= 4.875) & (x[0] <= 5.5188))[0]
+    indices_1 = np.where((x[0] >= 5.5188) & (x[0] <= 5.9501))[0]
+    y = (0. * x[0], 0. * x[1])
+    y[0][indices_0] = (x[0][indices_0] - 4.875) * (mu[0] - mu_ref[0]) / (5.5188 - 4.875)
+    y[0][indices_1] = \
+        (x[0][indices_1] - 5.5188) * (mu[1] - mu_ref[1]) / (5.9501 - 5.5188) + \
+        (mu[0] - mu_ref[0]) * (x[0][indices_1] / x[0][indices_1])
+    return y
+
+
+bc_list_geometric.append(bc_1_geometric)
+
+
+def bc_2_geometric(x):
+    return ((mu[1] - mu_ref[1] + mu[0] - mu_ref[0]) * (x[0] / x[0]), (x[1] - 0.) * (mu[2] - mu_ref[2]) / (1. - 0.))
+
+
+bc_list_geometric.append(bc_2_geometric)
+
+
+def bc_3_geometric(x):
+    indices_0 = np.where((x[0] >= 4.875) & (x[0] <= 5.5188))[0]
+    indices_1 = np.where((x[0] >= 5.5188) & (x[0] <= 5.9501))[0]
+    y = (0. * x[0], 0. * x[1])
+    y[0][indices_0] = (x[0][indices_0] - 4.875) * (mu[0] - mu_ref[0]) / (5.5188 - 4.875)
+    y[0][indices_1] = \
+        (x[0][indices_1] - 5.5188) * (mu[1] - mu_ref[1]) / (5.9501 - 5.5188) + \
+        (mu[0] - mu_ref[0]) * (x[0][indices_1] / x[0][indices_1])
+    y[1][:] = (mu[2] - mu_ref[2]) * x[1]
+    return y
+
+
+bc_list_geometric.append(bc_3_geometric)
+
+
+def bc_4_geometric(x):
+    return (0. * x[0], (mu[2] - mu_ref[2]) * x[1])
+
+
+bc_list_geometric.append(bc_4_geometric)
+
+
+def bc_5_geometric(x):
+    return (0. * x[0], (mu[2] - mu_ref[2]) * x[1])
+
+
+bc_list_geometric.append(bc_5_geometric)
+
+
+def bc_6_geometric(x):
+    return (0. * x[0], (mu[2] - mu_ref[2]) * (x[1] / x[1]))
+
+
+bc_list_geometric.append(bc_6_geometric)
+
+
+def bc_7_geometric(x):
+    return (0. * x[0], (mu[2] - mu_ref[2]) * (x[1] / x[1]))
+
+
+bc_list_geometric.append(bc_7_geometric)
+
+
+def bc_8_geometric(x):
+    return (0. * x[0], (mu[2] - mu_ref[2]) * (x[1] / x[1]))
+
+
+bc_list_geometric.append(bc_8_geometric)
+
+
+def bc_9_geometric(x):
+    return (0. * x[0], (mu[2] - mu_ref[2]) * (x[1] / x[1]))
+
+
+bc_list_geometric.append(bc_9_geometric)
+
+
+def bc_10_geometric(x):
+    return (0. * x[0], (x[1] - 1.6) * (mu[3] - mu_ref[3]) / (2.1 - 1.6) + (mu[2] - mu_ref[2]) * (x[1] / x[1]))
+
+
+bc_list_geometric.append(bc_10_geometric)
+
+
+def bc_11_geometric(x):
+    return (0. * x[0], (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * (x[1] / x[1]))
+
+
+bc_list_geometric.append(bc_11_geometric)
+
+
+def bc_12_geometric(x):
+    return (0. * x[0], (x[1] - 1.6) * (mu[3] - mu_ref[3]) / (2.1 - 1.6) + (mu[2] - mu_ref[2]) * (x[1] / x[1]))
+
+
+bc_list_geometric.append(bc_12_geometric)
+
+
+def bc_13_geometric(x):
+    return (0. * x[0], (mu[2] - mu_ref[2]) * x[1] / x[1])
+
+
+bc_list_geometric.append(bc_13_geometric)
+
+
+def bc_14_geometric(x):
+    indices_0 = np.where((x[1] >= 1.6) & (x[1] <= 2.1))[0]
+    indices_1 = np.where(x[1] > 2.1)[0]
+    y = (0. * x[0], 0. * x[1])
+    y[1][indices_0] = (x[1][indices_0] - 1.6) * (mu[3] - mu_ref[3]) / (2.1 - 1.6) + \
+        (mu[2] - mu_ref[2]) * x[1][indices_0] / x[1][indices_0]
+    y[1][indices_1] = (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1][indices_1] / x[1][indices_1]
+    return y
+
+
+bc_list_geometric.append(bc_14_geometric)
+
+
+def bc_15_geometric(x):
+    return (0. * x[0], (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1] / x[1])
+
+
+bc_list_geometric.append(bc_15_geometric)
+
+
+def bc_16_geometric(x):
+    return ((x[0] - 4.875) * (mu[0] - mu_ref[0]) / (5.5188 - 4.875),
+            (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1] / x[1])
+
+
+bc_list_geometric.append(bc_16_geometric)
+
+
+def bc_17_geometric(x):
+    return ((x[0] - 4.875) * (mu[0] - mu_ref[0]) / (5.5188 - 4.875),
+            (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1] / x[1])
+
+
+bc_list_geometric.append(bc_17_geometric)
+
+
+def bc_18_geometric(x):
+    return ((x[0] - 4.875) * (mu[0] - mu_ref[0]) / (5.5188 - 4.875),
+            (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1] / x[1])
+
+
+bc_list_geometric.append(bc_18_geometric)
+
+
+def bc_19_geometric(x):
+    return ((x[0] - 4.875) * (mu[0] - mu_ref[0]) / (5.5188 - 4.875),
+            (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1] / x[1])
+
+
+bc_list_geometric.append(bc_19_geometric)
+
+
+def bc_20_geometric(x):
+    return ((x[0] - 4.875) * (mu[0] - mu_ref[0]) / (5.5188 - 4.875),
+            (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1] / x[1])
+
+
+bc_list_geometric.append(bc_20_geometric)
+
+
+def bc_21_geometric(x):
+    return (0. * x[0], (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1] / x[1])
+
+
+bc_list_geometric.append(bc_21_geometric)
+
+
+def bc_22_geometric(x):
+    return (0. * x[0], (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1] / x[1])
+
+
+bc_list_geometric.append(bc_22_geometric)
+
+
+def bc_23_geometric(x):
+    return (0. * x[0], (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1] / x[1])
+
+
+bc_list_geometric.append(bc_23_geometric)
+
+
+def bc_24_geometric(x):
+    indices_0 = np.where(x[1] < 1.6)[0]
+    indices_1 = np.where((x[1] >= 1.6) & (x[1] <= 2.1))[0]
+    indices_2 = np.where(x[1] > 2.1)[0]
+    y = (0. * x[0], 0. * x[1])
+    y[1][indices_0] = (mu[2] - mu_ref[2]) * (x[1][indices_0] / x[1][indices_0])
+    y[1][indices_1] = (mu[3] - mu_ref[3]) * (x[1][indices_1] - 1.6) / (2.1 - 1.6) + \
+        (mu[2] - mu_ref[2]) * x[1][indices_1] / x[1][indices_1]
+    y[1][indices_2] = (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1][indices_2] / x[1][indices_2]
+    y[0][:] = (mu[1] - mu_ref[1] + mu[0] - mu_ref[0]) * (x[0] / x[0])
+    return y
+
+
+bc_list_geometric.append(bc_24_geometric)
+
+
+def bc_25_geometric(x):
+    indices_0 = np.where((x[0] >= 4.875) & (x[0] <= 5.5188))[0]
+    indices_1 = np.where((x[0] >= 5.5188) & (x[0] <= 5.9501))[0]
+    y = (0. * x[0], 0. * x[1])
+    y[0][indices_0] = (x[0][indices_0] - 4.875) * (mu[0] - mu_ref[0]) / (5.5188 - 4.875)
+    y[0][indices_1] = \
+        (x[0][indices_1] - 5.5188) * (mu[1] - mu_ref[1]) / (5.9501 - 5.5188) + \
+        (mu[0] - mu_ref[0]) * (x[1][indices_1] / x[1][indices_1])
+    y[1][:] = (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1] / x[1]
+    return y
+
+
+bc_list_geometric.append(bc_25_geometric)
+
+
+def bc_26_geometric(x):
+    return ((mu[1] - mu_ref[1] + mu[0] - mu_ref[0]) * x[0] / x[0],
+            (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1] / x[1])
+
+
+bc_list_geometric.append(bc_26_geometric)
+
+
+def bc_27_geometric(x):
+    return ((x[0] - 5.5188) * (mu[1] - mu_ref[1]) / (5.9501 - 5.5188) + (mu[0] - mu_ref[0]) * (x[0] / x[0]),
+            (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1] / x[1])
+
+
+bc_list_geometric.append(bc_27_geometric)
+
+
+def bc_28_geometric(x):
+    return ((mu[1] - mu_ref[1] + mu[0] - mu_ref[0]) * x[0] / x[0],
+            (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1] / x[1])
+
+
+bc_list_geometric.append(bc_28_geometric)
+
+
+def bc_29_geometric(x):
+    return ((mu[1] - mu_ref[1] + mu[0] - mu_ref[0]) * x[0] / x[0],
+            (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1] / x[1])
+
+
+bc_list_geometric.append(bc_29_geometric)
+
+
+def bc_30_geometric(x):
+    indices_0 = np.where(x[1] < 1.)[0]
+    indices_1 = np.where((x[1] >= 1.) & (x[1] <= 1.6))[0]
+    indices_2 = np.where((x[1] > 1.6) & (x[1] <= 2.1))[0]
+    indices_3 = np.where(x[1] > 2.1)[0]
+    y = (0 * x[0], 0. * x[1])
+    y[0][:] = (mu[1] - mu_ref[1] + mu[0] - mu_ref[0]) * x[0] / x[0]
+    y[1][indices_0] = (x[1][indices_0] - 0.) * (mu[2] - mu_ref[2]) / (1. - 0.)
+    y[1][indices_1] = (mu[2] - mu_ref[2]) * (x[1][indices_1] / x[1][indices_1])
+    y[1][indices_2] = (x[1][indices_2] - 1.6) * (mu[3] - mu_ref[3]) / (2.1 - 1.6) + \
+        (mu[2] - mu_ref[2]) * x[1][indices_2] / x[1][indices_2]
+    y[1][indices_3] = (mu[3] - mu_ref[3] + mu[2] - mu_ref[2]) * x[1][indices_3] / x[1][indices_3]
+    return y
+
+
+bc_list_geometric.append(bc_30_geometric)
+
+
+def bc_31_geometric(x):
+    return ((mu[1] - mu_ref[1] + mu[0] - mu_ref[0]) * x[0] / x[0], 0. * x[1])
+
+
+bc_list_geometric.append(bc_31_geometric)
+
+bc_markers_list = list(np.arange(1, 32))
+
+# Thermal solve method
+with HarmonicMeshMotion(mesh, boundaries, bc_markers_list,
+                        bc_list_geometric, reset_reference=True,
+                        is_deformation=True):
+
+    solver = NewtonSolver(mesh.comm, problem)
+    solver.convergence_criterion = "incremental"
+
+    solver.rtol = 1e-10
+    solver.report = True
+    ksp = solver.krylov_solver
+    ksp.setFromOptions()
+    dolfinx.log.set_log_level(dolfinx.log.LogLevel.INFO)
+
+    n, converged = solver.solve(uT_func)
+    # print(f"Computed solution array: {uT_func.x.array}")
+    assert (converged)
+    print(f"Number of interations: {n:d}")
+
+    computed_file = "solution_nonlinear_thermomechanical_thermal/solution_computed.xdmf"
+    with dolfinx.io.XDMFFile(mesh.comm, computed_file, "w") as solution_file:
+        solution_file.write_mesh(mesh)
+        solution_file.write_function(uT_func)
 
 '''
 # TODO
-1. interps of diffusivity 2 to diffusvity 7
-2. geometric parametrization
-3. dlrbnicx multiprocess format (serial, cpu parallel, gpu parallel)
-4. time measurements
-5. paper update
+1. geometric parametrization
+2. dlrbnicx multiprocess format (serial, cpu parallel, gpu parallel)
+3. time measurements
+4. paper update
 '''
