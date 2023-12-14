@@ -54,7 +54,7 @@ q_top.x.array[:] = 0.
 # i.e. set reset_reference=True and is_deformation=True
 # Parameter tuple (D_0, D_1, t_0, t_1)
 mu_ref = [0.6438, 0.4313, 1., 0.5]  # reference geometry
-mu = [0.8, 0.55, 0.8, 0.4] # [0.45, 0.56, 0.9, 0.7] # Parametric geometry
+mu = mu_ref # [0.8, 0.55, 0.8, 0.4] # [0.45, 0.56, 0.9, 0.7] # Parametric geometry
 
 def thermal_diffusivity_1(sym_T):
     conditions = [ufl.le(sym_T, 293.), ufl.And(ufl.ge(sym_T, 293.), ufl.le(sym_T, 673.)), ufl.And(ufl.ge(sym_T, 673.), ufl.le(sym_T, 1273.)), ufl.ge(sym_T, 1273.)]
@@ -428,7 +428,7 @@ with HarmonicMeshMotion(mesh, boundaries, bc_markers_list,
     solver.report = True
     ksp = solver.krylov_solver
     ksp.setFromOptions()
-    dolfinx.log.set_log_level(dolfinx.log.LogLevel.INFO)
+    # dolfinx.log.set_log_level(dolfinx.log.LogLevel.INFO)
 
     n, converged = solver.solve(uT_func)
     # print(f"Computed solution array: {uT_func.x.array}")
@@ -439,6 +439,177 @@ with HarmonicMeshMotion(mesh, boundaries, bc_markers_list,
     with dolfinx.io.XDMFFile(mesh.comm, computed_file, "w") as solution_file:
         solution_file.write_mesh(mesh)
         solution_file.write_function(uT_func)
+
+
+VM = dolfinx.fem.VectorFunctionSpace(mesh, ("CG", 1))
+uM = ufl.TrialFunction(VM)
+vM = ufl.TestFunction(VM)
+uM_func = dolfinx.fem.Function(VM, name="Displacement")
+rho = 77106.
+g = 9.8
+T0 = 300.
+
+def young_modulus_1(sym_T):
+    conditions = [ufl.le(sym_T, 293.), ufl.And(ufl.ge(sym_T, 293.), ufl.le(sym_T, 823.)), ufl.And(ufl.ge(sym_T, 823.), ufl.le(sym_T, 1273.)), ufl.ge(sym_T, 1273.)]
+    interps = [1698.65453106434*sym_T**2 - 2185320.53818741*sym_T + 10994471124.8516, 1698.65453106434*sym_T**2 - 2185320.53818741*sym_T + 10994471124.8516, -1586.66402849173*sym_T**2 + 3222313.81084183*sym_T + 8769229590.22603, -1586.66402849173*sym_T**2 + 3222313.81084183*sym_T + 8769229590.22603]
+    assert len(conditions) == len(interps)
+    d_func = ufl.conditional(conditions[0], interps[0], interps[0])
+    for i in range(1, len(conditions)):
+        d_func = ufl.conditional(conditions[i], interps[i], d_func)
+    return d_func
+
+def young_modulus_2(sym_T):
+    conditions = [ufl.le(sym_T, 293.), ufl.And(ufl.ge(sym_T, 293.), ufl.le(sym_T, 823.)), ufl.And(ufl.ge(sym_T, 823.), ufl.le(sym_T, 1273.)), ufl.ge(sym_T, 1273.)]
+    interps = [-547.091412742593*sym_T**2 - 2026218.83656489*sym_T + 16040649369.8061, -547.091412742593*sym_T**2 - 2026218.83656489*sym_T + 16040649369.8061, 8466.75900277084*sym_T**2 - 16863016.6205001*sym_T + 22145991657.8954, 8466.75900277084*sym_T**2 - 16863016.6205001*sym_T + 22145991657.8954]
+    assert len(conditions) == len(interps)
+    d_func = ufl.conditional(conditions[0], interps[0], interps[0])
+    for i in range(1, len(conditions)):
+        d_func = ufl.conditional(conditions[i], interps[i], d_func)
+    return d_func
+
+def young_modulus_3(sym_T):
+    conditions = [ufl.le(sym_T, 293.), ufl.And(ufl.ge(sym_T, 293.), ufl.le(sym_T, 823.)), ufl.And(ufl.ge(sym_T, 823.), ufl.le(sym_T, 1273.)), ufl.ge(sym_T, 1273.)]
+    interps = [-105360.110803325*sym_T**2 + 123741855.955679*sym_T + 30988696357.3406, -105360.110803325*sym_T**2 + 123741855.955679*sym_T + 30988696357.3406, 61686.9806094212*sym_T**2 - 151217656.509701*sym_T + 144134535736.845, 61686.9806094212*sym_T**2 - 151217656.509701*sym_T + 144134535736.845]
+    assert len(conditions) == len(interps)
+    d_func = ufl.conditional(conditions[0], interps[0], interps[0])
+    for i in range(1, len(conditions)):
+        d_func = ufl.conditional(conditions[i], interps[i], d_func)
+    return d_func
+
+def young_modulus_4(sym_T):
+    conditions = [ufl.le(sym_T, 293.), ufl.And(ufl.ge(sym_T, 293.), ufl.le(sym_T, 823.)), ufl.And(ufl.ge(sym_T, 823.), ufl.le(sym_T, 1273.)), ufl.ge(sym_T, 1273.)]
+    interps = [-781.855955678702*sym_T**2 + 927087.257617759*sym_T + 1645484985.45706, -781.855955678702*sym_T**2 + 927087.257617759*sym_T + 1645484985.45706, 656.925207756334*sym_T**2 - 1441146.53739632*sym_T + 2620013192.10535, 656.925207756334*sym_T**2 - 1441146.53739632*sym_T + 2620013192.10535]
+    assert len(conditions) == len(interps)
+    d_func = ufl.conditional(conditions[0], interps[0], interps[0])
+    for i in range(1, len(conditions)):
+        d_func = ufl.conditional(conditions[i], interps[i], d_func)
+    return d_func
+
+def young_modulus_5(sym_T):
+    conditions = [ufl.le(sym_T, 293.), ufl.And(ufl.ge(sym_T, 293.), ufl.le(sym_T, 823.)), ufl.And(ufl.ge(sym_T, 823.), ufl.le(sym_T, 1273.)), ufl.ge(sym_T, 1273.)]
+    interps = [1781.75702413907*sym_T**2 + 242712.70280987*sym_T + 14275923119.3114, 1781.75702413907*sym_T**2 + 242712.70280987*sym_T + 14275923119.3114, 1781.75702413907*sym_T**2 + 242712.70280987*sym_T + 14275923119.3114, 1781.75702413907*sym_T**2 + 242712.70280987*sym_T + 14275923119.3114]
+    assert len(conditions) == len(interps)
+    d_func = ufl.conditional(conditions[0], interps[0], interps[0])
+    for i in range(1, len(conditions)):
+        d_func = ufl.conditional(conditions[i], interps[i], d_func)
+    return d_func
+
+def young_modulus_7(sym_T):
+    conditions = [ufl.le(sym_T, 293.), ufl.And(ufl.ge(sym_T, 293.), ufl.le(sym_T, 823.)), ufl.And(ufl.ge(sym_T, 823.), ufl.le(sym_T, 1273.)), ufl.ge(sym_T, 1273.)]
+    interps = [-547.091412742593*sym_T**2 - 2026218.83656489*sym_T + 16040649369.8061, -547.091412742593*sym_T**2 - 2026218.83656489*sym_T + 16040649369.8061, 8466.75900277084*sym_T**2 - 16863016.6205001*sym_T + 22145991657.8954, 8466.75900277084*sym_T**2 - 16863016.6205001*sym_T + 22145991657.8954]
+    assert len(conditions) == len(interps)
+    d_func = ufl.conditional(conditions[0], interps[0], interps[0])
+    for i in range(1, len(conditions)):
+        d_func = ufl.conditional(conditions[i], interps[i], d_func)
+    return d_func
+
+young_modulus_6 = 1.9E11
+
+poisson_ratio_1 = 0.3
+poisson_ratio_2 = 0.2
+poisson_ratio_3 = 0.1
+poisson_ratio_4 = 0.1
+poisson_ratio_5 = 0.2
+poisson_ratio_6 = 0.3
+poisson_ratio_7 = 0.2
+
+thermal_expansion_coefficient_1 = 2.3e-6
+thermal_expansion_coefficient_2 = 4.6e-6
+thermal_expansion_coefficient_3 = 4.7e-6
+thermal_expansion_coefficient_4 = 4.6e-6
+thermal_expansion_coefficient_5 = 6.e-6
+thermal_expansion_coefficient_6 = 1.2e-5
+thermal_expansion_coefficient_7 = 4.6e-6
+
+ymax = dolfinx.fem.Constant(mesh, PETSc.ScalarType(0.))
+
+def epsilon(u, x):
+    return ufl.as_tensor([[u[0].dx(0), 0.5*(u[0].dx(1)+u[1].dx(0)), 0.],[0.5*(u[0].dx(1)+u[1].dx(0)), u[1].dx(1), 0.],[0., 0., u[0]/x[0]]])
+
+aM = \
+    ufl.inner(young_modulus_1(uT_func) * poisson_ratio_1 / ((1 - 2 * poisson_ratio_1) * (1 + poisson_ratio_1)) * (uM[0].dx(0) + uM[1].dx(1) + uM[0]/x[0]) * ufl.Identity(3) + 2 * young_modulus_1(uT_func) / (2 * (1 + poisson_ratio_1)) * epsilon(uM, x), epsilon(vM, x)) * x[0] * dx(1) + \
+    ufl.inner(young_modulus_2(uT_func) * poisson_ratio_2 / ((1 - 2 * poisson_ratio_2) * (1 + poisson_ratio_2)) * (uM[0].dx(0) + uM[1].dx(1) + uM[0]/x[0]) * ufl.Identity(3) + 2 * young_modulus_2(uT_func) / (2 * (1 + poisson_ratio_2)) * epsilon(uM, x), epsilon(vM, x)) * x[0] * dx(2) + \
+    ufl.inner(young_modulus_3(uT_func) * poisson_ratio_3 / ((1 - 2 * poisson_ratio_3) * (1 + poisson_ratio_3)) * (uM[0].dx(0) + uM[1].dx(1) + uM[0]/x[0]) * ufl.Identity(3) + 2 * young_modulus_3(uT_func) / (2 * (1 + poisson_ratio_3)) * epsilon(uM, x), epsilon(vM, x)) * x[0] * dx(3) + \
+    ufl.inner(young_modulus_4(uT_func) * poisson_ratio_4 / ((1 - 2 * poisson_ratio_4) * (1 + poisson_ratio_4)) * (uM[0].dx(0) + uM[1].dx(1) + uM[0]/x[0]) * ufl.Identity(3) + 2 * young_modulus_4(uT_func) / (2 * (1 + poisson_ratio_4)) * epsilon(uM, x), epsilon(vM, x)) * x[0] * dx(4) + \
+    ufl.inner(young_modulus_5(uT_func) * poisson_ratio_5 / ((1 - 2 * poisson_ratio_5) * (1 + poisson_ratio_5)) * (uM[0].dx(0) + uM[1].dx(1) + uM[0]/x[0]) * ufl.Identity(3) + 2 * young_modulus_5(uT_func) / (2 * (1 + poisson_ratio_5)) * epsilon(uM, x), epsilon(vM, x)) * x[0] * dx(5) + \
+    ufl.inner(young_modulus_6 * poisson_ratio_6 / ((1 - 2 * poisson_ratio_6) * (1 + poisson_ratio_6)) * (uM[0].dx(0) + uM[1].dx(1) + uM[0]/x[0]) * ufl.Identity(3) + 2 * young_modulus_6 / (2 * (1 + poisson_ratio_6)) * epsilon(uM, x), epsilon(vM, x)) * x[0] * dx(6) + \
+    ufl.inner(young_modulus_7(uT_func) * poisson_ratio_7 / ((1 - 2 * poisson_ratio_7) * (1 + poisson_ratio_7)) * (uM[0].dx(0) + uM[1].dx(1) + uM[0]/x[0]) * ufl.Identity(3) + 2 * young_modulus_7(uT_func) / (2 * (1 + poisson_ratio_7)) * epsilon(uM, x), epsilon(vM, x)) * x[0] * dx(7)
+
+lM = \
+    (uT_func - T0) * young_modulus_1(uT_func) /( 1 - 2 * poisson_ratio_1) * thermal_expansion_coefficient_1 * (vM[0].dx(0) + vM[1].dx(1) + vM[0]/x[0]) * x[0] * dx(1) + \
+    (uT_func - T0) * young_modulus_2(uT_func) /( 1 - 2 * poisson_ratio_2) * thermal_expansion_coefficient_2 * (vM[0].dx(0) + vM[1].dx(1) + vM[0]/x[0]) * x[0] * dx(2) + \
+    (uT_func - T0) * young_modulus_3(uT_func) /( 1 - 2 * poisson_ratio_3) * thermal_expansion_coefficient_3 * (vM[0].dx(0) + vM[1].dx(1) + vM[0]/x[0]) * x[0] * dx(3) + \
+    (uT_func - T0) * young_modulus_4(uT_func) /( 1 - 2 * poisson_ratio_4) * thermal_expansion_coefficient_4 * (vM[0].dx(0) + vM[1].dx(1) + vM[0]/x[0]) * x[0] * dx(4) + \
+    (uT_func - T0) * young_modulus_5(uT_func) /( 1 - 2 * poisson_ratio_5) * thermal_expansion_coefficient_5 * (vM[0].dx(0) + vM[1].dx(1) + vM[0]/x[0]) * x[0] * dx(5) + \
+    (uT_func - T0) * young_modulus_6 /( 1 - 2 * poisson_ratio_6) * thermal_expansion_coefficient_6 * (vM[0].dx(0) + vM[1].dx(1) + vM[0]/x[0]) * x[0] * dx(6) + \
+    (uT_func - T0) * young_modulus_7(uT_func) /( 1 - 2 * poisson_ratio_7) * thermal_expansion_coefficient_7 * (vM[0].dx(0) + vM[1].dx(1) + vM[0]/x[0]) * x[0] * dx(7) - \
+    rho * g * (ymax - x[1]) * ufl.dot(vM, n_vec) * x[0] * ds_sf
+
+aM_cpp = dolfinx.fem.form(aM)
+lM_cpp = dolfinx.fem.form(lM)
+
+dofs_bottom_1 = dolfinx.fem.locate_dofs_topological(VM.sub(1), gdim-1, boundaries.find(1))
+dofs_bottom_31 = dolfinx.fem.locate_dofs_topological(VM.sub(1), gdim-1, boundaries.find(31))
+dofs_sym_5 = dolfinx.fem.locate_dofs_topological(VM.sub(0), gdim-1, boundaries.find(5))
+dofs_sym_9 = dolfinx.fem.locate_dofs_topological(VM.sub(0), gdim-1, boundaries.find(9))
+dofs_sym_12 = dolfinx.fem.locate_dofs_topological(VM.sub(0), gdim-1, boundaries.find(12))
+dofs_bottom_1_2 = dolfinx.fem.locate_dofs_topological(VM.sub(0), gdim-1, boundaries.find(1))
+dofs_bottom_31_2 = dolfinx.fem.locate_dofs_topological(VM.sub(0), gdim-1, boundaries.find(31))
+dofs_top_18 = dolfinx.fem.locate_dofs_topological(VM.sub(0), mesh.geometry.dim-1, boundaries.find(18))
+dofs_top_28 = dolfinx.fem.locate_dofs_topological(VM.sub(0), mesh.geometry.dim-1, boundaries.find(28))
+dofs_top_19 = dolfinx.fem.locate_dofs_topological(VM.sub(1), mesh.geometry.dim-1, boundaries.find(19))
+dofs_top_27 = dolfinx.fem.locate_dofs_topological(VM.sub(1), mesh.geometry.dim-1, boundaries.find(27))
+dofs_top_29 = dolfinx.fem.locate_dofs_topological(VM.sub(1), mesh.geometry.dim-1, boundaries.find(29))
+
+bc_bottom_1 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_bottom_1, VM.sub(1))
+bc_bottom_31 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_bottom_31, VM.sub(1))
+bc_sym_5 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_sym_5, VM.sub(0))
+bc_sym_9 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_sym_9, VM.sub(0))
+bc_sym_12 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_sym_12, VM.sub(0))
+bc_bottom_1_2 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_bottom_1_2, VM.sub(0))
+bc_bottom_31_2 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_bottom_31_2, VM.sub(0))
+bc_top_18 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_top_18, VM.sub(0))
+bc_top_28 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_top_28, VM.sub(0))
+bc_top_19 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_top_19, VM.sub(1))
+bc_top_27 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_top_27, VM.sub(1))
+bc_top_29 = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), dofs_top_29, VM.sub(1))
+
+bcsM = [bc_bottom_1, bc_bottom_31, bc_sym_5, bc_sym_9, bc_sym_12, bc_bottom_1_2, bc_bottom_31_2,
+        bc_top_18, bc_top_28, bc_top_19, bc_top_27, bc_top_29]
+
+# Mechanical solve method
+with HarmonicMeshMotion(mesh, boundaries, bc_markers_list,
+                        bc_list_geometric, reset_reference=True,
+                        is_deformation=True):
+
+    ymax.value = mesh_comm.allreduce(np.max(mesh.geometry.x[:, 1]), op=MPI.MAX)
+    # Bilinear side assembly
+    A = dolfinx.fem.petsc.assemble_matrix(aM_cpp, bcs=bcsM)
+    A.assemble()
+
+    # Linear side assembly
+    L = dolfinx.fem.petsc.assemble_vector(lM_cpp)
+    dolfinx.fem.petsc.apply_lifting(L, [aM_cpp], [bcsM])
+    L.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
+    dolfinx.fem.petsc.set_bc(L, bcsM)
+
+    # Solver setup
+    ksp = PETSc.KSP()
+    ksp.create(mesh.comm)
+    ksp.setOperators(A)
+    ksp.setType("preonly")
+    ksp.getPC().setType("lu")
+    ksp.getPC().setFactorSolverType("mumps")
+    ksp.setFromOptions()
+    ksp.solve(L, uM_func.vector)
+    uM_func.x.scatter_forward()
+    # print(displacement_field.x.array)
+    print(f"Displacement field norm: {mesh_comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(uM_func, uM_func) * x[0] * ufl.dx + ufl.inner(epsilon(uM_func, x), epsilon(uM_func, x)) * x[0] * ufl.dx)))}")
+
+    computed_file = "solution_nonlinear_thermomechanical_mechanical/solution_computed.xdmf"
+    with dolfinx.io.XDMFFile(mesh.comm, computed_file, "w") as solution_file:
+        solution_file.write_mesh(mesh)
+        solution_file.write_function(uM_func)
 
 '''
 # TODO
