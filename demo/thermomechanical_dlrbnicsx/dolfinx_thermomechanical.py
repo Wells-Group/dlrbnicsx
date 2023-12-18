@@ -137,6 +137,8 @@ l_T = \
     ufl.inner(q_source, vT) * x[0] * dx + h_cf * vT * T_f * x[0] * ds_sf + h_cout * vT * T_out * x[0] * ds_out + \
     h_cbottom * vT * T_bottom * x[0] * ds_bottom - ufl.inner(q_top, vT) * x[0] * ds_top
 
+uT_func.x.array[:] = 350.
+uT_func.x.scatter_forward()
 problem = NonlinearProblem(a_T - l_T, uT_func, bcs=[])
 
 bc_list_geometric = list()
