@@ -23,8 +23,10 @@ mesh, subdomains, boundaries = \
                                      gmsh_model_rank, gdim=gdim)
 
 VT = dolfinx.fem.FunctionSpace(mesh, ("CG", 1))
+VT_plot = dolfinx.fem.FunctionSpace(mesh, ("CG", 2))
 uT, vT = ufl.TrialFunction(VT), ufl.TestFunction(VT)
 uT_func = dolfinx.fem.Function(VT)
+uT_func_plot = dolfinx.fem.Function(VT_plot)
 dx = ufl.Measure("dx", domain=mesh, subdomain_data=subdomains)
 ds = ufl.Measure("ds", domain=mesh, subdomain_data=boundaries)
 
@@ -435,16 +437,20 @@ with HarmonicMeshMotion(mesh, boundaries, bc_markers_list,
     assert (converged)
     print(f"Number of interations: {n:d}")
 
+    uT_func_plot.interpolate(uT_func)
+    uT_func_plot.x.scatter_forward()
     computed_file = "solution_nonlinear_thermomechanical_thermal/solution_computed.xdmf"
     with dolfinx.io.XDMFFile(mesh.comm, computed_file, "w") as solution_file:
         solution_file.write_mesh(mesh)
-        solution_file.write_function(uT_func)
+        solution_file.write_function(uT_func_plot)
 
 
 VM = dolfinx.fem.VectorFunctionSpace(mesh, ("CG", 1))
+VM_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("CG", 2))
 uM = ufl.TrialFunction(VM)
 vM = ufl.TestFunction(VM)
 uM_func = dolfinx.fem.Function(VM, name="Displacement")
+uM_func_plot = dolfinx.fem.Function(VM_plot)
 rho = 77106.
 g = 9.8
 T0 = 300.
@@ -606,10 +612,12 @@ with HarmonicMeshMotion(mesh, boundaries, bc_markers_list,
     # print(displacement_field.x.array)
     print(f"Displacement field norm: {mesh_comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(uM_func, uM_func) * x[0] * ufl.dx + ufl.inner(epsilon(uM_func, x), epsilon(uM_func, x)) * x[0] * ufl.dx)))}")
 
+    uM_func_plot.interpolate(uM_func)
+    uM_func_plot.x.scatter_forward()
     computed_file = "solution_nonlinear_thermomechanical_mechanical/solution_computed.xdmf"
     with dolfinx.io.XDMFFile(mesh.comm, computed_file, "w") as solution_file:
         solution_file.write_mesh(mesh)
-        solution_file.write_function(uM_func)
+        solution_file.write_function(uM_func_plot)
 
 '''
 # TODO
