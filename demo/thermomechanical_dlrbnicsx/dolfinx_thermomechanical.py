@@ -54,7 +54,7 @@ q_top.x.array[:] = 0.
 # i.e. set reset_reference=True and is_deformation=True
 # Parameter tuple (D_0, D_1, t_0, t_1)
 mu_ref = [0.6438, 0.4313, 1., 0.5]  # reference geometry
-mu = mu_ref # [0.8, 0.55, 0.8, 0.4] # [0.45, 0.56, 0.9, 0.7] # Parametric geometry
+mu = [0.8, 0.55, 0.8, 0.4] # [0.45, 0.56, 0.9, 0.7] # Parametric geometry
 
 def thermal_diffusivity_1(sym_T):
     conditions = [ufl.le(sym_T, 293.), ufl.And(ufl.ge(sym_T, 293.), ufl.le(sym_T, 673.)), ufl.And(ufl.ge(sym_T, 673.), ufl.le(sym_T, 1273.)), ufl.ge(sym_T, 1273.)]
