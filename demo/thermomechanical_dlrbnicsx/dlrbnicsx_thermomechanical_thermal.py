@@ -373,7 +373,7 @@ class MechanicalProblemOnDeformedDomain(abc.ABC):
         with MeshDeformationWrapperClass(self._mesh, self._boundaries,
                                          self.mu_ref, self.mu):
             
-            self._ymax.value = self._mesh.comm.allreduce(np.max(mesh.geometry.x[:, 1]), op=MPI.MAX)
+            self._ymax.value = self._mesh.comm.allreduce(np.max(self._mesh.geometry.x[:, 1]), op=MPI.MAX)
             # Bilinear side assembly
             aM_cpp = self.bilinear_form
             A = dolfinx.fem.petsc.assemble_matrix(aM_cpp, bcs=self._bcsM)
