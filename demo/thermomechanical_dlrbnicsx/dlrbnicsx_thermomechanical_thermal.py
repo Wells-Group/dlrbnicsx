@@ -369,7 +369,7 @@ class MechanicalProblemOnDeformedDomain(abc.ABC):
         # 2. Other in solve of mehcanical problem
         self.uT_func.x.array[:] = self._thermalproblem.solve(self.mu).x.array.copy()
         self.uT_func.x.scatter_forward()
-        print(f"Temperature field norm: {self._thermalproblem.inner_product_action(uT_func)(uT_func)}")
+        print(f"Temperature field norm: {self._thermalproblem.inner_product_action(self.uT_func)(self.uT_func)}")
         with MeshDeformationWrapperClass(self._mesh, self._boundaries,
                                          self.mu_ref, self.mu):
             
