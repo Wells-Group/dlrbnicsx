@@ -216,6 +216,7 @@ class MechanicalProblemOnDeformedDomain(abc.ABC):
         self.inner_product_action = \
             rbnicsx.backends.bilinear_form_action(self._inner_product,
                                                   part="real")
+        self.uT_func = dolfinx.fem.Function(self._thermalproblem._VT)
         self._rho = 77106.
         self._g = 9.8
         self._T0 = 300.
