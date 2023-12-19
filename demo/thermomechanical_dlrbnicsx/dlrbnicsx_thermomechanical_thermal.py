@@ -373,7 +373,7 @@ class MechanicalProblemOnDeformedDomain(abc.ABC):
         with MeshDeformationWrapperClass(self._mesh, self._boundaries,
                                          self.mu_ref, self.mu):
             
-            self._ymax.value = mesh_comm.allreduce(np.max(mesh.geometry.x[:, 1]), op=MPI.MAX)
+            self._ymax.value = self._mesh.comm.allreduce(np.max(mesh.geometry.x[:, 1]), op=MPI.MAX)
             # Bilinear side assembly
             aM_cpp = self.bilinear_form
             A = dolfinx.fem.petsc.assemble_matrix(aM_cpp, bcs=self._bcsM)
@@ -384,11 +384,11 @@ class MechanicalProblemOnDeformedDomain(abc.ABC):
             L = dolfinx.fem.petsc.assemble_vector(lM_cpp)
             dolfinx.fem.petsc.apply_lifting(L, [aM_cpp], [self._bcsM])
             L.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
-            dolfinx.fem.petsc.set_bc(L, bcsM)
+            dolfinx.fem.petsc.set_bc(L, self._bcsM)
 
             # Solver setup
             ksp = PETSc.KSP()
-            ksp.create(mesh.comm)
+            ksp.create(self._mesh.comm)
             ksp.setOperators(A)
             ksp.setType("preonly")
             ksp.getPC().setType("lu")
@@ -398,7 +398,8 @@ class MechanicalProblemOnDeformedDomain(abc.ABC):
             ksp.solve(L, uM_func.vector)
             uM_func.x.scatter_forward()
             # print(displacement_field.x.array)
-            print(f"Displacement field norm: {mesh_comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(uM_func, uM_func) * x[0] * ufl.dx + ufl.inner(epsilon(uM_func, x), epsilon(uM_func, x)) * x[0] * ufl.dx)))}")
+            x = ufl.SpatialCoordinate(self._mesh)
+            print(f"Displacement field norm: {self._mesh.comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(uM_func, uM_func) * x[0] * ufl.dx + ufl.inner(epsilon(uM_func, x), epsilon(uM_func, x)) * x[0] * ufl.dx)))}")
         return uM_func
 
 class ThermalPODANNReducedProblem(abc.ABC):
