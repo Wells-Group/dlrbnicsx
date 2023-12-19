@@ -399,7 +399,7 @@ class MechanicalProblemOnDeformedDomain(abc.ABC):
             uM_func.x.scatter_forward()
             # print(displacement_field.x.array)
             x = ufl.SpatialCoordinate(self._mesh)
-            print(f"Displacement field norm: {self._mesh.comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(uM_func, uM_func) * x[0] * ufl.dx + ufl.inner(epsilon(uM_func, x), epsilon(uM_func, x)) * x[0] * ufl.dx)))}")
+            print(f"Displacement field norm: {self._mesh.comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(uM_func, uM_func) * x[0] * ufl.dx + ufl.inner(self.epsilon(uM_func), self.epsilon(uM_func)) * x[0] * ufl.dx)))}")
         return uM_func
 
 class ThermalPODANNReducedProblem(abc.ABC):
