@@ -188,6 +188,8 @@ class ThermalProblemOnDeformedDomain(abc.ABC):
             
             solution.x.array[:] = self.uT_func.x.array.copy()
             solution.x.scatter_forward()
+            x = ufl.SpatialCoordinate(self._mesh)
+            print(f"Temperature field norm: {self._mesh.comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(solution, solution) * x[0] * ufl.dx + ufl.inner(ufl.grad(solution), ufl.grad(solution)) * x[0] * ufl.dx)))}")
         return solution
 
 class MechanicalProblemOnDeformedDomain(abc.ABC):

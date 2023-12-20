@@ -441,11 +441,11 @@ with HarmonicMeshMotion(mesh, boundaries, bc_markers_list,
 
     uT_func_plot.interpolate(uT_func)
     uT_func_plot.x.scatter_forward()
+    print(f"Temperature field norm: {mesh.comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(uT_func, uT_func) * x[0] * ufl.dx + ufl.inner(ufl.grad(uT_func), ufl.grad(uT_func)) * x[0] * ufl.dx)))}")
     computed_file = "solution_nonlinear_thermomechanical_thermal/solution_computed.xdmf"
     with dolfinx.io.XDMFFile(mesh.comm, computed_file, "w") as solution_file:
         solution_file.write_mesh(mesh)
         solution_file.write_function(uT_func_plot)
-
 
 VM = dolfinx.fem.VectorFunctionSpace(mesh, ("CG", 1))
 VM_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("CG", 2))
@@ -620,6 +620,8 @@ with HarmonicMeshMotion(mesh, boundaries, bc_markers_list,
     with dolfinx.io.XDMFFile(mesh.comm, computed_file, "w") as solution_file:
         solution_file.write_mesh(mesh)
         solution_file.write_function(uM_func_plot)
+
+print(f"Displacement field norm: {mesh_comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(uM_func, uM_func) * x[0] * ufl.dx + ufl.inner(epsilon(uM_func, x), epsilon(uM_func, x)) * x[0] * ufl.dx)))}")
 
 '''
 # TODO
