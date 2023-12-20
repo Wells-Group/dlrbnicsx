@@ -34,19 +34,14 @@ class ThermalProblemOnDeformedDomain(abc.ABC):
         self._mesh = mesh
         self._subdomains = subdomains
         self._boundaries = boundaries
+        dx = ufl.Measure("dx", domain=mesh, subdomain_data=subdomains)
         ds = ufl.Measure("ds", domain=self._mesh, subdomain_data=self._boundaries)
+        self.dx = dx
         self._ds_sf = ds(11) + ds(20) + ds(21) + ds(22) + ds(23)
         self._ds_bottom = ds(1) + ds(31)
         self._ds_out = ds(30)
         self._ds_sym = ds(5) + ds(9) + ds(12)
         self._ds_top = ds(18) + ds(19) + ds(27) + ds(28) + ds(29)
-        self._omega_1_cells = self._subdomains.find(1)
-        self._omega_2_cells = self._subdomains.find(2)
-        self._omega_3_cells = self._subdomains.find(3)
-        self._omega_4_cells = self._subdomains.find(4)
-        self._omega_5_cells = self._subdomains.find(5)
-        self._omega_6_cells = self._subdomains.find(6)
-        self._omega_7_cells = self._subdomains.find(7)
         x = ufl.SpatialCoordinate(self._mesh)
         self._VT = dolfinx.fem.FunctionSpace(self._mesh, ("CG", 1))
         uT, vT = ufl.TrialFunction(self._VT), ufl.TestFunction(self._VT)
@@ -62,231 +57,142 @@ class ThermalProblemOnDeformedDomain(abc.ABC):
         self._q_source.x.array[:] = 0.
         self._q_top = dolfinx.fem.Function(self._VT)
         self._q_top.x.array[:] = 0.
-        self.temperature_field = dolfinx.fem.Function(self._VT)
+        self.uT_func = dolfinx.fem.Function(self._VT)
         self.mu_ref = [0.6438, 0.4313, 1., 0.5]
-
-        self._Q = dolfinx.fem.FunctionSpace(self._mesh, ("DG", 0))
-        self._thermal_conductivity_func = dolfinx.fem.Function(self._Q)
-        self._thermal_conductivity_func_diff = dolfinx.fem.Function(self._Q)
-        self._thermal_conductivity_func_1 = dolfinx.fem.Function(self._Q)
-        self._thermal_conductivity_func_diff_1 = dolfinx.fem.Function(self._Q)
-        self._thermal_conductivity_func_2 = dolfinx.fem.Function(self._Q)
-        self._thermal_conductivity_func_diff_2 = dolfinx.fem.Function(self._Q)
-        self._thermal_conductivity_func_5 = dolfinx.fem.Function(self._Q)
-        self._thermal_conductivity_func_diff_5 = dolfinx.fem.Function(self._Q)
-        self._thermal_conductivity_func_7 = dolfinx.fem.Function(self._Q)
-        self._thermal_conductivity_func_diff_7 = dolfinx.fem.Function(self._Q)
 
         self._max_iterations = 20
         self.rtol = 1.e-4
         self.atol = 1.e-12
         
-        sym_T = sympy.Symbol("sym_T")
-        
-        self._thermal_conductivity_func.x.array[self._omega_3_cells] = 5.3
-        self._thermal_conductivity_func.x.array[self._omega_4_cells] = 4.75
-        self._thermal_conductivity_func.x.array[self._omega_6_cells] = 45.6
+    def thermal_diffusivity_1(self, sym_T):
+        conditions = [ufl.le(sym_T, 293.), ufl.And(ufl.ge(sym_T, 293.), ufl.le(sym_T, 673.)), ufl.And(ufl.ge(sym_T, 673.), ufl.le(sym_T, 1273.)), ufl.ge(sym_T, 1273.)]
+        interps = [8.17484662576687e-6*sym_T**2 - 0.00926193251533741*sym_T + 18.0819438190184, 8.17484662576687e-6*sym_T**2 - 0.00926193251533741*sym_T + 18.0819438190184, 1.76073619631904e-6*sym_T**2 - 0.000628539877300632*sym_T + 15.176807196319, 1.76073619631904e-6*sym_T**2 - 0.000628539877300632*sym_T + 15.176807196319]
+        assert len(conditions) == len(interps)
+        d_func = ufl.conditional(conditions[0], interps[0], interps[0])
+        for i in range(1, len(conditions)):
+            d_func = ufl.conditional(conditions[i], interps[i], d_func)
+        return d_func
 
-        thermal_conductivity_sym_1 = sympy.interpolating_spline(2, sym_T, [293., 473., 873., 1273.], [16.07, 15.53, 15.97, 17.23])
-        thermal_conductivity_sym_1 = sympy.Piecewise(
-            thermal_conductivity_sym_1.args[0], (thermal_conductivity_sym_1.args[1][0], True))
-        self._thermal_conductivity_sym_1_lambdified = sympy.lambdify(sym_T, thermal_conductivity_sym_1)
-        thermal_conductivity_sym_diff_1 = sympy.diff(thermal_conductivity_sym_1, sym_T)
-        self._thermal_conductivity_sym_diff_1_lambdified = sympy.lambdify(sym_T, thermal_conductivity_sym_diff_1)
+    def thermal_diffusivity_2(self, sym_T):
+        conditions = [ufl.le(sym_T, 293.), ufl.And(ufl.ge(sym_T, 293.), ufl.le(sym_T, 693.)), ufl.And(ufl.ge(sym_T, 673.), ufl.le(sym_T, 1273.)), ufl.ge(sym_T, 1273.)]
+        interps = [0.000299054192229039*sym_T**2 - 0.36574217791411*sym_T + 130.838954780164, 0.000299054192229039*sym_T**2 - 0.36574217791411*sym_T + 130.838954780164, -1.10434560327197e-5*sym_T**2 + 0.0516492566462166*sym_T - 9.61326294938646, -1.10434560327197e-5*sym_T**2 + 0.0516492566462166*sym_T - 9.61326294938646]
+        assert len(conditions) == len(interps)
+        d_func = ufl.conditional(conditions[0], interps[0], interps[0])
+        for i in range(1, len(conditions)):
+            d_func = ufl.conditional(conditions[i], interps[i], d_func)
+        return d_func
 
-        thermal_conductivity_sym_2 = sympy.interpolating_spline(2, sym_T, [293., 473., 873., 1273.], [49.35, 24.75, 27.06, 38.24])
-        thermal_conductivity_sym_2 = sympy.Piecewise(
-            thermal_conductivity_sym_2.args[0], (thermal_conductivity_sym_2.args[1][0], True))
-        self._thermal_conductivity_sym_2_lambdified = sympy.lambdify(sym_T, thermal_conductivity_sym_2)
-        thermal_conductivity_sym_diff_2 = sympy.diff(thermal_conductivity_sym_2, sym_T)
-        self._thermal_conductivity_sym_diff_2_lambdified = sympy.lambdify(sym_T, thermal_conductivity_sym_diff_2)
+    def thermal_diffusivity_3(self, sym_T):
+        conditions = [ufl.le(sym_T, 293.), ufl.And(ufl.ge(sym_T, 293.), ufl.le(sym_T, 693.)), ufl.And(ufl.ge(sym_T, 673.), ufl.le(sym_T, 1273.)), ufl.ge(sym_T, 1273.)]
+        interps = [8.17484662576687e-6*sym_T**2 - 0.00926193251533741*sym_T + 18.0819438190184, 8.17484662576687e-6*sym_T**2 - 0.00926193251533741*sym_T + 18.0819438190184, 1.76073619631904e-6*sym_T**2 - 0.000628539877300632*sym_T + 15.176807196319, 1.76073619631904e-6*sym_T**2 - 0.000628539877300632*sym_T + 15.176807196319]
+        assert len(conditions) == len(interps)
+        d_func = ufl.conditional(conditions[0], interps[0], interps[0])
+        for i in range(1, len(conditions)):
+            d_func = ufl.conditional(conditions[i], interps[i], d_func)
+        return d_func
 
-        thermal_conductivity_sym_5 = sympy.interpolating_spline(2, sym_T, [293., 473., 873., 1273.], [23.34, 20.81, 20.99, 21.62])
-        thermal_conductivity_sym_5 = sympy.Piecewise(
-            thermal_conductivity_sym_5.args[0], (thermal_conductivity_sym_5.args[1][0], True))
-        self._thermal_conductivity_sym_5_lambdified = sympy.lambdify(sym_T, thermal_conductivity_sym_5)
-        thermal_conductivity_sym_diff_5 = sympy.diff(thermal_conductivity_sym_5, sym_T)
-        self._thermal_conductivity_sym_diff_5_lambdified = sympy.lambdify(sym_T, thermal_conductivity_sym_diff_5)
+    def thermal_diffusivity_4(self, sym_T):
+        conditions = [ufl.le(sym_T, 293.), ufl.And(ufl.ge(sym_T, 293.), ufl.le(sym_T, 693.)), ufl.And(ufl.ge(sym_T, 673.), ufl.le(sym_T, 1273.)), ufl.ge(sym_T, 1273.)]
+        interps = [8.17484662576687e-6*sym_T**2 - 0.00926193251533741*sym_T + 18.0819438190184, 8.17484662576687e-6*sym_T**2 - 0.00926193251533741*sym_T + 18.0819438190184, 1.76073619631904e-6*sym_T**2 - 0.000628539877300632*sym_T + 15.176807196319, 1.76073619631904e-6*sym_T**2 - 0.000628539877300632*sym_T + 15.176807196319]
+        assert len(conditions) == len(interps)
+        d_func = ufl.conditional(conditions[0], interps[0], interps[0])
+        for i in range(1, len(conditions)):
+            d_func = ufl.conditional(conditions[i], interps[i], d_func)
+        return d_func
 
-        thermal_conductivity_sym_7 = sympy.interpolating_spline(2, sym_T, [293., 473., 873., 1273.], [49.35, 24.75, 27.06, 38.24])
-        thermal_conductivity_sym_7 = sympy.Piecewise(
-            thermal_conductivity_sym_7.args[0], (thermal_conductivity_sym_7.args[1][0], True))
-        self._thermal_conductivity_sym_7_lambdified = sympy.lambdify(sym_T, thermal_conductivity_sym_7)
-        thermal_conductivity_sym_diff_7 = sympy.diff(thermal_conductivity_sym_7, sym_T)
-        self._thermal_conductivity_sym_diff_7_lambdified = sympy.lambdify(sym_T, thermal_conductivity_sym_diff_7)
-        
-    def conductivity_eval_1(self, x):
-        temperature_field = self.temperature_field
-        tree = dolfinx.geometry.bb_tree(self._mesh, self._mesh.geometry.dim)
-        cell_candidates = dolfinx.geometry.compute_collisions_points(tree, x.T)
-        colliding_cells = dolfinx.geometry.compute_colliding_cells(self._mesh, cell_candidates, x.T)
-        return self._thermal_conductivity_sym_1_lambdified(temperature_field.eval(x.T, colliding_cells.array)[:, 0])
+    def thermal_diffusivity_5(self, sym_T):
+        conditions = [ufl.le(sym_T, 293.), ufl.And(ufl.ge(sym_T, 293.), ufl.le(sym_T, 693.)), ufl.And(ufl.ge(sym_T, 673.), ufl.le(sym_T, 1273.)), ufl.ge(sym_T, 1273.)]
+        interps = [3.08018064076346e-5*sym_T**2 - 0.0376497392638036*sym_T + 31.7270693260054, 3.08018064076346e-5*sym_T**2 - 0.0376497392638036*sym_T + 31.7270693260054, -2.79311520109062e-6*sym_T**2 + 0.00756902522154049*sym_T + 16.5109550766871, -2.79311520109062e-6*sym_T**2 + 0.00756902522154049*sym_T + 16.5109550766871]
+        assert len(conditions) == len(interps)
+        d_func = ufl.conditional(conditions[0], interps[0], interps[0])
+        for i in range(1, len(conditions)):
+            d_func = ufl.conditional(conditions[i], interps[i], d_func)
+        return d_func
 
-    def conductivity_eval_diff_1(self, x):
-        temperature_field = self.temperature_field
-        tree = dolfinx.geometry.bb_tree(self._mesh, self._mesh.geometry.dim)
-        cell_candidates = dolfinx.geometry.compute_collisions_points(tree, x.T)
-        colliding_cells = dolfinx.geometry.compute_colliding_cells(self._mesh, cell_candidates, x.T)
-        return self._thermal_conductivity_sym_diff_1_lambdified(temperature_field.eval(x.T, colliding_cells.array)[:, 0])
+    def thermal_diffusivity_6(self, sym_T):
+        conditions = [ufl.le(sym_T, 293.), ufl.And(ufl.ge(sym_T, 293.), ufl.le(sym_T, 693.)), ufl.And(ufl.ge(sym_T, 673.), ufl.le(sym_T, 1273.)), ufl.ge(sym_T, 1273.)]
+        interps = [8.17484662576687e-6*sym_T**2 - 0.00926193251533741*sym_T + 18.0819438190184, 8.17484662576687e-6*sym_T**2 - 0.00926193251533741*sym_T + 18.0819438190184, 1.76073619631904e-6*sym_T**2 - 0.000628539877300632*sym_T + 15.176807196319, 1.76073619631904e-6*sym_T**2 - 0.000628539877300632*sym_T + 15.176807196319]
+        assert len(conditions) == len(interps)
+        d_func = ufl.conditional(conditions[0], interps[0], interps[0])
+        for i in range(1, len(conditions)):
+            d_func = ufl.conditional(conditions[i], interps[i], d_func)
+        return d_func
 
-    def conductivity_eval_2(self, x):
-        temperature_field = self.temperature_field
-        tree = dolfinx.geometry.bb_tree(self._mesh, self._mesh.geometry.dim)
-        cell_candidates = dolfinx.geometry.compute_collisions_points(tree, x.T)
-        colliding_cells = dolfinx.geometry.compute_colliding_cells(self._mesh, cell_candidates, x.T)
-        return self._thermal_conductivity_sym_2_lambdified(temperature_field.eval(x.T, colliding_cells.array)[:, 0])
-
-    def conductivity_eval_diff_2(self, x):
-        temperature_field = self.temperature_field
-        tree = dolfinx.geometry.bb_tree(self._mesh, self._mesh.geometry.dim)
-        cell_candidates = dolfinx.geometry.compute_collisions_points(tree, x.T)
-        colliding_cells = dolfinx.geometry.compute_colliding_cells(self._mesh, cell_candidates, x.T)
-        return self._thermal_conductivity_sym_diff_2_lambdified(temperature_field.eval(x.T, colliding_cells.array)[:, 0])
-
-    def conductivity_eval_5(self, x):
-        temperature_field = self.temperature_field
-        tree = dolfinx.geometry.bb_tree(self._mesh, self._mesh.geometry.dim)
-        cell_candidates = dolfinx.geometry.compute_collisions_points(tree, x.T)
-        colliding_cells = dolfinx.geometry.compute_colliding_cells(self._mesh, cell_candidates, x.T)
-        return self._thermal_conductivity_sym_5_lambdified(temperature_field.eval(x.T, colliding_cells.array)[:, 0])
-
-    def conductivity_eval_diff_5(self, x):
-        temperature_field = self.temperature_field
-        tree = dolfinx.geometry.bb_tree(self._mesh, self._mesh.geometry.dim)
-        cell_candidates = dolfinx.geometry.compute_collisions_points(tree, x.T)
-        colliding_cells = dolfinx.geometry.compute_colliding_cells(self._mesh, cell_candidates, x.T)
-        return self._thermal_conductivity_sym_diff_5_lambdified(temperature_field.eval(x.T, colliding_cells.array)[:, 0])
-
-    def conductivity_eval_7(self, x):
-        temperature_field = self.temperature_field
-        tree = dolfinx.geometry.bb_tree(self._mesh, self._mesh.geometry.dim)
-        cell_candidates = dolfinx.geometry.compute_collisions_points(tree, x.T)
-        colliding_cells = dolfinx.geometry.compute_colliding_cells(self._mesh, cell_candidates, x.T)
-        return self._thermal_conductivity_sym_7_lambdified(temperature_field.eval(x.T, colliding_cells.array)[:, 0])
-
-    def conductivity_eval_diff_7(self, x):
-        temperature_field = self.temperature_field
-        tree = dolfinx.geometry.bb_tree(self._mesh, self._mesh.geometry.dim)
-        cell_candidates = dolfinx.geometry.compute_collisions_points(tree, x.T)
-        colliding_cells = dolfinx.geometry.compute_colliding_cells(self._mesh, cell_candidates, x.T)
-        return self._thermal_conductivity_sym_diff_7_lambdified(temperature_field.eval(x.T, colliding_cells.array)[:, 0])
+    def thermal_diffusivity_7(self, sym_T):
+        conditions = [ufl.le(sym_T, 293.), ufl.And(ufl.ge(sym_T, 293.), ufl.le(sym_T, 693.)), ufl.And(ufl.ge(sym_T, 673.), ufl.le(sym_T, 1273.)), ufl.ge(sym_T, 1273.)]
+        interps = [0.000299054192229039*sym_T**2 - 0.36574217791411*sym_T + 130.838954780164, 0.000299054192229039*sym_T**2 - 0.36574217791411*sym_T + 130.838954780164, -1.10434560327197e-5*sym_T**2 + 0.0516492566462166*sym_T - 9.61326294938646, -1.10434560327197e-5*sym_T**2 + 0.0516492566462166*sym_T - 9.61326294938646]
+        assert len(conditions) == len(interps)
+        d_func = ufl.conditional(conditions[0], interps[0], interps[0])
+        for i in range(1, len(conditions)):
+            d_func = ufl.conditional(conditions[i], interps[i], d_func)
+        return d_func        
     
     @property
-    def bilinear_form(self):
-        uT, vT = self._trial, self._test
+    def lhs_form(self):
+        uT_func, vT = self.uT_func, self._test
         x = ufl.SpatialCoordinate(self._mesh)
-        JaT = ufl.inner(self._thermal_conductivity_func * ufl.grad(uT), ufl.grad(vT)) * x[0] * ufl.dx + \
-            ufl.inner(uT * self._thermal_conductivity_func_diff * ufl.grad(self.temperature_field), ufl.grad(vT)) * x[0] * ufl.dx
-        cT = ufl.inner(self._h_cf * uT, vT) * x[0] * self._ds_sf + ufl.inner(self._h_cout * uT, vT) * x[0] * self._ds_out + \
-            ufl.inner(self._h_cbottom * uT, vT) * x[0] * self._ds_bottom
-        return dolfinx.fem.form(JaT + cT)
+        dx = self.dx
+        a_T = \
+            ufl.inner(self.thermal_diffusivity_1(uT_func) * ufl.grad(uT_func), ufl.grad(vT))  * x[0] * dx(1) + \
+            ufl.inner(self.thermal_diffusivity_2(uT_func) * ufl.grad(uT_func), ufl.grad(vT))  * x[0] * dx(2) + \
+            ufl.inner(5.3 * ufl.grad(uT_func), ufl.grad(vT))  * x[0] * dx(3) + \
+            ufl.inner(4.75 * ufl.grad(uT_func), ufl.grad(vT))  * x[0] * dx(4) + \
+            ufl.inner(self.thermal_diffusivity_5(uT_func) * ufl.grad(uT_func), ufl.grad(vT))  * x[0] * dx(5) + \
+            ufl.inner(45.6 * ufl.grad(uT_func), ufl.grad(vT))  * x[0] * dx(6) + \
+            ufl.inner(self.thermal_diffusivity_7(uT_func) * ufl.grad(uT_func), ufl.grad(vT))  * x[0] * dx(7) + \
+            ufl.inner(self._h_cf * uT_func, vT) * x[0] * self._ds_sf + \
+            ufl.inner(self._h_cout * uT_func, vT) * x[0] * self._ds_out + \
+            ufl.inner(self._h_cbottom * uT_func, vT) * x[0] * self._ds_bottom
+        return a_T
     
     @property
-    def linear_form(self):
+    def rhs_form(self):
         vT = self._test
         x = ufl.SpatialCoordinate(self._mesh)
-        JlT = ufl.inner(self.temperature_field * self._thermal_conductivity_func_diff * \
-            ufl.grad(self.temperature_field), ufl.grad(vT)) * x[0] * ufl.dx
-        lT = ufl.inner(self._q_source, vT) * x[0] * ufl.dx + self._h_cf * vT * self._T_f * x[0] * self._ds_sf + \
+        dx = self.dx
+        l_T = \
+            ufl.inner(self._q_source, vT) * x[0] * dx + \
+            self._h_cf * vT * self._T_f * x[0] * self._ds_sf + \
             self._h_cout * vT * self._T_out * x[0] * self._ds_out + \
             self._h_cbottom * vT * self._T_bottom * x[0] * self._ds_bottom - \
             ufl.inner(self._q_top, vT) * x[0] * self._ds_top
-        return dolfinx.fem.form(JlT + lT)
+        return l_T
     
+    @property
+    def set_problem(self):
+        problemNonlinear = \
+            NonlinearProblem(self.lhs_form - self.rhs_form,
+                             self.uT_func, bcs=[])
+        return problemNonlinear
+
     def solve(self, mu):
         vT = self._test
         self.mu = mu
-        self.temperature_field.x.array[:] = 300.  # TODO 300 or 350??
+        self.uT_func.x.array[:] = 350.
+        self.uT_func.x.scatter_forward()
+        problemNonlinear = self.set_problem
+        solution = dolfinx.fem.Function(self._VT)
         with MeshDeformationWrapperClass(self._mesh, self._boundaries,
                                          self.mu_ref, self.mu):
+            solver = NewtonSolver(self._mesh.comm, problemNonlinear)
+            solver.convergence_criterion = "incremental"
+
+            solver.rtol = 1e-10
+            solver.report = True
+            ksp = solver.krylov_solver
+            ksp.setFromOptions()
+            # dolfinx.log.set_log_level(dolfinx.log.LogLevel.INFO)
+
+            n, converged = solver.solve(self.uT_func)
+            # print(f"Computed solution array: {uT_func.x.array}")
+            assert (converged)
+            print(f"Number of interations: {n:d}")
+            
+            solution.x.array[:] = self.uT_func.x.array.copy()
+            solution.x.scatter_forward()
             x = ufl.SpatialCoordinate(self._mesh)
-            for iteration in range(self._max_iterations):
-                print(f"Iteration {iteration + 1}/{self._max_iterations}")
-
-                self._thermal_conductivity_func_1.interpolate(self.conductivity_eval_1)
-                self._thermal_conductivity_func_diff_1.interpolate(self.conductivity_eval_diff_1)
-
-                self._thermal_conductivity_func_2.interpolate(self.conductivity_eval_2)
-                self._thermal_conductivity_func_diff_2.interpolate(self.conductivity_eval_diff_2)
-
-                self._thermal_conductivity_func_5.interpolate(self.conductivity_eval_5)
-                self._thermal_conductivity_func_diff_5 .interpolate(self.conductivity_eval_diff_5)
-
-                self._thermal_conductivity_func_7.interpolate(self.conductivity_eval_7)
-                self._thermal_conductivity_func_diff_7.interpolate(self.conductivity_eval_diff_7)
-
-                self._thermal_conductivity_func.x.array[self._omega_1_cells] = self._thermal_conductivity_func_1.x.array[self._omega_1_cells]
-                self._thermal_conductivity_func_diff.x.array[self._omega_1_cells] = self._thermal_conductivity_func_diff_1.x.array[self._omega_1_cells]
-
-                self._thermal_conductivity_func.x.array[self._omega_2_cells] = self._thermal_conductivity_func_2.x.array[self._omega_2_cells]
-                self._thermal_conductivity_func_diff.x.array[self._omega_2_cells] = self._thermal_conductivity_func_diff_2.x.array[self._omega_2_cells]
-
-                self._thermal_conductivity_func.x.array[self._omega_5_cells] = self._thermal_conductivity_func_5.x.array[self._omega_5_cells]
-                self._thermal_conductivity_func_diff.x.array[self._omega_5_cells] = self._thermal_conductivity_func_diff_5.x.array[self._omega_5_cells]
-
-                self._thermal_conductivity_func.x.array[self._omega_7_cells] = self._thermal_conductivity_func_7.x.array[self._omega_7_cells]
-                self._thermal_conductivity_func_diff.x.array[self._omega_7_cells] = self._thermal_conductivity_func_diff_7.x.array[self._omega_7_cells]
-
-                residual = abs(self._mesh.comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(self._thermal_conductivity_func * ufl.grad(self.temperature_field),
-                                                                                                            ufl.grad(vT)) * x[0] * ufl.dx +
-                self._h_cf * ufl.inner(self.temperature_field - self._T_f, vT) * x[0] * self._ds_sf + self._h_cbottom * ufl.inner(self.temperature_field - self._T_bottom, vT) * x[0] * self._ds_bottom + self._h_cout * ufl.inner(self.temperature_field - self._T_out, vT) * x[0] * self._ds_out)), op=MPI.SUM))
-
-                if iteration == 0:
-                    initial_residual = residual
-
-                # print(f"Residual: {residual/initial_residual}")
-                print(f"Residual: {residual}")
-                
-                '''
-                if residual/initial_residual < rtol:
-                    print(f"Residual tolerance {rtol} reached in iterations {iteration}")
-                    break
-                '''
-
-                if residual < self.rtol:
-                    print(f"Residual tolerance {self.rtol} reached in iterations {iteration}")
-                    break
-                
-                aT_cpp = self.bilinear_form
-                lT_cpp = self.linear_form
-
-                # Bilinear side assembly
-                A = dolfinx.fem.petsc.assemble_matrix(aT_cpp, bcs=[])
-                A.assemble()
-
-                # Linear side assembly
-                L = dolfinx.fem.petsc.assemble_vector(lT_cpp)
-                dolfinx.fem.petsc.apply_lifting(L, [aT_cpp], [[]])
-                L.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
-                dolfinx.fem.petsc.set_bc(L, [])
-
-                # Solver setup
-                ksp = PETSc.KSP()
-                ksp.create(self._mesh.comm)
-                ksp.setOperators(A)
-                ksp.setType("preonly")
-                ksp.getPC().setType("lu")
-                ksp.getPC().setFactorSolverType("mumps")
-                ksp.setFromOptions()
-                solution_field = dolfinx.fem.Function(self._VT)
-                ksp.solve(L, solution_field.vector)
-                solution_field.x.scatter_forward()
-                # print(solution_field.x.array)
-
-                update_abs = \
-                    (np.sqrt(self._mesh.comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(solution_field - self.temperature_field,
-                                                                                            solution_field - self.temperature_field) * x[0] * ufl.dx)), op=MPI.SUM)))/\
-                    (np.sqrt(self._mesh.comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(self.temperature_field, self.temperature_field) * x[0] * ufl.dx)), op=MPI.SUM)))
-
-                print(f"Absolute update: {update_abs}")
-
-                self.temperature_field.x.array[:] = solution_field.x.array.copy()
-
-                if update_abs < self.atol:
-                    print(f"Solver tolerance {self.atol} reached in iterations {iteration + 1}")
-                    break
-        
-        return solution_field
+            print(f"Temperature field norm: {self._mesh.comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(solution, solution) * x[0] * ufl.dx + ufl.inner(ufl.grad(solution), ufl.grad(solution)) * x[0] * ufl.dx)))}")
+        return solution
 
 class ThermalPODANNReducedProblem(abc.ABC):
     def __init__(self, thermal_problem) -> None:
@@ -360,6 +266,8 @@ if __name__ == "__main__":
     thermal_problem_parametric = ThermalProblemOnDeformedDomain(mesh, cell_tags,
                                                         facet_tags)
     solution_mu = thermal_problem_parametric.solve(mu)
+
+    VT_plot = dolfinx.fem.FunctionSpace(mesh, ("CG", mesh.geometry.cmaps[0].degree))
 
     itemsize = MPI.DOUBLE.Get_size()
     para_dim = 4
@@ -467,7 +375,6 @@ if __name__ == "__main__":
         sampling = LHS(xlimits=xlimits)
         training_set = sampling(num_ann_samples)
         return training_set
-
 
     def generate_ann_output_set(problem, reduced_problem, input_set,
                                 output_set, indices, mode=None):
@@ -734,6 +641,10 @@ if __name__ == "__main__":
                         online_mu, thermal_model,
                         len(thermal_reduced_problem._basis_functions)))
 
+        thermal_fem_solution_plot = dolfinx.fem.Function(VT_plot)
+        thermal_fem_solution_plot.interpolate(thermal_fem_solution)
+        thermal_rb_solution_plot = dolfinx.fem.Function(VT_plot)
+        thermal_rb_solution_plot.interpolate(thermal_rb_solution)
 
         thermal_fem_online_file \
             = "dlrbnicsx_solution_thermal/thermal_fem_online_mu_computed.xdmf"
@@ -742,7 +653,7 @@ if __name__ == "__main__":
             with dolfinx.io.XDMFFile(mesh.comm, thermal_fem_online_file,
                                     "w") as thermal_solution_file:
                 thermal_solution_file.write_mesh(mesh)
-                thermal_solution_file.write_function(thermal_fem_solution)
+                thermal_solution_file.write_function(thermal_fem_solution_plot)
 
         thermal_rb_online_file \
             = "dlrbnicsx_solution_thermal/thermal_rb_online_mu_computed.xdmf"
@@ -752,11 +663,15 @@ if __name__ == "__main__":
                                     "w") as thermal_solution_file:
                 # NOTE scatter_forward not considered for online solution
                 thermal_solution_file.write_mesh(mesh)
-                thermal_solution_file.write_function(thermal_rb_solution)
+                thermal_solution_file.write_function(thermal_rb_solution_plot)
 
         thermal_error_function = dolfinx.fem.Function(thermal_problem_parametric._VT)
         thermal_error_function.x.array[:] = \
             thermal_fem_solution.x.array - thermal_rb_solution.x.array
+
+        thermal_error_function_plot = dolfinx.fem.Function(VT_plot)
+        thermal_error_function_plot.interpolate(thermal_error_function)
+
         thermal_fem_rb_error_file \
             = "dlrbnicsx_solution_thermal/thermal_fem_rb_error_computed.xdmf"
         with MeshDeformationWrapperClass(mesh, facet_tags, mu_ref,
@@ -764,7 +679,7 @@ if __name__ == "__main__":
             with dolfinx.io.XDMFFile(mesh.comm, thermal_fem_rb_error_file,
                                     "w") as thermal_solution_file:
                 thermal_solution_file.write_mesh(mesh)
-                thermal_solution_file.write_function(thermal_error_function)
+                thermal_solution_file.write_function(thermal_error_function_plot)
 
         thermal_projection_error_function = dolfinx.fem.Function(thermal_problem_parametric._VT)
         thermal_reconstructed_solution = \
@@ -773,6 +688,10 @@ if __name__ == "__main__":
                                                          len(thermal_reduced_problem._basis_functions)))
         thermal_projection_error_function.x.array[:] = \
             thermal_fem_solution.x.array - thermal_reconstructed_solution.x.array
+
+        thermal_projection_error_function_plot = dolfinx.fem.Function(VT_plot)
+        thermal_projection_error_function_plot.interpolate(thermal_projection_error_function)
+
         thermal_fem_rb_projection_error_file \
             = "dlrbnicsx_solution_thermal/thermal_fem_rb_projection_error_computed.xdmf"
         with MeshDeformationWrapperClass(mesh, facet_tags, mu_ref,
@@ -780,7 +699,7 @@ if __name__ == "__main__":
             with dolfinx.io.XDMFFile(mesh.comm, thermal_fem_rb_projection_error_file,
                                     "w") as thermal_solution_file:
                 thermal_solution_file.write_mesh(mesh)
-                thermal_solution_file.write_function(thermal_projection_error_function)
+                thermal_solution_file.write_function(thermal_projection_error_function_plot)
 
 
     if thermal_cpu_group0_comm != MPI.COMM_NULL:
