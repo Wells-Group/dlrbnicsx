@@ -1,6 +1,6 @@
+import dolfinx
 import gmsh
 from mpi4py import MPI
-import dolfinx
 
 gmsh.initialize('', False)
 gdim = 2
