@@ -1,4 +1,6 @@
 import dolfinx
+from dolfinx.fem.petsc import NonlinearProblem
+from dolfinx.nls.petsc import NewtonSolver
 import ufl
 
 import rbnicsx
