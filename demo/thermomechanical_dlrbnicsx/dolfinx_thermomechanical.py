@@ -447,6 +447,10 @@ with HarmonicMeshMotion(mesh, boundaries, bc_markers_list,
         solution_file.write_mesh(mesh)
         solution_file.write_function(uT_func_plot)
 
+print(f"Temperature field norm: {mesh.comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(uT_func, uT_func) * x[0] * ufl.dx + ufl.inner(ufl.grad(uT_func), ufl.grad(uT_func)) * x[0] * ufl.dx)))}")
+
+# Mechanical problem
+
 VM = dolfinx.fem.VectorFunctionSpace(mesh, ("CG", 1))
 VM_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("CG", 2))
 uM = ufl.TrialFunction(VM)
