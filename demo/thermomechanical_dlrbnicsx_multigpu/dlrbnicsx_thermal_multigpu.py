@@ -714,7 +714,7 @@ if __name__ == "__main__":
                 thermal_solution_file.write_function(thermal_projection_error_function_plot)
 
 
-    if thermal_cpu_group0_comm != MPI.COMM_NULL:
+    if thermal_gpu_group0_comm != MPI.COMM_NULL:
         print(f"Training time (Thermal): {thermal_elapsed_time}")
 
     if world_comm.rank == 0:
