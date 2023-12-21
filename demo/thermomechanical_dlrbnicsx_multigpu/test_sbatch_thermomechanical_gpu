@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -J dlrbnicsx_thermal_multigpu
+#SBATCH -J dlrbnicsx_thermomechanical_multigpu
 #SBATCH -A WELLS-SL3-GPU
 #SBATCH --output=test_job_gpu_%A_%a.out
 #SBATCH --error=test_job_gpu_%A_%a.err
