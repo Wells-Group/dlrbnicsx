@@ -257,9 +257,10 @@ if __name__ == "__main__":
     mu_ref = [0.6438, 0.4313, 1., 0.5]  # reference geometry
     mu = [0.8, 0.55, 0.8, 0.4]  # Parametric geometry
 
-    pod_samples = [3, 4, 3, 4]
-    ann_samples = [4, 3, 4, 3]
-    error_analysis_samples = [2, 2, 2, 2]
+    para_dim = 4
+    mechanical_ann_input_samples_num = 640
+    mechanical_error_analysis_samples_num = 144
+    num_snapshots = 700
 
     # FEM solve
     thermal_problem_parametric = \
@@ -290,7 +291,7 @@ if __name__ == "__main__":
         training_set[:, 3] = (0.60 - 0.40) * training_set[:, 3] + 0.40
         return training_set
 
-    thermal_training_set = rbnicsx.io.on_rank_zero(mesh.comm, generate_training_set)
+    thermal_training_set = generate_training_set(num_snapshots, para_dim)
 
     Nmax = 30
 
@@ -379,7 +380,7 @@ if __name__ == "__main__":
 
 
     # Training dataset
-    thermal_ann_input_set = generate_ann_input_set(samples=ann_samples)
+    thermal_ann_input_set = generate_ann_input_set(mechanical_ann_input_samples_num)
     # np.random.shuffle(thermal_ann_input_set)
     thermal_ann_output_set = \
         generate_ann_output_set(thermal_problem_parametric,
@@ -469,7 +470,7 @@ if __name__ == "__main__":
     print("\n")
     print("Generating error analysis (only input/parameters) dataset")
     print("\n")
-    thermal_error_analysis_set = generate_ann_input_set(samples=error_analysis_samples)
+    thermal_error_analysis_set = generate_ann_input_set(mechanical_error_analysis_samples_num)
     thermal_error_numpy = np.zeros(thermal_error_analysis_set.shape[0])
 
     for i in range(thermal_error_analysis_set.shape[0]):
