@@ -15,6 +15,7 @@ from petsc4py import PETSc
 
 import numpy as np
 import sympy
+from smt.sampling_methods import LHS
 import itertools
 import abc
 import matplotlib.pyplot as plt
@@ -302,9 +303,10 @@ mesh, cell_tags, facet_tags = \
 mu_ref = [0.6438, 0.4313, 1., 0.5]  # reference geometry
 mu = [0.8, 0.55, 0.8, 0.4]  # Parametric geometry
 
-pod_samples = [3, 4, 3, 4]
-ann_samples = [4, 3, 4, 3]
-error_analysis_samples = [2, 2, 2, 2]
+para_dim = 4
+mechanical_ann_input_samples_num = 640
+mechanical_error_analysis_samples_num = 144
+num_snapshots = 700
 
 # FEM solve
 thermal_problem_parametric = \
@@ -328,19 +330,15 @@ with MeshDeformationWrapperClass(mesh, facet_tags, mu_ref, mu):
         solution_file.write_function(uM_func_plot)
 
 # ### Mechanical POD starts ###
-
-def generate_training_set(samples=pod_samples):
-    training_set_0 = np.linspace(0.55, 0.75, samples[0])
-    training_set_1 = np.linspace(0.35, 0.55, samples[1])
-    training_set_2 = np.linspace(0.8, 1.2, samples[2])
-    training_set_3 = np.linspace(0.4, 0.6, samples[3])
-    training_set = np.array(list(itertools.product(training_set_0,
-                                                   training_set_1,
-                                                   training_set_2,
-                                                   training_set_3)))
+def generate_training_set(num_samples, para_dim):
+    training_set = np.random.uniform(size=(num_samples, para_dim))
+    training_set[:, 0] = (0.75 - 0.55) * training_set[:, 0] + 0.55
+    training_set[:, 1] = (0.55 - 0.35) * training_set[:, 1] + 0.35
+    training_set[:, 2] = (1.20 - 0.80) * training_set[:, 2] + 0.80
+    training_set[:, 3] = (0.60 - 0.40) * training_set[:, 3] + 0.40
     return training_set
 
-mechanical_training_set = rbnicsx.io.on_rank_zero(mesh.comm, generate_training_set)
+mechanical_training_set = generate_training_set(num_snapshots, para_dim)
 
 Nmax = 30
 
@@ -403,16 +401,11 @@ print(f"Eigenvalues (Mechanical): {mechanical_positive_eigenvalues}")
 
 # ### Mechanical POD Ends ###
 
-def generate_ann_input_set(samples=ann_samples):
-    """Generate an equispaced training set using numpy."""
-    training_set_0 = np.linspace(0.55, 0.75, samples[0])
-    training_set_1 = np.linspace(0.35, 0.55, samples[1])
-    training_set_2 = np.linspace(0.8, 1.2, samples[2])
-    training_set_3 = np.linspace(0.4, 0.6, samples[3])
-    training_set = np.array(list(itertools.product(training_set_0,
-                                                   training_set_1,
-                                                   training_set_2,
-                                                   training_set_3)))
+def generate_ann_input_set(mechanical_ann_input_samples_num):
+    xlimits = np.array([[0.55, 0.75], [0.35, 0.55],
+                        [0.8, 1.2], [0.4, 0.6]])
+    sampling = LHS(xlimits=xlimits)
+    training_set = sampling(mechanical_ann_input_samples_num)
     return training_set
 
 
@@ -433,8 +426,8 @@ def generate_ann_output_set(problem, reduced_problem,
     return output_set
 
 # Training dataset
-mechanical_ann_input_set = generate_ann_input_set(samples=ann_samples)
-# np.random.shuffle(mechanical_ann_input_set)
+mechanical_ann_input_set = generate_ann_input_set(mechanical_ann_input_samples_num)
+np.random.shuffle(mechanical_ann_input_set)
 mechanical_ann_output_set = \
     generate_ann_output_set(mechanical_problem_parametric,
                             mechanical_reduced_problem,
@@ -520,7 +513,7 @@ os.system(f"rm {mechanical_checkpoint_path}")
 print("\n")
 print("Generating error analysis (only input/parameters) dataset")
 print("\n")
-mechanical_error_analysis_set = generate_ann_input_set(samples=error_analysis_samples)
+mechanical_error_analysis_set = generate_ann_input_set(mechanical_error_analysis_samples_num)
 mechanical_error_numpy = np.zeros(mechanical_error_analysis_set.shape[0])
 
 for i in range(mechanical_error_analysis_set.shape[0]):

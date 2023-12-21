@@ -14,6 +14,7 @@ from petsc4py import PETSc
 
 import numpy as np
 import sympy
+from smt.sampling_methods import LHS
 import itertools
 import abc
 import matplotlib.pyplot as plt
@@ -281,18 +282,13 @@ if __name__ == "__main__":
             solution_file.write_function(uT_func_plot)
 
     # Thermal POD Starts ###
-
-    def generate_training_set(samples=pod_samples):
-        training_set_0 = np.linspace(0.55, 0.75, samples[0])
-        training_set_1 = np.linspace(0.35, 0.55, samples[1])
-        training_set_2 = np.linspace(0.8, 1.2, samples[2])
-        training_set_3 = np.linspace(0.4, 0.6, samples[3])
-        training_set = np.array(list(itertools.product(training_set_0,
-                                                    training_set_1,
-                                                    training_set_2,
-                                                    training_set_3)))
+    def generate_training_set(num_samples, para_dim):
+        training_set = np.random.uniform(size=(num_samples, para_dim))
+        training_set[:, 0] = (0.75 - 0.55) * training_set[:, 0] + 0.55
+        training_set[:, 1] = (0.55 - 0.35) * training_set[:, 1] + 0.35
+        training_set[:, 2] = (1.20 - 0.80) * training_set[:, 2] + 0.80
+        training_set[:, 3] = (0.60 - 0.40) * training_set[:, 3] + 0.40
         return training_set
-
 
     thermal_training_set = rbnicsx.io.on_rank_zero(mesh.comm, generate_training_set)
 
@@ -358,18 +354,12 @@ if __name__ == "__main__":
 
     # 5. ANN implementation
 
-    def generate_ann_input_set(samples=ann_samples):
-        """Generate an equispaced training set using numpy."""
-        training_set_0 = np.linspace(0.55, 0.75, samples[0])
-        training_set_1 = np.linspace(0.35, 0.55, samples[1])
-        training_set_2 = np.linspace(0.8, 1.2, samples[2])
-        training_set_3 = np.linspace(0.4, 0.6, samples[3])
-        training_set = np.array(list(itertools.product(training_set_0,
-                                                    training_set_1,
-                                                    training_set_2,
-                                                    training_set_3)))
+    def generate_ann_input_set(num_ann_samples):
+        xlimits = np.array([[0.55, 0.75], [0.35, 0.55],
+                            [0.8, 1.2], [0.4, 0.6]])
+        sampling = LHS(xlimits=xlimits)
+        training_set = sampling(num_ann_samples)
         return training_set
-
 
     def generate_ann_output_set(problem, reduced_problem,
                                 input_set, mode=None):
@@ -412,7 +402,7 @@ if __name__ == "__main__":
 
     customDataset = CustomDataset(thermal_reduced_problem,
                                 thermal_input_training_set, thermal_output_training_set)
-    thermal_train_dataloader = DataLoader(customDataset, batch_size=40, shuffle=False)# shuffle=True)
+    thermal_train_dataloader = DataLoader(customDataset, batch_size=40, shuffle=True)
 
     customDataset = CustomDataset(thermal_reduced_problem,
                                 thermal_input_validation_set, thermal_output_validation_set)
@@ -436,13 +426,13 @@ if __name__ == "__main__":
     thermal_training_loss = list()
     thermal_validation_loss = list()
 
-    thermal_max_epochs = 20 #000
+    thermal_max_epochs = 20000
     thermal_min_validation_loss = None
     thermal_start_epoch = 0
     thermal_checkpoint_path = "thermal_checkpoint"
     thermal_checkpoint_epoch = 10
 
-    thermal_learning_rate = 1e-4
+    thermal_learning_rate = 1e-6
     thermal_optimiser = get_optimiser(thermal_model, "Adam", thermal_learning_rate)
     thermal_loss_fn = get_loss_func("MSE", reduction="sum")
 
