@@ -6,7 +6,7 @@ import rbnicsx.online
 import rbnicsx.backends
 
 from dlrbnicsx_thermomechanical_geometric_deformation import MeshDeformationWrapperClass
-from dlrbnicsx_thermal_distributed import ThermalProblemOnDeformedDomain
+from dlrbnicsx_thermal_multigpu import ThermalProblemOnDeformedDomain
 
 from mpi4py import MPI
 from petsc4py import PETSc
