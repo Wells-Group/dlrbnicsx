@@ -1,6 +1,6 @@
+import dolfinx
 import gmsh
 from mpi4py import MPI
-import dolfinx
 
 gmsh.initialize('', False)
 gdim = 2
@@ -146,7 +146,7 @@ gmsh.model.addPhysicalGroup(gdim-1, [26], 26)
 
 gmsh.write("mesh.msh")
 
-gmsh.fltk.run()
+# gmsh.fltk.run()
 
 gmsh.finalize()
 

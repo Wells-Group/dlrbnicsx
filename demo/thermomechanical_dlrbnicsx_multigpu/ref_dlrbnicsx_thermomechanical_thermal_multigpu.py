@@ -891,7 +891,7 @@ if thermal_gpu_group0_comm != MPI.COMM_NULL:
     customDataset = CustomPartitionedDatasetGpu(thermal_reduced_problem, thermal_input_training_set,
                                              thermal_output_training_set, thermal_training_set_indices_gpu,
                                              cuda_rank_list[thermal_gpu_group0_comm.rank])
-    thermal_train_dataloader = DataLoader(customDataset, batch_size=40, shuffle=False)# shuffle=True)
+    thermal_train_dataloader = DataLoader(customDataset, batch_size=40, shuffle=True)
 
     customDataset = CustomPartitionedDatasetGpu(thermal_reduced_problem, thermal_input_validation_set,
                                             thermal_output_validation_set, thermal_validation_set_indices_gpu,

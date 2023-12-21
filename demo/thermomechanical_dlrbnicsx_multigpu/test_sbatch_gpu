@@ -1,0 +1,25 @@
+#!/bin/bash
+#SBATCH -J dlrbnicsx_thermal_multigpu
+#SBATCH -A WELLS-SL3-GPU
+#SBATCH --output=test_job_gpu_%A_%a.out
+#SBATCH --error=test_job_gpu_%A_%a.err
+
+#SBATCH --nodes=1
+#SBATCH --gres=gpu:3
+#SBATCH --ntasks=16
+#SBATCH --time=01:00:00
+#SBATCH --mem=3420mb
+
+
+#SBATCH -p ampere
+#SBATCH --mail-type=ALL
+
+module purge
+source ../spack/share/spack/setup-env.sh
+spack env activate gpu-env
+spack env status
+spack load py-pip@23.1.2
+cd mesh_data
+mpiexec -n 1 python3 mesh.py
+cd ..
+mpiexec -n 16 python3 dlrbnicsx_thermal_multigpu.py
