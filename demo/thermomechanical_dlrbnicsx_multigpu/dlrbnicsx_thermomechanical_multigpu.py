@@ -22,13 +22,17 @@ import os
 from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
 from dlrbnicsx.activation_function.activation_function_factory \
     import Tanh
-from dlrbnicsx.dataset.custom_partitioned_dataset \
-    import CustomPartitionedDataset
+from dlrbnicsx.dataset.custom_partitioned_dataset_gpu \
+    import CustomPartitionedDatasetGpu
 from dlrbnicsx.interface.wrappers import DataLoader, save_model, \
-    load_model, save_checkpoint, load_checkpoint, model_synchronise, \
-    init_cpu_process_group, get_optimiser, get_loss_func, share_model
+    load_model, model_synchronise, init_gpu_process_group, model_to_gpu, \
+    model_to_cpu, save_checkpoint, load_checkpoint, get_optimiser, \
+    get_loss_func, share_model
+from dlrbnicsx.train_validate_test.train_validate_test_multigpu \
+    import train_nn, validate_nn
+
 from dlrbnicsx.train_validate_test.train_validate_test_distributed \
-    import train_nn, validate_nn, online_nn, error_analysis
+    import online_nn, error_analysis
 
 class MechanicalProblemOnDeformedDomain(abc.ABC):
     def __init__(self, mesh, subdomains, boundaries, thermalproblem):
@@ -538,37 +542,41 @@ mechanical_reduced_problem.output_range[1] = \
 
 print("\n")
 
-mechanical_cpu_group0_procs = world_comm.group.Incl([0, 1, 2, 3])
-mechanical_cpu_group0_comm = world_comm.Create_group(mechanical_cpu_group0_procs)
+mechanical_gpu_group0_procs = world_comm.group.Incl([0, 1, 2])
+mechanical_gpu_group0_comm = world_comm.Create_group(mechanical_gpu_group0_procs)
 
 # ANN model
-mechanical_model = \
-    HiddenLayersNet(mechanical_training_set.shape[1], [35, 35, 35],
-                    len(mechanical_reduced_problem._basis_functions), Tanh())
+mechanical_model = HiddenLayersNet(mechanical_training_set.shape[1], [35, 35],
+                        len(mechanical_reduced_problem._basis_functions), Tanh())
 
-if mechanical_cpu_group0_comm != MPI.COMM_NULL:
-    init_cpu_process_group(mechanical_cpu_group0_comm)
+if mechanical_gpu_group0_comm != MPI.COMM_NULL:
 
-    mechanical_training_set_indices_cpu = np.arange(mechanical_cpu_group0_comm.rank,
+    cuda_rank_list = [0, 1, 2]
+    init_gpu_process_group(mechanical_gpu_group0_comm)
+
+    mechanical_training_set_indices_gpu = np.arange(mechanical_gpu_group0_comm.rank,
                                          mechanical_input_training_set.shape[0],
-                                         mechanical_cpu_group0_comm.size)
-    mechanical_validation_set_indices_cpu = np.arange(mechanical_cpu_group0_comm.rank,
+                                         mechanical_gpu_group0_comm.size)
+    mechanical_validation_set_indices_gpu = np.arange(mechanical_gpu_group0_comm.rank,
                                            mechanical_input_validation_set.shape[0],
-                                           mechanical_cpu_group0_comm.size)
+                                           mechanical_gpu_group0_comm.size)
 
-    customDataset = CustomPartitionedDataset(mechanical_reduced_problem, mechanical_input_training_set,
-                                             mechanical_output_training_set, mechanical_training_set_indices_cpu)
-    mechanical_train_dataloader = DataLoader(customDataset, batch_size=15, shuffle=True)
+    customDataset = CustomPartitionedDatasetGpu(mechanical_reduced_problem, mechanical_input_training_set,
+                                             mechanical_output_training_set, mechanical_training_set_indices_gpu,
+                                             cuda_rank_list[mechanical_gpu_group0_comm.rank])
+    mechanical_train_dataloader = DataLoader(customDataset, batch_size=10, shuffle=True)
 
-    customDataset = CustomPartitionedDataset(mechanical_reduced_problem, mechanical_input_validation_set,
-                                            mechanical_output_validation_set, mechanical_validation_set_indices_cpu)
+    customDataset = CustomPartitionedDatasetGpu(mechanical_reduced_problem, mechanical_input_validation_set,
+                                            mechanical_output_validation_set, mechanical_validation_set_indices_gpu,
+                                             cuda_rank_list[mechanical_gpu_group0_comm.rank])
     mechanical_valid_dataloader = DataLoader(customDataset, shuffle=False)
 
     mechanical_path = "mechanical_model.pth"
     # save_model(mechanical_model, mechanical_path)
     # load_model(mechanical_model, mechanical_path)
 
-    model_synchronise(mechanical_model, verbose=False)
+    model_to_gpu(mechanical_model, cuda_rank=cuda_rank_list[mechanical_gpu_group0_comm.rank])
+    model_synchronise(mechanical_model, verbose=True)
 
     # Training of ANN
     mechanical_training_loss = list()
@@ -580,7 +588,7 @@ if mechanical_cpu_group0_comm != MPI.COMM_NULL:
     mechanical_checkpoint_path = "mechanical_checkpoint"
     mechanical_checkpoint_epoch = 10
 
-    mechanical_learning_rate = 1e-6
+    mechanical_learning_rate = 1e-4
     mechanical_optimiser = get_optimiser(mechanical_model, "Adam", mechanical_learning_rate)
     mechanical_loss_fn = get_loss_func("MSE", reduction="sum")
 
@@ -589,7 +597,7 @@ if mechanical_cpu_group0_comm != MPI.COMM_NULL:
             load_checkpoint(mechanical_checkpoint_path, mechanical_model, mechanical_optimiser)
 
     import time
-    start_time = MPI.Wtime()
+    start_time = time.time()
     for mechanical_epochs in range(mechanical_start_epoch, mechanical_max_epochs):
         if mechanical_epochs > 0 and mechanical_epochs % mechanical_checkpoint_epoch == 0:
             save_checkpoint(mechanical_checkpoint_path, mechanical_epochs,
@@ -602,7 +610,8 @@ if mechanical_cpu_group0_comm != MPI.COMM_NULL:
         mechanical_training_loss.append(mechanical_current_training_loss)
         mechanical_current_validation_loss = validate_nn(mechanical_reduced_problem,
                                               mechanical_valid_dataloader,
-                                              mechanical_model, mechanical_loss_fn)
+                                              mechanical_model, cuda_rank_list[mechanical_gpu_group0_comm.rank],
+                                              mechanical_loss_fn)
         mechanical_validation_loss.append(mechanical_current_validation_loss)
         if mechanical_epochs > 0 and mechanical_current_validation_loss > mechanical_min_validation_loss \
         and mechanical_reduced_problem.regularisation == "EarlyStopping":
@@ -611,17 +620,13 @@ if mechanical_cpu_group0_comm != MPI.COMM_NULL:
             print(f"Early stopping criteria invoked at epoch: {mechanical_epochs+1}")
             break
         mechanical_min_validation_loss = min(mechanical_validation_loss)
-    end_time = MPI.Wtime()
+    end_time = time.time()
     mechanical_elapsed_time = end_time - start_time
-
+    model_to_cpu(mechanical_model)
     os.system(f"rm {mechanical_checkpoint_path}")
 
-if mechanical_cpu_group0_comm != MPI.COMM_NULL and mechanical_cpu_group0_comm.rank == 0:
-    save_model(mechanical_model, "trained_mechanical_model.pth")
-
-mechanical_model_root_process = 0
+mechanical_model_root_process = 1
 share_model(mechanical_model, world_comm, mechanical_model_root_process)
-# load_model(mechanical_model, "trained_mechanical_model.pth")
 world_comm.Barrier()
 # ### Mechanical ANN ends ###
 
@@ -761,7 +766,7 @@ if world_comm.rank == 0:
             mechanical_solution_file.write_mesh(mesh)
             mechanical_solution_file.write_function(mechanical_projection_error_function_plot)
 
-if mechanical_cpu_group0_comm != MPI.COMM_NULL:
+if mechanical_gpu_group0_comm != MPI.COMM_NULL:
     print(f"Training time (Mechanical): {mechanical_elapsed_time}")
 
 if world_comm.rank == 0:
