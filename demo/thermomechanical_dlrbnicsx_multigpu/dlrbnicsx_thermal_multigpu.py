@@ -490,7 +490,7 @@ if __name__ == "__main__":
 
     print("\n")
 
-    thermal_gpu_group0_procs = world_comm.group.Incl([0, 1, 2, 3])
+    thermal_gpu_group0_procs = world_comm.group.Incl([0, 1, 2])
     thermal_gpu_group0_comm = world_comm.Create_group(thermal_gpu_group0_procs)
 
     # ANN model
@@ -499,7 +499,7 @@ if __name__ == "__main__":
 
     if thermal_gpu_group0_comm != MPI.COMM_NULL:
 
-        cuda_rank_list = [0, 1, 2, 3]
+        cuda_rank_list = [0, 1, 2]
         init_gpu_process_group(thermal_gpu_group0_comm)
 
         thermal_training_set_indices_gpu = np.arange(thermal_gpu_group0_comm.rank,
