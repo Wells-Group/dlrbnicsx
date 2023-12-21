@@ -23,13 +23,17 @@ import os
 from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
 from dlrbnicsx.activation_function.activation_function_factory \
     import Tanh
-from dlrbnicsx.dataset.custom_partitioned_dataset \
-    import CustomPartitionedDataset
+from dlrbnicsx.dataset.custom_partitioned_dataset_gpu \
+    import CustomPartitionedDatasetGpu
 from dlrbnicsx.interface.wrappers import DataLoader, save_model, \
-    load_model, save_checkpoint, load_checkpoint, model_synchronise, \
-    init_cpu_process_group, get_optimiser, get_loss_func, share_model
+    load_model, model_synchronise, init_gpu_process_group, model_to_gpu, \
+    model_to_cpu, save_checkpoint, load_checkpoint, get_optimiser, \
+    get_loss_func, share_model
+from dlrbnicsx.train_validate_test.train_validate_test_multigpu \
+    import train_nn, validate_nn
+
 from dlrbnicsx.train_validate_test.train_validate_test_distributed \
-    import train_nn, validate_nn, online_nn, error_analysis
+    import online_nn, error_analysis
 
 class ThermalProblemOnDeformedDomain(abc.ABC):
     def __init__(self, mesh, subdomains, boundaries):
