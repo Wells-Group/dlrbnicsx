@@ -258,9 +258,9 @@ if __name__ == "__main__":
     mu = [0.8, 0.55, 0.8, 0.4]  # Parametric geometry
 
     para_dim = 4
-    mechanical_ann_input_samples_num = 640
-    mechanical_error_analysis_samples_num = 144
-    num_snapshots = 700
+    thermal_ann_input_samples_num = 420
+    thermal_error_analysis_samples_num = 144
+    num_snapshots = 400
 
     # FEM solve
     thermal_problem_parametric = \
@@ -380,8 +380,8 @@ if __name__ == "__main__":
 
 
     # Training dataset
-    thermal_ann_input_set = generate_ann_input_set(mechanical_ann_input_samples_num)
-    # np.random.shuffle(thermal_ann_input_set)
+    thermal_ann_input_set = generate_ann_input_set(thermal_ann_input_samples_num)
+    np.random.shuffle(thermal_ann_input_set)
     thermal_ann_output_set = \
         generate_ann_output_set(thermal_problem_parametric,
                                 thermal_reduced_problem,
@@ -470,7 +470,7 @@ if __name__ == "__main__":
     print("\n")
     print("Generating error analysis (only input/parameters) dataset")
     print("\n")
-    thermal_error_analysis_set = generate_ann_input_set(mechanical_error_analysis_samples_num)
+    thermal_error_analysis_set = generate_ann_input_set(thermal_error_analysis_samples_num)
     thermal_error_numpy = np.zeros(thermal_error_analysis_set.shape[0])
 
     for i in range(thermal_error_analysis_set.shape[0]):

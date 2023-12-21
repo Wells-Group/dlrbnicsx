@@ -1,12 +1,12 @@
 #!/bin/bash
-#SBATCH -J test_job
+#SBATCH -J dlrbnicsx_thermal
 #SBATCH -A WELLS-SL3-CPU
 #SBATCH --output=test_job_%A_%a.out
 #SBATCH --error=test_job_%A_%a.err
 
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --time=01:00:00
+#SBATCH --time=03:00:00
 #SBATCH --mem=3420mb
 
 #SBATCH -p icelake
@@ -17,7 +17,6 @@ source ../../../fenics_branch/share/spack/setup-env.sh
 spack env activate fenicsx-env
 spack env status
 spack load py-pip@23.1.2
-pip3 install smt
 cd mesh_data
 mpiexec -n 1 python3 mesh.py
 cd ..

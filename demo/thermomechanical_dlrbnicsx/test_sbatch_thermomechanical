@@ -1,12 +1,12 @@
 #!/bin/bash
-#SBATCH -J test_job
+#SBATCH -J dlrbnicsx_thermomechanical
 #SBATCH -A WELLS-SL3-CPU
 #SBATCH --output=test_job_%A_%a.out
 #SBATCH --error=test_job_%A_%a.err
 
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --time=2:00:00
+#SBATCH --time=3:00:00
 #SBATCH --mem=3420mb
 
 #SBATCH -p icelake
