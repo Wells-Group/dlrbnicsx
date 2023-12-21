@@ -588,7 +588,7 @@ if mechanical_gpu_group0_comm != MPI.COMM_NULL:
     mechanical_checkpoint_path = "mechanical_checkpoint"
     mechanical_checkpoint_epoch = 10
 
-    mechanical_learning_rate = 1e-4
+    mechanical_learning_rate = 1e-6
     mechanical_optimiser = get_optimiser(mechanical_model, "Adam", mechanical_learning_rate)
     mechanical_loss_fn = get_loss_func("MSE", reduction="sum")
 
