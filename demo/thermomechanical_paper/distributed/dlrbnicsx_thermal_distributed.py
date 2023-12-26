@@ -334,6 +334,7 @@ if __name__ == "__main__":
     print("")
 
     print(rbnicsx.io.TextLine("Perform POD", fill="#"))
+    world_comm.Barrier()
     pod_start_time = MPI.Wtime()
     thermal_eigenvalues, thermal_modes, _ = \
         rbnicsx.backends.\
@@ -915,6 +916,6 @@ if __name__ == "__main__":
     
     world_comm.Barrier()
     
-    print(f"Basis size: {thermal_reduced_size}, hidden_H: {hidden_H}, Training samples: {thermal_ann_input_samples_num}, Error: {np.mean(thermal_error_numpy_0)}, Projection error: {np.mean(thermal_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}")
-    print(f"Basis size: {thermal_reduced_size}, hidden_H: {hidden_H}, Training samples: {thermal_ann_input_samples_num}, Error: {np.mean(thermal_error_numpy_1)}, Projection error: {np.mean(thermal_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}")
-    print(f"Basis size: {thermal_reduced_size}, hidden_H: {hidden_H}, Training samples: {thermal_ann_input_samples_num}, Error: {np.mean(thermal_error_numpy_2)}, Projection error: {np.mean(thermal_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}")
+    print(f"Basis size: {thermal_reduced_size}, hidden_H: {20}, Training samples: {thermal_ann_input_samples_num}, Error: {np.mean(thermal_error_numpy_0)}, Projection error: {np.mean(thermal_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}")
+    print(f"Basis size: {thermal_reduced_size}, hidden_H: {40}, Training samples: {thermal_ann_input_samples_num}, Error: {np.mean(thermal_error_numpy_1)}, Projection error: {np.mean(thermal_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}")
+    print(f"Basis size: {thermal_reduced_size}, hidden_H: {60}, Training samples: {thermal_ann_input_samples_num}, Error: {np.mean(thermal_error_numpy_2)}, Projection error: {np.mean(thermal_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}")
