@@ -13,7 +13,7 @@
 #SBATCH --mail-type=ALL
 
 module purge
-source ../../../fenics_branch/share/spack/setup-env.sh
+source ../../../../fenics_branch/share/spack/setup-env.sh
 spack env activate fenicsx-env
 spack env status
 spack load py-pip@23.1.2
