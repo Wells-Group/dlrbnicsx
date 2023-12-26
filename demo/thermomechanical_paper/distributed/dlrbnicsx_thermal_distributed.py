@@ -273,7 +273,7 @@ if __name__ == "__main__":
 
     itemsize = MPI.DOUBLE.Get_size()
     para_dim = 4
-    thermal_ann_input_samples_num = 420
+    thermal_ann_input_samples_num = 460
     thermal_error_analysis_samples_num = 144
     num_snapshots = 400
     thermal_num_dofs = solution_mu.x.array.shape[0]
