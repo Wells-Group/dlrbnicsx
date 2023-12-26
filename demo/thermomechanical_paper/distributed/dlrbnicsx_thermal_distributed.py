@@ -825,6 +825,7 @@ if __name__ == "__main__":
 
     # ### Thermal ANN starts ###
 
+    '''
     # Online phase
     if world_comm.rank == 0:
         online_mu = np.array([0.45, 0.56, 0.9, 0.7])
@@ -894,10 +895,16 @@ if __name__ == "__main__":
                                     "w") as thermal_solution_file:
                 thermal_solution_file.write_mesh(mesh)
                 thermal_solution_file.write_function(thermal_projection_error_function_plot)
-
+    '''
 
     if thermal_cpu_group0_comm != MPI.COMM_NULL:
-        print(f"Training time (Thermal): {thermal_elapsed_time}")
+        print(f"Training time (Thermal 0): {thermal_elapsed_time}")
+
+    if thermal_cpu_group1_comm != MPI.COMM_NULL:
+        print(f"Training time (Thermal 1): {thermal_elapsed_time}")
+
+    if thermal_cpu_group2_comm != MPI.COMM_NULL:
+        print(f"Training time (Thermal 2): {thermal_elapsed_time}")
 
     if world_comm.rank == 0:
         np.save("thermal_error_analysis_set.npy", thermal_error_analysis_set)
@@ -908,6 +915,6 @@ if __name__ == "__main__":
     
     world_comm.Barrier()
     
-    print(f"Basis size: {thermal_reduced_size}, hidden_H: {hidden_H}, Training samples: {thermal_ann_input_samples_num}, Error: {np.mean(thermal_error_numpy_0)}, Projection error: {np.mean(thermal_projection_error_numpy)}, Rank: {world_comm.rank}")
-    print(f"Basis size: {thermal_reduced_size}, hidden_H: {hidden_H}, Training samples: {thermal_ann_input_samples_num}, Error: {np.mean(thermal_error_numpy_1)}, Projection error: {np.mean(thermal_projection_error_numpy)}, Rank: {world_comm.rank}")
-    print(f"Basis size: {thermal_reduced_size}, hidden_H: {hidden_H}, Training samples: {thermal_ann_input_samples_num}, Error: {np.mean(thermal_error_numpy_2)}, Projection error: {np.mean(thermal_projection_error_numpy)}, Rank: {world_comm.rank}")
+    print(f"Basis size: {thermal_reduced_size}, hidden_H: {hidden_H}, Training samples: {thermal_ann_input_samples_num}, Error: {np.mean(thermal_error_numpy_0)}, Projection error: {np.mean(thermal_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}")
+    print(f"Basis size: {thermal_reduced_size}, hidden_H: {hidden_H}, Training samples: {thermal_ann_input_samples_num}, Error: {np.mean(thermal_error_numpy_1)}, Projection error: {np.mean(thermal_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}")
+    print(f"Basis size: {thermal_reduced_size}, hidden_H: {hidden_H}, Training samples: {thermal_ann_input_samples_num}, Error: {np.mean(thermal_error_numpy_2)}, Projection error: {np.mean(thermal_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}")
