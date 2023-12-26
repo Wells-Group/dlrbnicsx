@@ -509,11 +509,11 @@ if __name__ == "__main__":
 
         customDataset = CustomPartitionedDataset(thermal_reduced_problem, thermal_input_training_set,
                                                  thermal_output_training_set, thermal_training_set_indices_cpu)
-        thermal_train_dataloader = DataLoader(customDataset, batch_size=10, shuffle=True)
+        thermal_train_dataloader = DataLoader(customDataset, batch_size=12, shuffle=True)
 
         customDataset = CustomPartitionedDataset(thermal_reduced_problem, thermal_input_validation_set,
                                                  thermal_output_validation_set, thermal_validation_set_indices_cpu)
-        thermal_valid_dataloader = DataLoader(customDataset, shuffle=False)
+        thermal_valid_dataloader = DataLoader(customDataset, batch_size=thermal_validation_set_indices_cpu.shape[0], shuffle=False)
 
         thermal_path = "thermal_model_0.pth"
         # save_model(thermal_model, thermal_path)
@@ -589,11 +589,11 @@ if __name__ == "__main__":
 
         customDataset = CustomPartitionedDataset(thermal_reduced_problem, thermal_input_training_set,
                                                  thermal_output_training_set, thermal_training_set_indices_cpu)
-        thermal_train_dataloader = DataLoader(customDataset, batch_size=10, shuffle=True)
+        thermal_train_dataloader = DataLoader(customDataset, batch_size=12, shuffle=True)
 
         customDataset = CustomPartitionedDataset(thermal_reduced_problem, thermal_input_validation_set,
                                                  thermal_output_validation_set, thermal_validation_set_indices_cpu)
-        thermal_valid_dataloader = DataLoader(customDataset, shuffle=False)
+        thermal_valid_dataloader = DataLoader(customDataset, batch_size=thermal_validation_set_indices_cpu.shape[0], shuffle=False)
 
         thermal_path = "thermal_model_1.pth"
         # save_model(thermal_model, thermal_path)
@@ -673,7 +673,7 @@ if __name__ == "__main__":
 
         customDataset = CustomPartitionedDataset(thermal_reduced_problem, thermal_input_validation_set,
                                                  thermal_output_validation_set, thermal_validation_set_indices_cpu)
-        thermal_valid_dataloader = DataLoader(customDataset, shuffle=False)
+        thermal_valid_dataloader = DataLoader(customDataset, batch_size=thermal_validation_set_indices_cpu.shape[0], shuffle=False)
 
         thermal_path = "thermal_model_2.pth"
         # save_model(thermal_model, thermal_path)
