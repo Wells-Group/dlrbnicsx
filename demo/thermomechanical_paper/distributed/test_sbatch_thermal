@@ -7,7 +7,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=12
 #SBATCH --time=03:00:00
-#SBATCH --mem=3420mb
+#SBATCH --mem=42000mb
 
 #SBATCH -p icelake
 #SBATCH --mail-type=ALL
