@@ -627,9 +627,5 @@ with HarmonicMeshMotion(mesh, boundaries, bc_markers_list,
 
 print(f"Displacement field norm: {mesh_comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(uM_func, uM_func) * x[0] * ufl.dx + ufl.inner(epsilon(uM_func, x), epsilon(uM_func, x)) * x[0] * ufl.dx)))}")
 
-'''
-# TODO
-1. dlrbnicx multiprocess format (serial, cpu parallel, gpu parallel)
-2. time measurements
-3. paper update
-'''
+print(mesh.comm.allreduce(uT_func.x.array.shape[0], op=MPI.SUM))
+print(mesh.comm.allreduce(uM_func.x.array.shape[0], op=MPI.SUM))

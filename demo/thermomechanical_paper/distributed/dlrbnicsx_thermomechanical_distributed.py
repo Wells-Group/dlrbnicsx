@@ -565,7 +565,8 @@ if mechanical_cpu_group0_comm != MPI.COMM_NULL:
 
     customDataset = CustomPartitionedDataset(mechanical_reduced_problem, mechanical_input_validation_set,
                                             mechanical_output_validation_set, mechanical_validation_set_indices_cpu)
-    mechanical_valid_dataloader = DataLoader(customDataset, shuffle=False)
+    mechanical_valid_dataloader = DataLoader(customDataset, batch_size=mechanical_validation_set_indices_cpu.shape[0],
+                                             shuffle=False)
 
     mechanical_path = "mechanical_model_0.pth"
     # save_model(mechanical_model, mechanical_path)
@@ -645,7 +646,8 @@ if mechanical_cpu_group1_comm != MPI.COMM_NULL:
 
     customDataset = CustomPartitionedDataset(mechanical_reduced_problem, mechanical_input_validation_set,
                                             mechanical_output_validation_set, mechanical_validation_set_indices_cpu)
-    mechanical_valid_dataloader = DataLoader(customDataset, shuffle=False)
+    mechanical_valid_dataloader = DataLoader(customDataset, batch_size=mechanical_validation_set_indices_cpu.shape[0],
+                                             shuffle=False)
 
     mechanical_path = "mechanical_model_1.pth"
     # save_model(mechanical_model, mechanical_path)
@@ -725,7 +727,8 @@ if mechanical_cpu_group2_comm != MPI.COMM_NULL:
 
     customDataset = CustomPartitionedDataset(mechanical_reduced_problem, mechanical_input_validation_set,
                                             mechanical_output_validation_set, mechanical_validation_set_indices_cpu)
-    mechanical_valid_dataloader = DataLoader(customDataset, shuffle=False)
+    mechanical_valid_dataloader = DataLoader(customDataset, batch_size=mechanical_validation_set_indices_cpu.shape[0],
+                                             shuffle=False)
 
     mechanical_path = "mechanical_model_2.pth"
     # save_model(mechanical_model, mechanical_path)
@@ -784,6 +787,7 @@ if mechanical_cpu_group0_comm != MPI.COMM_NULL and mechanical_cpu_group0_comm.ra
     save_model(mechanical_model, "trained_mechanical_model.pth")
 '''
 
+world_comm.Barrier()
 mechanical_model_root_process = 0
 share_model(mechanical_model_0, world_comm, mechanical_model_root_process)
 mechanical_model_root_process = 4
@@ -954,13 +958,13 @@ if world_comm.rank == 0:
 '''
 
 if mechanical_cpu_group0_comm != MPI.COMM_NULL:
-    print(f"Training time (Mechanical): {mechanical_elapsed_time}")
+    print(f"Training time (Mechanical 0): {mechanical_elapsed_time}")
 
 if mechanical_cpu_group1_comm != MPI.COMM_NULL:
-    print(f"Training time (Mechanical): {mechanical_elapsed_time}")
+    print(f"Training time (Mechanical 1): {mechanical_elapsed_time}")
 
 if mechanical_cpu_group2_comm != MPI.COMM_NULL:
-    print(f"Training time (Mechanical): {mechanical_elapsed_time}")
+    print(f"Training time (Mechanical 2): {mechanical_elapsed_time}")
 
 if world_comm.rank == 0:
     np.save("mechanical_error_analysis_set.npy", mechanical_error_analysis_set)
