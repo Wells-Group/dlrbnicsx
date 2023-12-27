@@ -542,8 +542,8 @@ mechanical_cpu_group0_procs = world_comm.group.Incl([0, 1, 2, 3])
 mechanical_cpu_group0_comm = world_comm.Create_group(mechanical_cpu_group0_procs)
 
 # ANN model
-mechanical_model = \
-    HiddenLayersNet(mechanical_training_set.shape[1], [35, 35, 35],
+mechanical_model_0 = \
+    HiddenLayersNet(mechanical_training_set.shape[1], [15, 15, 15],
                     len(mechanical_reduced_problem._basis_functions), Tanh())
 
 if mechanical_cpu_group0_comm != MPI.COMM_NULL:
@@ -564,11 +564,11 @@ if mechanical_cpu_group0_comm != MPI.COMM_NULL:
                                             mechanical_output_validation_set, mechanical_validation_set_indices_cpu)
     mechanical_valid_dataloader = DataLoader(customDataset, shuffle=False)
 
-    mechanical_path = "mechanical_model.pth"
+    mechanical_path = "mechanical_model_0.pth"
     # save_model(mechanical_model, mechanical_path)
     # load_model(mechanical_model, mechanical_path)
 
-    model_synchronise(mechanical_model, verbose=False)
+    model_synchronise(mechanical_model_0, verbose=False)
 
     # Training of ANN
     mechanical_training_loss = list()
@@ -577,32 +577,32 @@ if mechanical_cpu_group0_comm != MPI.COMM_NULL:
     mechanical_max_epochs = 20000
     mechanical_min_validation_loss = None
     mechanical_start_epoch = 0
-    mechanical_checkpoint_path = "mechanical_checkpoint"
+    mechanical_checkpoint_path = "mechanical_checkpoint_0"
     mechanical_checkpoint_epoch = 10
 
     mechanical_learning_rate = 1e-6
-    mechanical_optimiser = get_optimiser(mechanical_model, "Adam", mechanical_learning_rate)
+    mechanical_optimiser = get_optimiser(mechanical_model_0, "Adam", mechanical_learning_rate)
     mechanical_loss_fn = get_loss_func("MSE", reduction="sum")
 
     if os.path.exists(mechanical_checkpoint_path):
         mechanical_start_epoch, mechanical_min_validation_loss = \
-            load_checkpoint(mechanical_checkpoint_path, mechanical_model, mechanical_optimiser)
+            load_checkpoint(mechanical_checkpoint_path, mechanical_model_0, mechanical_optimiser)
 
     import time
     start_time = MPI.Wtime()
     for mechanical_epochs in range(mechanical_start_epoch, mechanical_max_epochs):
         if mechanical_epochs > 0 and mechanical_epochs % mechanical_checkpoint_epoch == 0:
             save_checkpoint(mechanical_checkpoint_path, mechanical_epochs,
-                            mechanical_model, mechanical_optimiser,
+                            mechanical_model_0, mechanical_optimiser,
                             mechanical_min_validation_loss)
         print(f"Epoch: {mechanical_epochs+1}/{mechanical_max_epochs}")
         mechanical_current_training_loss = train_nn(mechanical_reduced_problem,
                                          mechanical_train_dataloader,
-                                         mechanical_model, mechanical_loss_fn, mechanical_optimiser)
+                                         mechanical_model_0, mechanical_loss_fn, mechanical_optimiser)
         mechanical_training_loss.append(mechanical_current_training_loss)
         mechanical_current_validation_loss = validate_nn(mechanical_reduced_problem,
                                               mechanical_valid_dataloader,
-                                              mechanical_model, mechanical_loss_fn)
+                                              mechanical_model_0, mechanical_loss_fn)
         mechanical_validation_loss.append(mechanical_current_validation_loss)
         if mechanical_epochs > 0 and mechanical_current_validation_loss > mechanical_min_validation_loss \
         and mechanical_reduced_problem.regularisation == "EarlyStopping":
@@ -616,12 +616,177 @@ if mechanical_cpu_group0_comm != MPI.COMM_NULL:
 
     os.system(f"rm {mechanical_checkpoint_path}")
 
+print("\n")
+
+mechanical_cpu_group1_procs = world_comm.group.Incl([4, 5, 6, 7])
+mechanical_cpu_group1_comm = world_comm.Create_group(mechanical_cpu_group1_procs)
+
+# ANN model
+mechanical_model_1 = \
+    HiddenLayersNet(mechanical_training_set.shape[1], [20, 20, 20],
+                    len(mechanical_reduced_problem._basis_functions), Tanh())
+
+if mechanical_cpu_group1_comm != MPI.COMM_NULL:
+    init_cpu_process_group(mechanical_cpu_group1_comm)
+
+    mechanical_training_set_indices_cpu = np.arange(mechanical_cpu_group1_comm.rank,
+                                         mechanical_input_training_set.shape[0],
+                                         mechanical_cpu_group1_comm.size)
+    mechanical_validation_set_indices_cpu = np.arange(mechanical_cpu_group1_comm.rank,
+                                           mechanical_input_validation_set.shape[0],
+                                           mechanical_cpu_group1_comm.size)
+
+    customDataset = CustomPartitionedDataset(mechanical_reduced_problem, mechanical_input_training_set,
+                                             mechanical_output_training_set, mechanical_training_set_indices_cpu)
+    mechanical_train_dataloader = DataLoader(customDataset, batch_size=15, shuffle=True)
+
+    customDataset = CustomPartitionedDataset(mechanical_reduced_problem, mechanical_input_validation_set,
+                                            mechanical_output_validation_set, mechanical_validation_set_indices_cpu)
+    mechanical_valid_dataloader = DataLoader(customDataset, shuffle=False)
+
+    mechanical_path = "mechanical_model_1.pth"
+    # save_model(mechanical_model, mechanical_path)
+    # load_model(mechanical_model, mechanical_path)
+
+    model_synchronise(mechanical_model_1, verbose=False)
+
+    # Training of ANN
+    mechanical_training_loss = list()
+    mechanical_validation_loss = list()
+
+    mechanical_max_epochs = 20000
+    mechanical_min_validation_loss = None
+    mechanical_start_epoch = 0
+    mechanical_checkpoint_path = "mechanical_checkpoint_1"
+    mechanical_checkpoint_epoch = 10
+
+    mechanical_learning_rate = 1e-6
+    mechanical_optimiser = get_optimiser(mechanical_model_1, "Adam", mechanical_learning_rate)
+    mechanical_loss_fn = get_loss_func("MSE", reduction="sum")
+
+    if os.path.exists(mechanical_checkpoint_path):
+        mechanical_start_epoch, mechanical_min_validation_loss = \
+            load_checkpoint(mechanical_checkpoint_path_1, mechanical_model_1, mechanical_optimiser)
+
+    import time
+    start_time = MPI.Wtime()
+    for mechanical_epochs in range(mechanical_start_epoch, mechanical_max_epochs):
+        if mechanical_epochs > 0 and mechanical_epochs % mechanical_checkpoint_epoch == 0:
+            save_checkpoint(mechanical_checkpoint_path, mechanical_epochs,
+                            mechanical_model_1, mechanical_optimiser,
+                            mechanical_min_validation_loss)
+        print(f"Epoch: {mechanical_epochs+1}/{mechanical_max_epochs}")
+        mechanical_current_training_loss = train_nn(mechanical_reduced_problem,
+                                         mechanical_train_dataloader,
+                                         mechanical_model_1, mechanical_loss_fn, mechanical_optimiser)
+        mechanical_training_loss.append(mechanical_current_training_loss)
+        mechanical_current_validation_loss = validate_nn(mechanical_reduced_problem,
+                                              mechanical_valid_dataloader,
+                                              mechanical_model_1, mechanical_loss_fn)
+        mechanical_validation_loss.append(mechanical_current_validation_loss)
+        if mechanical_epochs > 0 and mechanical_current_validation_loss > mechanical_min_validation_loss \
+        and mechanical_reduced_problem.regularisation == "EarlyStopping":
+            # 1% safety margin against min_validation_loss
+            # before invoking early stopping criteria
+            print(f"Early stopping criteria invoked at epoch: {mechanical_epochs+1}")
+            break
+        mechanical_min_validation_loss = min(mechanical_validation_loss)
+    end_time = MPI.Wtime()
+    mechanical_elapsed_time = end_time - start_time
+
+    os.system(f"rm {mechanical_checkpoint_path}")
+
+print("\n")
+
+mechanical_cpu_group2_procs = world_comm.group.Incl([8, 9, 10, 11])
+mechanical_cpu_group2_comm = world_comm.Create_group(mechanical_cpu_group2_procs)
+
+# ANN model
+mechanical_model_2 = \
+    HiddenLayersNet(mechanical_training_set.shape[1], [25, 25, 25],
+                    len(mechanical_reduced_problem._basis_functions), Tanh())
+
+if mechanical_cpu_group2_comm != MPI.COMM_NULL:
+    init_cpu_process_group(mechanical_cpu_group2_comm)
+
+    mechanical_training_set_indices_cpu = np.arange(mechanical_cpu_group2_comm.rank,
+                                         mechanical_input_training_set.shape[0],
+                                         mechanical_cpu_group2_comm.size)
+    mechanical_validation_set_indices_cpu = np.arange(mechanical_cpu_group2_comm.rank,
+                                           mechanical_input_validation_set.shape[0],
+                                           mechanical_cpu_group2_comm.size)
+
+    customDataset = CustomPartitionedDataset(mechanical_reduced_problem, mechanical_input_training_set,
+                                             mechanical_output_training_set, mechanical_training_set_indices_cpu)
+    mechanical_train_dataloader = DataLoader(customDataset, batch_size=15, shuffle=True)
+
+    customDataset = CustomPartitionedDataset(mechanical_reduced_problem, mechanical_input_validation_set,
+                                            mechanical_output_validation_set, mechanical_validation_set_indices_cpu)
+    mechanical_valid_dataloader = DataLoader(customDataset, shuffle=False)
+
+    mechanical_path = "mechanical_model_2.pth"
+    # save_model(mechanical_model, mechanical_path)
+    # load_model(mechanical_model, mechanical_path)
+
+    model_synchronise(mechanical_model_2, verbose=False)
+
+    # Training of ANN
+    mechanical_training_loss = list()
+    mechanical_validation_loss = list()
+
+    mechanical_max_epochs = 20000
+    mechanical_min_validation_loss = None
+    mechanical_start_epoch = 0
+    mechanical_checkpoint_path = "mechanical_checkpoint_1"
+    mechanical_checkpoint_epoch = 10
+
+    mechanical_learning_rate = 1e-6
+    mechanical_optimiser = get_optimiser(mechanical_model_2, "Adam", mechanical_learning_rate)
+    mechanical_loss_fn = get_loss_func("MSE", reduction="sum")
+
+    if os.path.exists(mechanical_checkpoint_path):
+        mechanical_start_epoch, mechanical_min_validation_loss = \
+            load_checkpoint(mechanical_checkpoint_path_1, mechanical_model_2, mechanical_optimiser)
+
+    import time
+    start_time = MPI.Wtime()
+    for mechanical_epochs in range(mechanical_start_epoch, mechanical_max_epochs):
+        if mechanical_epochs > 0 and mechanical_epochs % mechanical_checkpoint_epoch == 0:
+            save_checkpoint(mechanical_checkpoint_path, mechanical_epochs,
+                            mechanical_model_2, mechanical_optimiser,
+                            mechanical_min_validation_loss)
+        print(f"Epoch: {mechanical_epochs+1}/{mechanical_max_epochs}")
+        mechanical_current_training_loss = train_nn(mechanical_reduced_problem,
+                                         mechanical_train_dataloader,
+                                         mechanical_model_2, mechanical_loss_fn, mechanical_optimiser)
+        mechanical_training_loss.append(mechanical_current_training_loss)
+        mechanical_current_validation_loss = validate_nn(mechanical_reduced_problem,
+                                              mechanical_valid_dataloader,
+                                              mechanical_model_2, mechanical_loss_fn)
+        mechanical_validation_loss.append(mechanical_current_validation_loss)
+        if mechanical_epochs > 0 and mechanical_current_validation_loss > mechanical_min_validation_loss \
+        and mechanical_reduced_problem.regularisation == "EarlyStopping":
+            # 1% safety margin against min_validation_loss
+            # before invoking early stopping criteria
+            print(f"Early stopping criteria invoked at epoch: {mechanical_epochs+1}")
+            break
+        mechanical_min_validation_loss = min(mechanical_validation_loss)
+    end_time = MPI.Wtime()
+    mechanical_elapsed_time = end_time - start_time
+
+    os.system(f"rm {mechanical_checkpoint_path}")
+
+'''
 if mechanical_cpu_group0_comm != MPI.COMM_NULL and mechanical_cpu_group0_comm.rank == 0:
     save_model(mechanical_model, "trained_mechanical_model.pth")
+'''
 
 mechanical_model_root_process = 0
-share_model(mechanical_model, world_comm, mechanical_model_root_process)
-# load_model(mechanical_model, "trained_mechanical_model.pth")
+share_model(mechanical_model_0, world_comm, mechanical_model_root_process)
+mechanical_model_root_process = 4
+share_model(mechanical_model_1, world_comm, mechanical_model_root_process)
+mechanical_model_root_process = 8
+share_model(mechanical_model_2, world_comm, mechanical_model_root_process)
 world_comm.Barrier()
 # ### Mechanical ANN ends ###
 
@@ -651,7 +816,7 @@ mechanical_error_analysis_set = \
 win7 = MPI.Win.Allocate_shared(mechanical_nbytes_error, itemsize,
                                comm=world_comm)
 buf7, itemsize = win7.Shared_query(0)
-mechanical_error_numpy = np.ndarray(buffer=buf7, dtype="d",
+mechanical_error_numpy_0 = np.ndarray(buffer=buf7, dtype="d",
                          shape=(mechanical_error_analysis_samples_num))
 
 win8 = MPI.Win.Allocate_shared(mechanical_nbytes_error, itemsize,
@@ -659,6 +824,18 @@ win8 = MPI.Win.Allocate_shared(mechanical_nbytes_error, itemsize,
 buf8, itemsize = win8.Shared_query(0)
 mechanical_projection_error_numpy = np.ndarray(buffer=buf8, dtype="d",
                                             shape=(mechanical_error_analysis_samples_num))
+
+win9 = MPI.Win.Allocate_shared(mechanical_nbytes_error, itemsize,
+                               comm=world_comm)
+buf9, itemsize = win9.Shared_query(0)
+mechanical_error_numpy_1 = np.ndarray(buffer=buf9, dtype="d",
+                         shape=(mechanical_error_analysis_samples_num))
+
+win10 = MPI.Win.Allocate_shared(mechanical_nbytes_error, itemsize,
+                               comm=world_comm)
+buf10, itemsize = win10.Shared_query(0)
+mechanical_error_numpy_2 = np.ndarray(buffer=buf10, dtype="d",
+                         shape=(mechanical_error_analysis_samples_num))
 
 if world_comm.rank == 0:
     mechanical_error_analysis_set[:, :] = generate_ann_input_set(mechanical_error_analysis_samples_num)
@@ -669,8 +846,16 @@ mechanical_error_analysis_indices = np.arange(world_comm.rank,
                                    mechanical_error_analysis_set.shape[0],
                                    world_comm.size)
 for i in mechanical_error_analysis_indices:
-    mechanical_error_numpy[i] = error_analysis(mechanical_reduced_problem, mechanical_problem_parametric,
-                                    mechanical_error_analysis_set[i, :], mechanical_model,
+    mechanical_error_numpy_0[i] = error_analysis(mechanical_reduced_problem, mechanical_problem_parametric,
+                                    mechanical_error_analysis_set[i, :], mechanical_model_0,
+                                    len(mechanical_reduced_problem._basis_functions),
+                                    online_nn)
+    mechanical_error_numpy_1[i] = error_analysis(mechanical_reduced_problem, mechanical_problem_parametric,
+                                    mechanical_error_analysis_set[i, :], mechanical_model_1,
+                                    len(mechanical_reduced_problem._basis_functions),
+                                    online_nn)
+    mechanical_error_numpy_2[i] = error_analysis(mechanical_reduced_problem, mechanical_problem_parametric,
+                                    mechanical_error_analysis_set[i, :], mechanical_model_2,
                                     len(mechanical_reduced_problem._basis_functions),
                                     online_nn)
     mechanical_fem_solution = mechanical_problem_parametric.solve(mechanical_error_analysis_set[i, :])
@@ -683,12 +868,15 @@ for i in mechanical_error_analysis_indices:
         mechanical_reduced_problem.norm_error(mechanical_fem_solution,
                                                 mechanical_reconstructed_solution)
     print(f"Error analysis {i+1} of {mechanical_error_analysis_set.shape[0]}, " +
-            f"RB error: {mechanical_error_numpy[i]}, " +
+            f"RB error 0: {mechanical_error_numpy_0[i]}, " +
+            f"RB error 1: {mechanical_error_numpy_1[i]}, " +
+            f"RB error 2: {mechanical_error_numpy_2[i]}, " +
             f"Projection error: {mechanical_projection_error_numpy[i]}")
 
 world_comm.Barrier()
 # ### Mechanical Error analysis ends ###
 
+'''
 # ### Online phase ###
 # Online phase at parameter online_mu
 if world_comm.rank == 0:
@@ -760,11 +948,26 @@ if world_comm.rank == 0:
                                 "w") as mechanical_solution_file:
             mechanical_solution_file.write_mesh(mesh)
             mechanical_solution_file.write_function(mechanical_projection_error_function_plot)
+'''
 
 if mechanical_cpu_group0_comm != MPI.COMM_NULL:
     print(f"Training time (Mechanical): {mechanical_elapsed_time}")
 
+if mechanical_cpu_group1_comm != MPI.COMM_NULL:
+    print(f"Training time (Mechanical): {mechanical_elapsed_time}")
+
+if mechanical_cpu_group2_comm != MPI.COMM_NULL:
+    print(f"Training time (Mechanical): {mechanical_elapsed_time}")
+
 if world_comm.rank == 0:
     np.save("mechanical_error_analysis_set.npy", mechanical_error_analysis_set)
-    np.save("mechanical_rb_error.npy", mechanical_error_numpy)
+    np.save("mechanical_rb_error_0.npy", mechanical_error_numpy_0)
+    np.save("mechanical_rb_error_1.npy", mechanical_error_numpy_1)
+    np.save("mechanical_rb_error_2.npy", mechanical_error_numpy_2)
     np.save("mechanical_projection_error.npy", mechanical_projection_error_numpy)
+
+world_comm.Barrier()
+
+print(f"Basis size: {thermal_reduced_size}, hidden_H: {15}, Training samples: {mechanical_ann_input_samples_num}, Error: {np.mean(thermal_error_numpy_0)}, Projection error: {np.mean(thermal_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}")
+print(f"Basis size: {thermal_reduced_size}, hidden_H: {20}, Training samples: {mechanical_ann_input_samples_num}, Error: {np.mean(thermal_error_numpy_1)}, Projection error: {np.mean(thermal_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}")
+print(f"Basis size: {thermal_reduced_size}, hidden_H: {25}, Training samples: {mechanical_ann_input_samples_num}, Error: {np.mean(thermal_error_numpy_2)}, Projection error: {np.mean(thermal_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}")
