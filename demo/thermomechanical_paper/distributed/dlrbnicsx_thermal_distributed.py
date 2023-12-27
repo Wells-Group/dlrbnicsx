@@ -273,7 +273,7 @@ if __name__ == "__main__":
 
     itemsize = MPI.DOUBLE.Get_size()
     para_dim = 4
-    thermal_ann_input_samples_num = 460
+    thermal_ann_input_samples_num = 420
     thermal_error_analysis_samples_num = 144
     num_snapshots = 400
     thermal_num_dofs = solution_mu.x.array.shape[0]
@@ -509,7 +509,7 @@ if __name__ == "__main__":
 
         customDataset = CustomPartitionedDataset(thermal_reduced_problem, thermal_input_training_set,
                                                  thermal_output_training_set, thermal_training_set_indices_cpu)
-        thermal_train_dataloader = DataLoader(customDataset, batch_size=12, shuffle=True)
+        thermal_train_dataloader = DataLoader(customDataset, batch_size=10, shuffle=True)
 
         customDataset = CustomPartitionedDataset(thermal_reduced_problem, thermal_input_validation_set,
                                                  thermal_output_validation_set, thermal_validation_set_indices_cpu)
@@ -589,7 +589,7 @@ if __name__ == "__main__":
 
         customDataset = CustomPartitionedDataset(thermal_reduced_problem, thermal_input_training_set,
                                                  thermal_output_training_set, thermal_training_set_indices_cpu)
-        thermal_train_dataloader = DataLoader(customDataset, batch_size=12, shuffle=True)
+        thermal_train_dataloader = DataLoader(customDataset, batch_size=10, shuffle=True)
 
         customDataset = CustomPartitionedDataset(thermal_reduced_problem, thermal_input_validation_set,
                                                  thermal_output_validation_set, thermal_validation_set_indices_cpu)
@@ -669,7 +669,7 @@ if __name__ == "__main__":
 
         customDataset = CustomPartitionedDataset(thermal_reduced_problem, thermal_input_training_set,
                                                  thermal_output_training_set, thermal_training_set_indices_cpu)
-        thermal_train_dataloader = DataLoader(customDataset, batch_size=12, shuffle=True)
+        thermal_train_dataloader = DataLoader(customDataset, batch_size=10, shuffle=True)
 
         customDataset = CustomPartitionedDataset(thermal_reduced_problem, thermal_input_validation_set,
                                                  thermal_output_validation_set, thermal_validation_set_indices_cpu)
@@ -826,7 +826,6 @@ if __name__ == "__main__":
 
     # ### Thermal ANN starts ###
 
-    '''
     # Online phase
     if world_comm.rank == 0:
         online_mu = np.array([0.45, 0.56, 0.9, 0.7])
@@ -834,7 +833,7 @@ if __name__ == "__main__":
         thermal_rb_solution = \
             thermal_reduced_problem.reconstruct_solution(
                 online_nn(thermal_reduced_problem, thermal_problem_parametric,
-                        online_mu, thermal_model,
+                        online_mu, thermal_model_2,
                         len(thermal_reduced_problem._basis_functions)))
 
         thermal_fem_solution_plot = dolfinx.fem.Function(VT_plot)
@@ -896,7 +895,6 @@ if __name__ == "__main__":
                                     "w") as thermal_solution_file:
                 thermal_solution_file.write_mesh(mesh)
                 thermal_solution_file.write_function(thermal_projection_error_function_plot)
-    '''
 
     if thermal_cpu_group0_comm != MPI.COMM_NULL:
         print(f"Training time (Thermal 0): {thermal_elapsed_time}")
