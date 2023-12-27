@@ -385,11 +385,14 @@ mechanical_reduced_problem = MechanicalPODANNReducedProblem(mechanical_problem_p
 print("")
 
 print(rbnicsx.io.TextLine("Perform POD", fill="#"))
+world_comm.Barrier()
+pod_start_time = MPI.Wtime()
 mechanical_eigenvalues, mechanical_modes, _ = \
     rbnicsx.backends.\
     proper_orthogonal_decomposition(snapshots_matrix,
                                     mechanical_reduced_problem._inner_product_action,
                                     N=Nmax, tol=1e-6)
+pod_end_time = MPI.Wtime()
 mechanical_reduced_problem._basis_functions.extend(mechanical_modes)
 mechanical_reduced_size = len(mechanical_reduced_problem._basis_functions)
 print("")
@@ -737,7 +740,7 @@ if mechanical_cpu_group2_comm != MPI.COMM_NULL:
     mechanical_max_epochs = 20000
     mechanical_min_validation_loss = None
     mechanical_start_epoch = 0
-    mechanical_checkpoint_path = "mechanical_checkpoint_1"
+    mechanical_checkpoint_path = "mechanical_checkpoint_2"
     mechanical_checkpoint_epoch = 10
 
     mechanical_learning_rate = 1e-6
@@ -968,6 +971,6 @@ if world_comm.rank == 0:
 
 world_comm.Barrier()
 
-print(f"Basis size: {thermal_reduced_size}, hidden_H: {15}, Training samples: {mechanical_ann_input_samples_num}, Error: {np.mean(thermal_error_numpy_0)}, Projection error: {np.mean(thermal_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}")
-print(f"Basis size: {thermal_reduced_size}, hidden_H: {20}, Training samples: {mechanical_ann_input_samples_num}, Error: {np.mean(thermal_error_numpy_1)}, Projection error: {np.mean(thermal_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}")
-print(f"Basis size: {thermal_reduced_size}, hidden_H: {25}, Training samples: {mechanical_ann_input_samples_num}, Error: {np.mean(thermal_error_numpy_2)}, Projection error: {np.mean(thermal_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}")
+print(f"Basis size: {mechanical_reduced_size}, hidden_H: {15}, Training samples: {mechanical_ann_input_samples_num}, Error: {np.mean(mechanical_error_numpy_0)}, Projection error: {np.mean(mechanical_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}")
+print(f"Basis size: {mechanical_reduced_size}, hidden_H: {20}, Training samples: {mechanical_ann_input_samples_num}, Error: {np.mean(mechanical_error_numpy_1)}, Projection error: {np.mean(mechanical_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}")
+print(f"Basis size: {mechanical_reduced_size}, hidden_H: {25}, Training samples: {mechanical_ann_input_samples_num}, Error: {np.mean(mechanical_error_numpy_2)}, Projection error: {np.mean(mechanical_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}")
