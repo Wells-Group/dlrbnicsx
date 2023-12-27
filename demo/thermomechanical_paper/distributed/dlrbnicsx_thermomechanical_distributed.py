@@ -324,7 +324,7 @@ VM_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("CG", mesh.geometry.cmaps[0].de
 
 itemsize = MPI.DOUBLE.Get_size()
 para_dim = 4
-mechanical_ann_input_samples_num = 640
+mechanical_ann_input_samples_num = 700
 mechanical_error_analysis_samples_num = 144
 num_snapshots = 700
 mechanical_num_dofs = solution_mu.x.array.shape[0]
