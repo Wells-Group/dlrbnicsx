@@ -147,7 +147,7 @@ class MechanicalProblemOnDeformedDomain(abc.ABC):
 
     def young_modulus_5(self, sym_T):
         conditions = [ufl.le(sym_T, 293.), ufl.And(ufl.ge(sym_T, 293.), ufl.le(sym_T, 823.)), ufl.And(ufl.ge(sym_T, 823.), ufl.le(sym_T, 1273.)), ufl.ge(sym_T, 1273.)]
-        interps = [1781.75702413907*sym_T**2 + 242712.70280987*sym_T + 14275923119.3114, 1781.75702413907*sym_T**2 + 242712.70280987*sym_T + 14275923119.3114, 1781.75702413907*sym_T**2 + 242712.70280987*sym_T + 14275923119.3114, 1781.75702413907*sym_T**2 + 242712.70280987*sym_T + 14275923119.3114]
+        interps = [6896.51760981398*sym_T**2 - 8115241.39295605*sym_T + 15485706587.8512, 6896.51760981398*sym_T**2 - 8115241.39295605*sym_T + 15485706587.8512, 1805.10486743176*sym_T**2 + 265223.981005117*sym_T + 12037145086.4662, 1805.10486743176*sym_T**2 + 265223.981005117*sym_T + 12037145086.4662]
         assert len(conditions) == len(interps)
         d_func = ufl.conditional(conditions[0], interps[0], interps[0])
         for i in range(1, len(conditions)):
@@ -880,7 +880,7 @@ world_comm.Barrier()
 # ### Online phase ###
 # Online phase at parameter online_mu
 if world_comm.rank == 0:
-    online_mu = np.array([0.45, 0.56, 0.9, 0.7])
+    online_mu = np.array([0.62, 0.47, 0.9, 0.53])
     print(mechanical_model.forward(online_mu))
     mechanical_fem_solution = mechanical_problem_parametric.solve(online_mu)
     mechanical_rb_solution = \
