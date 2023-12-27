@@ -793,6 +793,9 @@ if __name__ == "__main__":
     thermal_error_analysis_indices = np.arange(world_comm.rank,
                                     thermal_error_analysis_set.shape[0],
                                     world_comm.size)
+    
+    fem_time = 0
+    projection_time = 0
     for i in thermal_error_analysis_indices:
         thermal_error_numpy_0[i] = error_analysis(thermal_reduced_problem, thermal_problem_parametric,
                                         thermal_error_analysis_set[i, :], thermal_model_0,
@@ -806,11 +809,16 @@ if __name__ == "__main__":
                                         thermal_error_analysis_set[i, :], thermal_model_2,
                                         len(thermal_reduced_problem._basis_functions),
                                         online_nn)
-
+        fem_start_time = MPI.Wtime()
         thermal_fem_solution = thermal_problem_parametric.solve(thermal_error_analysis_set[i, :])
+        fem_end_time = MPI.Wtime()
+        fem_time += fem_end_time - fem_start_time
+        projection_start_time = MPI.Wtime()
         thermal_projected_solution = \
             thermal_reduced_problem.project_snapshot(thermal_fem_solution,
                                                      len(thermal_reduced_problem._basis_functions))
+        projection_end_time = MPI.Wtime()
+        projection_time += projection_end_time - projection_start_time
         thermal_reconstructed_solution = \
             thermal_reduced_problem.reconstruct_solution(thermal_projected_solution)
         thermal_projection_error_numpy[i] = \
@@ -913,7 +921,16 @@ if __name__ == "__main__":
         np.save("thermal_projection_error.npy", thermal_projection_error_numpy)
     
     world_comm.Barrier()
+
+    online_time = 0
+    for i in thermal_error_analysis_indices:
+        online_start_time = MPI.Wtime()
+        _ = online_nn(thermal_reduced_problem, thermal_problem_parametric,
+                      thermal_error_analysis_set[i, :], thermal_model_2,
+                      len(thermal_reduced_problem._basis_functions))
+        online_end_time = MPI.Wtime()
+        online_time += online_end_time - online_start_time
     
-    print(f"Basis size: {thermal_reduced_size}, hidden_H: {20}, Training samples: {thermal_ann_input_samples_num}, Error: {np.mean(thermal_error_numpy_0)}, Projection error: {np.mean(thermal_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}")
-    print(f"Basis size: {thermal_reduced_size}, hidden_H: {40}, Training samples: {thermal_ann_input_samples_num}, Error: {np.mean(thermal_error_numpy_1)}, Projection error: {np.mean(thermal_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}")
-    print(f"Basis size: {thermal_reduced_size}, hidden_H: {60}, Training samples: {thermal_ann_input_samples_num}, Error: {np.mean(thermal_error_numpy_2)}, Projection error: {np.mean(thermal_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}")
+    print(f"Basis size: {thermal_reduced_size}, hidden_H: {20}, Training samples: {thermal_ann_input_samples_num}, Error: {np.mean(thermal_error_numpy_0)}, Projection error: {np.mean(thermal_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}, FEM time: {fem_time / thermal_error_analysis_indices.shape[0]}, Projection time: {projection_time / thermal_error_analysis_indices.shape[0]}, Online time: {online_time / thermal_error_analysis_indices.shape[0]}")
+    print(f"Basis size: {thermal_reduced_size}, hidden_H: {40}, Training samples: {thermal_ann_input_samples_num}, Error: {np.mean(thermal_error_numpy_1)}, Projection error: {np.mean(thermal_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}, FEM time: {fem_time / thermal_error_analysis_indices.shape[0]}, Projection time: {projection_time / thermal_error_analysis_indices.shape[0]}, Online time: {online_time / thermal_error_analysis_indices.shape[0]}")
+    print(f"Basis size: {thermal_reduced_size}, hidden_H: {60}, Training samples: {thermal_ann_input_samples_num}, Error: {np.mean(thermal_error_numpy_2)}, Projection error: {np.mean(thermal_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}, FEM time: {fem_time / thermal_error_analysis_indices.shape[0]}, Projection time: {projection_time / thermal_error_analysis_indices.shape[0]}, Online time: {online_time / thermal_error_analysis_indices.shape[0]}")

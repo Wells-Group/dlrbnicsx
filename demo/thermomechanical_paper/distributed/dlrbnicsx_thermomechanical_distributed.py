@@ -324,7 +324,7 @@ VM_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("CG", mesh.geometry.cmaps[0].de
 
 itemsize = MPI.DOUBLE.Get_size()
 para_dim = 4
-mechanical_ann_input_samples_num = 700
+mechanical_ann_input_samples_num = 640
 mechanical_error_analysis_samples_num = 144
 num_snapshots = 700
 mechanical_num_dofs = solution_mu.x.array.shape[0]
@@ -852,6 +852,9 @@ world_comm.Barrier()
 mechanical_error_analysis_indices = np.arange(world_comm.rank,
                                    mechanical_error_analysis_set.shape[0],
                                    world_comm.size)
+
+fem_time = 0
+projection_time = 0
 for i in mechanical_error_analysis_indices:
     mechanical_error_numpy_0[i] = error_analysis(mechanical_reduced_problem, mechanical_problem_parametric,
                                     mechanical_error_analysis_set[i, :], mechanical_model_0,
@@ -865,10 +868,16 @@ for i in mechanical_error_analysis_indices:
                                     mechanical_error_analysis_set[i, :], mechanical_model_2,
                                     len(mechanical_reduced_problem._basis_functions),
                                     online_nn)
+    fem_start_time = MPI.Wtime()
     mechanical_fem_solution = mechanical_problem_parametric.solve(mechanical_error_analysis_set[i, :])
+    fem_end_time = MPI.Wtime()
+    fem_time += fem_end_time - fem_start_time
+    projection_start_time = MPI.Wtime()
     mechanical_projected_solution = \
         mechanical_reduced_problem.project_snapshot(mechanical_fem_solution,
                                                     len(mechanical_reduced_problem._basis_functions))
+    projection_end_time = MPI.Wtime()
+    projection_time += projection_end_time - projection_start_time
     mechanical_reconstructed_solution = \
         mechanical_reduced_problem.reconstruct_solution(mechanical_projected_solution)
     mechanical_projection_error_numpy[i] = \
@@ -883,7 +892,6 @@ for i in mechanical_error_analysis_indices:
 world_comm.Barrier()
 # ### Mechanical Error analysis ends ###
 
-'''
 # ### Online phase ###
 # Online phase at parameter online_mu
 if world_comm.rank == 0:
@@ -893,7 +901,7 @@ if world_comm.rank == 0:
     mechanical_rb_solution = \
         mechanical_reduced_problem.reconstruct_solution(
             online_nn(mechanical_reduced_problem, mechanical_problem_parametric,
-                    online_mu, mechanical_model,
+                    online_mu, mechanical_model_1,
                     len(mechanical_reduced_problem._basis_functions)))
 
     mechanical_fem_solution_plot = dolfinx.fem.Function(VM_plot)
@@ -942,7 +950,7 @@ if world_comm.rank == 0:
             mechanical_reduced_problem.project_snapshot(mechanical_problem_parametric.solve(online_mu),
                                                         len(mechanical_reduced_problem._basis_functions)))
     mechanical_projection_error_function.x.array[:] = \
-        mechanical_fem_solution.x.array - mechanical_reconstructed_solution.x.array
+        abs(mechanical_fem_solution.x.array - mechanical_reconstructed_solution.x.array)
 
     mechanical_projection_error_function_plot = dolfinx.fem.Function(VM_plot)
     mechanical_projection_error_function_plot.interpolate(mechanical_projection_error_function)
@@ -955,7 +963,6 @@ if world_comm.rank == 0:
                                 "w") as mechanical_solution_file:
             mechanical_solution_file.write_mesh(mesh)
             mechanical_solution_file.write_function(mechanical_projection_error_function_plot)
-'''
 
 if mechanical_cpu_group0_comm != MPI.COMM_NULL:
     print(f"Training time (Mechanical 0): {mechanical_elapsed_time}")
@@ -975,6 +982,15 @@ if world_comm.rank == 0:
 
 world_comm.Barrier()
 
-print(f"Basis size: {mechanical_reduced_size}, hidden_H: {15}, Training samples: {mechanical_ann_input_samples_num}, Error: {np.mean(mechanical_error_numpy_0)}, Projection error: {np.mean(mechanical_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}")
-print(f"Basis size: {mechanical_reduced_size}, hidden_H: {20}, Training samples: {mechanical_ann_input_samples_num}, Error: {np.mean(mechanical_error_numpy_1)}, Projection error: {np.mean(mechanical_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}")
-print(f"Basis size: {mechanical_reduced_size}, hidden_H: {25}, Training samples: {mechanical_ann_input_samples_num}, Error: {np.mean(mechanical_error_numpy_2)}, Projection error: {np.mean(mechanical_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}")
+online_time = 0
+for i in mechanical_error_analysis_indices:
+    online_start_time = MPI.Wtime()
+    _ = online_nn(mechanical_reduced_problem, mechanical_problem_parametric,
+                  mechanical_error_analysis_set[i, :], mechanical_model_1,
+                  len(mechanical_reduced_problem._basis_functions))
+    online_end_time = MPI.Wtime()
+    online_time += online_end_time - online_start_time
+
+print(f"Basis size: {mechanical_reduced_size}, hidden_H: {15}, Training samples: {mechanical_ann_input_samples_num}, Error: {np.mean(mechanical_error_numpy_0)}, Projection error: {np.mean(mechanical_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}, FEM time: {fem_time / mechanical_error_analysis_indices.shape[0]}, Projection time: {projection_time / mechanical_error_analysis_indices.shape[0]}, Online time: {online_time / mechanical_error_analysis_indices.shape[0]}")
+print(f"Basis size: {mechanical_reduced_size}, hidden_H: {20}, Training samples: {mechanical_ann_input_samples_num}, Error: {np.mean(mechanical_error_numpy_1)}, Projection error: {np.mean(mechanical_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}, FEM time: {fem_time / mechanical_error_analysis_indices.shape[0]}, Projection time: {projection_time / mechanical_error_analysis_indices.shape[0]}, Online time: {online_time / mechanical_error_analysis_indices.shape[0]}")
+print(f"Basis size: {mechanical_reduced_size}, hidden_H: {25}, Training samples: {mechanical_ann_input_samples_num}, Error: {np.mean(mechanical_error_numpy_2)}, Projection error: {np.mean(mechanical_projection_error_numpy)}, Rank: {world_comm.rank}, POD time: {pod_end_time - pod_start_time}, FEM time: {fem_time / mechanical_error_analysis_indices.shape[0]}, Projection time: {projection_time / mechanical_error_analysis_indices.shape[0]}, Online time: {online_time / mechanical_error_analysis_indices.shape[0]}")
