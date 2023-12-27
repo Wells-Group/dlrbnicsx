@@ -870,7 +870,7 @@ if __name__ == "__main__":
 
         thermal_error_function = dolfinx.fem.Function(thermal_problem_parametric._VT)
         thermal_error_function.x.array[:] = \
-            thermal_fem_solution.x.array - thermal_rb_solution.x.array
+            abs(thermal_fem_solution.x.array - thermal_rb_solution.x.array)
 
         thermal_error_function_plot = dolfinx.fem.Function(VT_plot)
         thermal_error_function_plot.interpolate(thermal_error_function)
@@ -890,7 +890,7 @@ if __name__ == "__main__":
                 thermal_reduced_problem.project_snapshot(thermal_problem_parametric.solve(online_mu),
                                                          len(thermal_reduced_problem._basis_functions)))
         thermal_projection_error_function.x.array[:] = \
-            thermal_fem_solution.x.array - thermal_reconstructed_solution.x.array
+            abs(thermal_fem_solution.x.array - thermal_reconstructed_solution.x.array)
 
         thermal_projection_error_function_plot = dolfinx.fem.Function(VT_plot)
         thermal_projection_error_function_plot.interpolate(thermal_projection_error_function)

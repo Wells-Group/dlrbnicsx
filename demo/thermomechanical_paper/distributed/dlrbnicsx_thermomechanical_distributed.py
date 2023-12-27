@@ -930,7 +930,7 @@ if world_comm.rank == 0:
 
     mechanical_error_function = dolfinx.fem.Function(mechanical_problem_parametric._VM)
     mechanical_error_function.x.array[:] = \
-        mechanical_fem_solution.x.array - mechanical_rb_solution.x.array
+        abs(mechanical_fem_solution.x.array - mechanical_rb_solution.x.array)
 
     mechanical_error_function_plot = dolfinx.fem.Function(VM_plot)
     mechanical_error_function_plot.interpolate(mechanical_error_function)
