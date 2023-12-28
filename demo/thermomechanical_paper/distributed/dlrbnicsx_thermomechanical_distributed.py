@@ -896,7 +896,7 @@ world_comm.Barrier()
 # Online phase at parameter online_mu
 if world_comm.rank == 0:
     online_mu = np.array([0.62, 0.47, 0.9, 0.53])
-    print(mechanical_model.forward(online_mu))
+    print(mechanical_model_1.forward(online_mu))
     mechanical_fem_solution = mechanical_problem_parametric.solve(online_mu)
     mechanical_rb_solution = \
         mechanical_reduced_problem.reconstruct_solution(
