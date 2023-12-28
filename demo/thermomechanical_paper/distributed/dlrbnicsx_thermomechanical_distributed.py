@@ -896,12 +896,12 @@ world_comm.Barrier()
 # Online phase at parameter online_mu
 if world_comm.rank == 0:
     online_mu = np.array([0.62, 0.47, 0.9, 0.53])
-    print(mechanical_model_1.forward(online_mu))
+    print(mechanical_model_2.forward(online_mu))
     mechanical_fem_solution = mechanical_problem_parametric.solve(online_mu)
     mechanical_rb_solution = \
         mechanical_reduced_problem.reconstruct_solution(
             online_nn(mechanical_reduced_problem, mechanical_problem_parametric,
-                    online_mu, mechanical_model_1,
+                    online_mu, mechanical_model_2,
                     len(mechanical_reduced_problem._basis_functions)))
 
     mechanical_fem_solution_plot = dolfinx.fem.Function(VM_plot)
@@ -986,7 +986,7 @@ online_time = 0
 for i in mechanical_error_analysis_indices:
     online_start_time = MPI.Wtime()
     _ = online_nn(mechanical_reduced_problem, mechanical_problem_parametric,
-                  mechanical_error_analysis_set[i, :], mechanical_model_1,
+                  mechanical_error_analysis_set[i, :], mechanical_model_2,
                   len(mechanical_reduced_problem._basis_functions))
     online_end_time = MPI.Wtime()
     online_time += online_end_time - online_start_time
