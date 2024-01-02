@@ -956,7 +956,7 @@ if world_comm.rank == 0:
     mechanical_projection_error_function_plot.interpolate(mechanical_projection_error_function)
 
     mechanical_fem_rb_projection_error_file \
-        = "dlrbnicsx_solution_thermal/mechanical_fem_rb_projection_error_computed.xdmf"
+        = "dlrbnicsx_solution_thermomechanical/mechanical_fem_rb_projection_error_computed.xdmf"
     with MeshDeformationWrapperClass(mesh, facet_tags, mu_ref,
                                      online_mu):
         with dolfinx.io.XDMFFile(mesh.comm, mechanical_fem_rb_projection_error_file,
