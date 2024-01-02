@@ -65,7 +65,8 @@ n_L = 49200 # Molar density of Lattice sites
 f_far = 96485.3321 # Faraday constant
 r_gas = 8.314 # Gas constant R
 ref_T = 298. # Reference temperature
-i_s = 4780 * 4 * 2.e-6 * 210 / 4 # Flux on surface # -ve implies lithiation and +ve implies delithiation
+mu_0, mu_1 = 4, 2.e-6
+i_s = 4780 * mu_0 * mu_1 * 210 / 4 # Flux on surface # -ve implies lithiation and +ve implies delithiation
 
 theta_current = ufl.variable(theta_current)
 v_oc = - theta_current + 4.5
@@ -91,7 +92,7 @@ def epsilon_theta(theta_current):
     epsilon_c = 0.2362 * theta_current**5 - 1.1269 * theta_current**4 + 2.0545 * theta_current**3 - 1.7512 * theta_current**2 + 0.6531 * theta_current - 0.0489
     return ufl.as_vector([epsilon_a, epsilon_c, epsilon_b, 0.])
 
-computed_file = "battery_problem/solution_computed.xdmf"
+computed_file = "battery_problem_parametrized/solution_computed.xdmf"
 
 solution_file = dolfinx.io.XDMFFile(mesh.comm, computed_file, "w")
 solution_file.write_mesh(mesh)
@@ -117,6 +118,7 @@ bc_center = dolfinx.fem.dirichletbc(PETSc.ScalarType(0.), center_disp_dofs[0], V
 
 bc = [bc_center, bc_sym_x_1, bc_sym_x_2]
 
+# TODO Clarify: Here theta_current is ufl.variable instead of dolfinx.fem.Function but mu_current, u_current are dolfinx.fem.Function
 a0 = n_L * ufl.inner(theta_current - theta_previous, theta_test) * x[0] * dx - dt * (n_L / (r_gas * ref_T)) * theta_current * ufl.inner(diffusivity_Li(theta_current) * (f_far * dv_oc_dtheta * ufl.grad(theta_current) - ufl.grad(mu_current)), ufl.grad(theta_test)) * x[0] * dx + dt * (i_s / f_far) * theta_test * x[0] * (ds(2) + ds(3))
 a1 = ufl.inner(mu_current, mu_test) * x[0] * dx + (1 / n_L) * ufl.inner(ufl.inner(stiffness_tensor * (epsilon(u_current, x) - epsilon_theta(theta_current)), ufl.diff(epsilon_theta(theta_current), theta_current)), mu_test) * x[0] * dx
 a2 = ufl.inner(stiffness_tensor * epsilon(u_current, x), epsilon(u_test, x)) * x[0] * dx - ufl.inner(stiffness_tensor * epsilon_theta(theta_current), epsilon(u_test, x)) * x[0] * dx
@@ -143,7 +145,7 @@ theta_current = sol_current.sub(0)
 mu_current = sol_current.sub(1)
 disp_current = sol_current.sub(2)
 
-stress_computed_file = "battery_problem/stress_computed.xdmf"
+stress_computed_file = "battery_problem_parametrized/stress_computed.xdmf"
 stress_computed_file = dolfinx.io.XDMFFile(mesh.comm, stress_computed_file, "w")
 stress_computed_file.write_mesh(mesh)
 stress_computed_file.write_function(sigma_func.sub(0), current_time)

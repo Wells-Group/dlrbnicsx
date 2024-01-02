@@ -13,11 +13,11 @@ gdim = 2
 min_r, max_r = 0, 1.e-6
 min_z, max_z = -1.e-6, 1.e-6
 
-point_a = gmsh.model.occ.addPoint(min_r, min_z, 0., 9.e-9)
+point_a = gmsh.model.occ.addPoint(min_r, min_z, 0., 2.e-8)
 point_b = gmsh.model.occ.addPoint(max_r, min_z, 0., 5.e-8)
-point_c = gmsh.model.occ.addPoint(max_r, 0, 0., 1.e-8)
+point_c = gmsh.model.occ.addPoint(max_r, 0, 0., 3.e-8)
 point_d = gmsh.model.occ.addPoint(max_r, max_z, 0., 5.e-8)
-point_e = gmsh.model.occ.addPoint(min_r, max_z, 0., 9.e-9)
+point_e = gmsh.model.occ.addPoint(min_r, max_z, 0., 2.e-8)
 point_f = gmsh.model.occ.addPoint(min_r, 0, 0., 3.e-9)
 
 line_ab = gmsh.model.occ.addLine(point_a, point_b)

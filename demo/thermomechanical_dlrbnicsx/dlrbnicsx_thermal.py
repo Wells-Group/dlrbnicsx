@@ -33,7 +33,7 @@ class ThermalProblemOnDeformedDomain(abc.ABC):
         self._mesh = mesh
         self._subdomains = subdomains
         self._boundaries = boundaries
-        dx = ufl.Measure("dx", domain=mesh, subdomain_data=subdomains)
+        dx = ufl.Measure("dx", domain=self._mesh, subdomain_data=self._subdomains)
         ds = ufl.Measure("ds", domain=self._mesh, subdomain_data=self._boundaries)
         self.dx = dx
         self._ds_sf = ds(11) + ds(20) + ds(21) + ds(22) + ds(23)
