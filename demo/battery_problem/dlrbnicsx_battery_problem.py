@@ -70,17 +70,9 @@ class ProblemParametric(abc.ABC):
         self.stiffness_tensor = ufl.as_tensor([
             [259.e9, 75.e9, 107.e9, 0.], [75.e9, 194.e9, 75.e9, 0.],
             [107.e9, 75.e9, 259.e9, 0.], [0., 0., 0., 59.e9]])
-        self.num_steps = 20
-        self.dt = 900 / self.num_steps # (3600 / self.mu_0) / self.num_steps
+        self.num_steps = dolfinx.fem.Constant(self._mesh, PETSc.ScalarType(20))
+        self.dt = (3600 / self.mu_0) / self.num_steps
         self.i_s = 4780 * self.mu_0 * self.mu_1 * 210 / 4
-
-        computed_file = "battery_problem_dlrbnicsx/solution_computed.xdmf"
-
-        self._solution_file = dolfinx.io.XDMFFile(self._mesh.comm, computed_file, "w")
-        self._solution_file.write_mesh(self._mesh)
-        self._solution_file.write_function(self._sol_current.sub(0), 0)
-        self._solution_file.write_function(self._sol_current.sub(1), 0)
-        self._solution_file.write_function(self._sol_current.sub(2), 0)
 
     def center_marker(self, x):
         return np.logical_and(np.isclose(x[0], np.zeros_like(x[0]), atol=1.e-10),
@@ -136,21 +128,35 @@ class ProblemParametric(abc.ABC):
         return problem
 
     def solve(self, mu):
-        # TODO restore initial guess for all sub(1) and sub(2) also
         # TODO stress computation
+        self._sol_current.x.array[:] = 0.
+        self._sol_current.x.scatter_forward()
+        self._sol_previous.x.array[:] = 0.
+        self._sol_previous.x.scatter_forward()
         self._sol_current.sub(0).interpolate(lambda x: np.array(0.95 * np.ones(x[0].shape,)))
         self._sol_current.x.scatter_forward()
         self._sol_previous.sub(0).x.array[:] = self._sol_current.sub(0).x.array.copy()
+
+        self._computed_file = f"battery_problem_dlrbnicsx/solution_computed_{mu[0]}_{mu[1]}.xdmf"
+        self._solution_file = dolfinx.io.XDMFFile(self._mesh.comm, self._computed_file, "w")
+        self._solution_file.write_mesh(self._mesh)
+        self._solution_file.write_function(self._sol_current.sub(0), 0)
+        self._solution_file.write_function(self._sol_current.sub(1), 0)
+        self._solution_file.write_function(self._sol_current.sub(2), 0)
+
         self._x.interpolate(lambda x: (x[0], x[1]))
         time_list = list()
         time_list.append(0)
-        solution_temp = dolfinx.fem.Function(self._V)
+
         solution_list = list()
+        solution_temp = dolfinx.fem.Function(self._V)
         solution_temp.x.array[:] = self._sol_current.x.array.copy()
         solution_temp.x.scatter_forward()
         solution_list.append(solution_temp)
+
         self.mu_0.value = mu[0]
         self.mu_1.value = mu[1]
+
         problem = self.set_problem
         solver = NewtonSolver(self._mesh.comm, problem)
         solver.convergence_criterion = "incremental"
@@ -158,20 +164,27 @@ class ProblemParametric(abc.ABC):
         # solver.atol = 1.e-10
         solver.max_it = 20
         dolfinx.log.set_log_level(dolfinx.log.LogLevel.INFO)
+        '''
         self._theta_current = self._sol_current.sub(0)
         self._mu_current = self._sol_current.sub(1)
         self._disp_current = self._sol_current.sub(2)
+        '''
         current_time = 0
-        for i in range(self.num_steps):
-            current_time += self.dt
+        for i in range(int(self.num_steps.value)):
+            current_time += (3600 / self.mu_0.value) / self.num_steps.value # self.dt
             solution_temp = dolfinx.fem.Function(self._V)
+            print(f"Time: {current_time}, Step: {i}")
             n, converged = solver.solve(self._sol_current)
-            print(f"Time: {current_time}, Iteration: {n}, Converged: {converged}")
+            # TODO How to evaluate time when self.mu_0 is involved?
+            print(f"Time: {current_time}, Iteration: {n}, Converged: {converged}, Step: {i}")
             self._sol_current.x.scatter_forward()
             self._sol_previous.x.array[:] = self._sol_current.x.array.copy()
-            self._solution_file.write_function(self._theta_current, current_time)
-            self._solution_file.write_function(self._mu_current, current_time)
-            self._solution_file.write_function(self._disp_current, current_time)
+            self._solution_file.write_function(self._sol_current.sub(0), current_time)
+            self._solution_file.write_function(self._sol_current.sub(1), current_time)
+            self._solution_file.write_function(self._sol_current.sub(2), current_time)
+            # self._solution_file.write_function(self._theta_current, current_time)
+            # self._solution_file.write_function(self._mu_current, current_time)
+            # self._solution_file.write_function(self._disp_current, current_time)
             solution_temp.x.array[:] = self._sol_current.x.array.copy()
             solution_temp.x.scatter_forward()
             solution_list.append(solution_temp)
@@ -187,9 +200,13 @@ mesh, cell_tags, facet_tags = \
     dolfinx.io.gmshio.read_from_msh("mesh_data/mesh.msh",
                                     mesh_comm, gmsh_model_rank, gdim=gdim)
 
+problem_parametric = ProblemParametric(mesh, cell_tags, facet_tags)
+sol_current = dolfinx.fem.Function(problem_parametric._V)
 
-problem_parametric = \
-    ProblemParametric(mesh, cell_tags, facet_tags)
+mu = np.array([5., 2.e-6])
+problem_parametric.num_steps.value = 5
+(time_list, sol_list) = problem_parametric.solve(mu)
 
 mu = np.array([4., 2.e-6])
+problem_parametric.num_steps.value = 20
 (time_list, sol_list) = problem_parametric.solve(mu)

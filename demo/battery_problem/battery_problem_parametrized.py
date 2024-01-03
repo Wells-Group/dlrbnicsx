@@ -55,9 +55,10 @@ sol_previous.sub(0).x.array[:] = sol_current.sub(0).x.array.copy()
 
 ds = ufl.Measure("ds", domain=mesh, subdomain_data=facet_tags)
 dx = ufl.Measure("dx", domain=mesh, subdomain_data=cell_tags)
+mu_0, mu_1 = 5., 2.e-6
 current_time = 0
-end_time = 900
-num_steps = 20
+end_time = 3600 / mu_0
+num_steps = 5 # 20
 dt = (end_time - current_time) / num_steps
 
 # Constants
@@ -65,7 +66,6 @@ n_L = 49200 # Molar density of Lattice sites
 f_far = 96485.3321 # Faraday constant
 r_gas = 8.314 # Gas constant R
 ref_T = 298. # Reference temperature
-mu_0, mu_1 = 4, 2.e-6
 i_s = 4780 * mu_0 * mu_1 * 210 / 4 # Flux on surface # -ve implies lithiation and +ve implies delithiation
 
 theta_current = ufl.variable(theta_current)
@@ -156,7 +156,7 @@ stress_computed_file.write_function(sigma_func.sub(3), current_time)
 for i in range(num_steps):
     current_time += dt
     n, converged = solver.solve(sol_current)
-    print(f"Time: {current_time}, Iteration: {n}, Converged: {converged}")
+    print(f"Time: {current_time}, Iteration: {n}, Converged: {converged}, Step: {i}")
     sol_current.x.scatter_forward() # NOTE Why no scatter_forward in the tutorial
     sol_previous.x.array[:] = sol_current.x.array.copy()
     # NOTE Why not deepcopy in Cahn Hiliard tutorial?
