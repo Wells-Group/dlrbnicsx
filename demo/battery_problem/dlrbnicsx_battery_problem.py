@@ -1,10 +1,9 @@
 import dolfinx
-import basix
-import ufl
-
 from dolfinx.fem.petsc import assemble_matrix, assemble_vector, \
     create_vector, apply_lifting, set_bc, NonlinearProblem, LinearProblem
 from dolfinx.nls.petsc import NewtonSolver
+import basix
+import ufl
 
 import rbnicsx
 import rbnicsx.backends
@@ -12,12 +11,13 @@ import rbnicsx.online
 
 from mpi4py import MPI
 from petsc4py import PETSc
-import numpy as np
 import sympy
 
-import matplotlib.pyplot as plt
-
+import numpy as np
+import itertools
 import abc
+import matplotlib.pyplot as plt
+import os
 
 class ProblemParametric(abc.ABC):
     def __init__(self, mesh, subdomains, boundaries):
@@ -203,10 +203,101 @@ mesh, cell_tags, facet_tags = \
 problem_parametric = ProblemParametric(mesh, cell_tags, facet_tags)
 sol_current = dolfinx.fem.Function(problem_parametric._V)
 
+'''
 mu = np.array([5., 2.e-6])
 problem_parametric.num_steps.value = 5
 (time_list, sol_list) = problem_parametric.solve(mu)
 
 mu = np.array([4., 2.e-6])
-problem_parametric.num_steps.value = 20
+problem_parametric.num_steps.value = 5
 (time_list, sol_list) = problem_parametric.solve(mu)
+'''
+
+pod_samples = [3, 1]
+
+# POD Starts ###
+def generate_training_set(samples=pod_samples):
+    training_set_0 = np.linspace(1., 5., samples[0])
+    training_set_1 = np.linspace(2.e-6, 2.e-6, samples[1])
+    training_set = np.array(list(itertools.product(training_set_0,
+                                                   training_set_1)))
+    return training_set
+
+
+training_set = generate_training_set()
+Nmax = 30
+
+print(rbnicsx.io.TextBox("POD offline phase begins", fill="="))
+print("")
+
+print("set up snapshots matrix")
+Theta, _ = problem_parametric._V.sub(0).collapse()
+Mu, _ = problem_parametric._V.sub(1).collapse()
+U, _ = problem_parametric._V.sub(2).collapse()
+snapshots_matrix_theta = rbnicsx.backends.FunctionsList(Theta)
+snapshots_matrix_mu = rbnicsx.backends.FunctionsList(Mu)
+snapshots_matrix_u = rbnicsx.backends.FunctionsList(U)
+
+print("set up reduced problem") # TODO
+
+print("")
+
+for (mu_index, mu) in enumerate(training_set):
+    print(rbnicsx.io.TextLine(str(mu_index+1), fill="#"))
+    theta_func = dolfinx.fem.Function(Theta)
+    mu_func = dolfinx.fem.Function(Mu)
+    u_func = dolfinx.fem
+
+    print("Parameter number ", (mu_index+1), "of", training_set.shape[0])
+    print("high fidelity solve for mu =", mu)
+    time_steps, snapshot_list = problem_parametric.solve(mu)
+    for i in range(len(snapshot_list)):
+        theta_func = snapshot_list[i].sub(0).collapse()
+        mu_func = snapshot_list[i].sub(1).collapse()
+        u_func = snapshot_list[i].sub(2).collapse()
+        print(theta_func.x.array.shape, mu_func.x.array.shape, u_func.x.array.shape)
+
+        print("update snapshots matrix")
+        snapshots_matrix_theta.append(theta_func)
+        snapshots_matrix_mu.append(mu_func)
+        snapshots_matrix_u.append(u_func)
+
+        print("")
+
+print(rbnicsx.io.TextLine("perform POD", fill="#"))
+eigenvalues_theta, modes_theta, _ = \
+    rbnicsx.backends.\
+    proper_orthogonal_decomposition(snapshots_matrix_theta,
+                                    problem_parametric._inner_product_theta_action,
+                                    N=Nmax, tol=1.e-6)
+# reduced_problem._basis_functions.extend(modes)
+# reduced_size = len(reduced_problem._basis_functions)
+print("")
+
+print(rbnicsx.io.TextBox("POD-Galerkin offline phase ends", fill="="))
+
+positive_eigenvalues_theta = np.where(eigenvalues_theta > 0., eigenvalues_theta, np.nan)
+singular_values_theta = np.sqrt(positive_eigenvalues_theta)
+
+print(positive_eigenvalues_theta)
+
+'''
+plt.figure(figsize=[8, 10])
+xint = list()
+yval = list()
+
+for x, y in enumerate(eigenvalues[:len(reduced_problem._basis_functions)]):
+    yval.append(y)
+    xint.append(x+1)
+
+plt.plot(xint, yval, "*-", color="orange")
+plt.xlabel("Eigenvalue number", fontsize=18)
+plt.ylabel("Eigenvalue", fontsize=18)
+plt.xticks(xint)
+plt.yscale("log")
+plt.title("Eigenvalue decay", fontsize=24)
+plt.tight_layout()
+# plt.show()
+'''
+
+# POD Ends ###

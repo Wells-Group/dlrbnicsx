@@ -18,7 +18,7 @@ point_b = gmsh.model.occ.addPoint(max_r, min_z, 0., 5.e-8)
 point_c = gmsh.model.occ.addPoint(max_r, 0, 0., 3.e-8)
 point_d = gmsh.model.occ.addPoint(max_r, max_z, 0., 5.e-8)
 point_e = gmsh.model.occ.addPoint(min_r, max_z, 0., 2.e-8)
-point_f = gmsh.model.occ.addPoint(min_r, 0, 0., 3.e-9)
+point_f = gmsh.model.occ.addPoint(min_r, 0, 0., 3.e-8) # 3.e-9
 
 line_ab = gmsh.model.occ.addLine(point_a, point_b)
 line_bc = gmsh.model.occ.addLine(point_b, point_c)
