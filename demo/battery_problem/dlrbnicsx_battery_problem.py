@@ -39,23 +39,33 @@ class ProblemParametric(abc.ABC):
         self._theta_trial, self._mu_trial, self._u_trial = ufl.TrialFunctions(self._V)
         self._theta_test, self._mu_test, self._u_test = ufl.TestFunctions(self._V)
         # TODO check whether self._x[0] is correct choice below inner products. Here, self._x is NOT ufl.spatialCoordinate
+
+        Theta, _ = self._V.sub(0).collapse()
+        Mu, _ = self._V.sub(1).collapse()
+        U, _ = self._V.sub(2).collapse()
+        self._theta_sub_trial, self._theta_sub_test = ufl.TrialFunction(Theta), ufl.TestFunction(Theta)
+        self._mu_sub_trial, self._mu_sub_test = ufl.TrialFunction(Mu), ufl.TestFunction(Mu)
+        self._u_sub_trial, self._u_sub_test = ufl.TrialFunction(U), ufl.TestFunction(U)
+
+        '''
         # H^1_r for theta
-        self._inner_product_theta = ufl.inner(self._theta_trial, self._theta_test) * self._x[0] * ufl.dx + \
-            ufl.inner(ufl.grad(self._theta_trial), ufl.grad(self._theta_test)) * self._x[0] * ufl.dx
+        self._inner_product_theta = ufl.inner(self._theta_sub_trial, self._theta_sub_test) * self._x[0] * ufl.dx + \
+            ufl.inner(ufl.grad(self._theta_sub_trial), ufl.grad(self._theta_sub_test)) * self._x[0] * ufl.dx
         self._inner_product_theta_action = \
             rbnicsx.backends.bilinear_form_action(self._inner_product_theta,
                                                   part="real")
         # L^2_r for mu
-        self._inner_product_mu = ufl.inner(self._mu_trial, self._mu_test) * self._x[0] * ufl.dx
+        self._inner_product_mu = ufl.inner(self._mu_sub_trial, self._mu_sub_test) * self._x[0] * ufl.dx
         self._inner_product_mu_action = \
             rbnicsx.backends.bilinear_form_action(self._inner_product_mu,
                                                   part="real")
         # H^1_r for u
-        self._inner_product_u = ufl.inner(self._u_trial, self._u_test) * self._x[0] * ufl.dx + \
-            ufl.inner(ufl.grad(self._u_trial), ufl.grad(self._u_test)) * self._x[0] * ufl.dx
+        self._inner_product_u = ufl.inner(self._u_sub_trial, self._u_sub_test) * self._x[0] * ufl.dx + \
+            ufl.inner(ufl.grad(self._u_sub_trial), ufl.grad(self._u_sub_test)) * self._x[0] * ufl.dx
         self._inner_product_u_action = \
             rbnicsx.backends.bilinear_form_action(self._inner_product_u,
                                                   part="real")
+        '''
 
         self._sol_previous = dolfinx.fem.Function(self._V)
         self._theta_previous, self._mu_previous, self._u_previous = ufl.split(self._sol_previous)
@@ -70,9 +80,24 @@ class ProblemParametric(abc.ABC):
         self.stiffness_tensor = ufl.as_tensor([
             [259.e9, 75.e9, 107.e9, 0.], [75.e9, 194.e9, 75.e9, 0.],
             [107.e9, 75.e9, 259.e9, 0.], [0., 0., 0., 59.e9]])
-        self.num_steps = dolfinx.fem.Constant(self._mesh, PETSc.ScalarType(20))
+        self.num_steps = dolfinx.fem.Constant(self._mesh, PETSc.ScalarType(5)) # dolfinx.fem.Constant(self._mesh, PETSc.ScalarType(20))
         self.dt = (3600 / self.mu_0) / self.num_steps
         self.i_s = 4780 * self.mu_0 * self.mu_1 * 210 / 4
+
+    def _inner_product_theta_action(self, fun_j):
+        def _(fun_i):
+            return fun_i.vector.dot(fun_j.vector)
+        return _
+
+    def _inner_product_mu_action(self, fun_j):
+        def _(fun_i):
+            return fun_i.vector.dot(fun_j.vector)
+        return _
+
+    def _inner_product_u_action(self, fun_j):
+        def _(fun_i):
+            return fun_i.vector.dot(fun_j.vector)
+        return _
 
     def center_marker(self, x):
         return np.logical_and(np.isclose(x[0], np.zeros_like(x[0]), atol=1.e-10),
@@ -255,16 +280,16 @@ for (mu_index, mu) in enumerate(training_set):
         theta_func = snapshot_list[i].sub(0).collapse()
         mu_func = snapshot_list[i].sub(1).collapse()
         u_func = snapshot_list[i].sub(2).collapse()
-        print(theta_func.x.array.shape, mu_func.x.array.shape, u_func.x.array.shape)
 
         print("update snapshots matrix")
         snapshots_matrix_theta.append(theta_func)
         snapshots_matrix_mu.append(mu_func)
         snapshots_matrix_u.append(u_func)
-
+    for k in range(len(snapshots_matrix_theta)):
+        print(f"Norms: {np.linalg.norm(snapshots_matrix_theta[k].vector)}, {np.linalg.norm(snapshots_matrix_mu[k].vector)}, {np.linalg.norm(snapshots_matrix_u[k].vector)}")
         print("")
 
-print(rbnicsx.io.TextLine("perform POD", fill="#"))
+print(rbnicsx.io.TextLine("perform POD (Theta)", fill="#"))
 eigenvalues_theta, modes_theta, _ = \
     rbnicsx.backends.\
     proper_orthogonal_decomposition(snapshots_matrix_theta,
@@ -274,30 +299,45 @@ eigenvalues_theta, modes_theta, _ = \
 # reduced_size = len(reduced_problem._basis_functions)
 print("")
 
-print(rbnicsx.io.TextBox("POD-Galerkin offline phase ends", fill="="))
+print(rbnicsx.io.TextBox("POD-Galerkin (Theta) offline phase ends", fill="="))
 
 positive_eigenvalues_theta = np.where(eigenvalues_theta > 0., eigenvalues_theta, np.nan)
 singular_values_theta = np.sqrt(positive_eigenvalues_theta)
 
 print(positive_eigenvalues_theta)
 
-'''
-plt.figure(figsize=[8, 10])
-xint = list()
-yval = list()
+print(rbnicsx.io.TextLine("perform POD (Mu)", fill="#"))
+eigenvalues_mu, modes_mu, _ = \
+    rbnicsx.backends.\
+    proper_orthogonal_decomposition(snapshots_matrix_mu,
+                                    problem_parametric._inner_product_mu_action,
+                                    N=Nmax, tol=1.e-6)
+# reduced_problem._basis_functions.extend(modes)
+# reduced_size = len(reduced_problem._basis_functions)
+print("")
 
-for x, y in enumerate(eigenvalues[:len(reduced_problem._basis_functions)]):
-    yval.append(y)
-    xint.append(x+1)
+print(rbnicsx.io.TextBox("POD-Galerkin (Mu) offline phase ends", fill="="))
 
-plt.plot(xint, yval, "*-", color="orange")
-plt.xlabel("Eigenvalue number", fontsize=18)
-plt.ylabel("Eigenvalue", fontsize=18)
-plt.xticks(xint)
-plt.yscale("log")
-plt.title("Eigenvalue decay", fontsize=24)
-plt.tight_layout()
-# plt.show()
-'''
+positive_eigenvalues_mu = np.where(eigenvalues_mu > 0., eigenvalues_mu, np.nan)
+singular_values_mu = np.sqrt(positive_eigenvalues_mu)
+
+print(positive_eigenvalues_mu)
+
+print(rbnicsx.io.TextLine("perform POD (U)", fill="#"))
+eigenvalues_u, modes_u, _ = \
+    rbnicsx.backends.\
+    proper_orthogonal_decomposition(snapshots_matrix_u,
+                                    problem_parametric._inner_product_u_action,
+                                    N=Nmax, tol=1.e-6)
+# reduced_problem._basis_functions.extend(modes)
+# reduced_size = len(reduced_problem._basis_functions)
+print("")
+
+print(rbnicsx.io.TextBox("POD-Galerkin (U) offline phase ends", fill="="))
+
+positive_eigenvalues_u = np.where(eigenvalues_u > 0., eigenvalues_u, np.nan)
+singular_values_u = np.sqrt(positive_eigenvalues_u)
+
+print(positive_eigenvalues_u)
 
 # POD Ends ###
