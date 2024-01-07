@@ -80,7 +80,7 @@ class ProblemParametric(abc.ABC):
         self.stiffness_tensor = ufl.as_tensor([
             [259.e9, 75.e9, 107.e9, 0.], [75.e9, 194.e9, 75.e9, 0.],
             [107.e9, 75.e9, 259.e9, 0.], [0., 0., 0., 59.e9]])
-        self.num_steps = dolfinx.fem.Constant(self._mesh, PETSc.ScalarType(5)) # dolfinx.fem.Constant(self._mesh, PETSc.ScalarType(20))
+        self.num_steps = dolfinx.fem.Constant(self._mesh, PETSc.ScalarType(20))
         self.dt = (3600 / self.mu_0) / self.num_steps
         self.i_s = 4780 * self.mu_0 * self.mu_1 * 210 / 4
 
@@ -275,7 +275,7 @@ mu = np.array([4., 2.e-6])
 problem_parametric.num_steps.value = 5
 (time_list, sol_list) = problem_parametric.solve(mu)
 
-pod_samples = [len(fem_comm_list), 1] # [3, 1]
+pod_samples = [3 * len(fem_comm_list), 1] # [3, 1]
 para_dim = 2
 num_snapshots = np.product(pod_samples)
 itemsize = MPI.DOUBLE.Get_size()
