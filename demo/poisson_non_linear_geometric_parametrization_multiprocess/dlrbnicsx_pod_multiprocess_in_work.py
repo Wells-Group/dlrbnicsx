@@ -308,9 +308,9 @@ else:
 
 world_comm.barrier()
 
-win0 = MPI.Win.Allocate_shared(nbytes, itemsize, comm=MPI.COMM_WORLD)
-buf0, itemsize = win0.Shared_query(0)
-snapshot_arrays = np.ndarray(buffer=buf0, dtype="d", shape=(num_snapshots, num_dofs))
+win1 = MPI.Win.Allocate_shared(nbytes, itemsize, comm=MPI.COMM_WORLD)
+buf1, itemsize = win1.Shared_query(0)
+snapshot_arrays = np.ndarray(buffer=buf1, dtype="d", shape=(num_snapshots, num_dofs))
 snapshots_matrix = rbnicsx.backends.FunctionsList(problem_parametric._V)
 Nmax = 10
 

@@ -40,12 +40,12 @@ class ProblemParametric(abc.ABC):
         self._theta_test, self._mu_test, self._u_test = ufl.TestFunctions(self._V)
         # TODO check whether self._x[0] is correct choice below inner products. Here, self._x is NOT ufl.spatialCoordinate
 
-        Theta, _ = self._V.sub(0).collapse()
-        Mu, _ = self._V.sub(1).collapse()
-        U, _ = self._V.sub(2).collapse()
-        self._theta_sub_trial, self._theta_sub_test = ufl.TrialFunction(Theta), ufl.TestFunction(Theta)
-        self._mu_sub_trial, self._mu_sub_test = ufl.TrialFunction(Mu), ufl.TestFunction(Mu)
-        self._u_sub_trial, self._u_sub_test = ufl.TrialFunction(U), ufl.TestFunction(U)
+        self._Theta, _ = self._V.sub(0).collapse()
+        self._Mu, _ = self._V.sub(1).collapse()
+        self._U, _ = self._V.sub(2).collapse()
+        self._theta_sub_trial, self._theta_sub_test = ufl.TrialFunction(self._Theta), ufl.TestFunction(self._Theta)
+        self._mu_sub_trial, self._mu_sub_test = ufl.TrialFunction(self._Mu), ufl.TestFunction(self._Mu)
+        self._u_sub_trial, self._u_sub_test = ufl.TrialFunction(self._U), ufl.TestFunction(self._U)
 
         '''
         # H^1_r for theta
@@ -80,7 +80,7 @@ class ProblemParametric(abc.ABC):
         self.stiffness_tensor = ufl.as_tensor([
             [259.e9, 75.e9, 107.e9, 0.], [75.e9, 194.e9, 75.e9, 0.],
             [107.e9, 75.e9, 259.e9, 0.], [0., 0., 0., 59.e9]])
-        self.num_steps = dolfinx.fem.Constant(self._mesh, PETSc.ScalarType(20))
+        self.num_steps = dolfinx.fem.Constant(self._mesh, PETSc.ScalarType(5, dtype=int))
         self.dt = (3600 / self.mu_0) / self.num_steps
         self.i_s = 4780 * self.mu_0 * self.mu_1 * 210 / 4
 
@@ -258,7 +258,7 @@ for comm_i in fem_comm_list:
         mesh_comm = comm_i
 
 gdim = 2
-# TODO clarify what does gmsh_model_rank correspond to? Is it rank on world_comm or mesh_comm?
+# TODO clarify why does gmsh_model_rank correspond to rank of?world_comm and not of mesh_comm?
 gmsh_model_rank = 0
 mesh, cell_tags, facet_tags = \
     dolfinx.io.gmshio.read_from_msh("mesh_data/mesh.msh",
@@ -266,7 +266,17 @@ mesh, cell_tags, facet_tags = \
 
 problem_parametric = ProblemParametric(mesh, cell_tags, facet_tags)
 sol_current = dolfinx.fem.Function(problem_parametric._V)
+sol_current_theta = sol_current.sub(0).collapse()
+sol_current_mu = sol_current.sub(1).collapse()
+sol_current_u = sol_current.sub(2).collapse()
+rstart_theta, rend_theta = sol_current_theta.vector.getOwnershipRange()
+num_dofs_theta = mesh.comm.allreduce(rend_theta, op=MPI.MAX) - mesh.comm.allreduce(rstart_theta, op=MPI.MIN)
+rstart_mu, rend_mu = sol_current_mu.vector.getOwnershipRange()
+num_dofs_mu = mesh.comm.allreduce(rend_mu, op=MPI.MAX) - mesh.comm.allreduce(rstart_mu, op=MPI.MIN)
+rstart_u, rend_u = sol_current_u.vector.getOwnershipRange()
+num_dofs_u = mesh.comm.allreduce(rend_u, op=MPI.MAX) - mesh.comm.allreduce(rstart_u, op=MPI.MIN)
 
+'''
 mu = np.array([5., 2.e-6])
 problem_parametric.num_steps.value = 5
 (time_list, sol_list) = problem_parametric.solve(mu)
@@ -274,8 +284,9 @@ problem_parametric.num_steps.value = 5
 mu = np.array([4., 2.e-6])
 problem_parametric.num_steps.value = 5
 (time_list, sol_list) = problem_parametric.solve(mu)
+'''
 
-pod_samples = [3 * len(fem_comm_list), 1] # [3, 1]
+pod_samples = [150, 1] # [3 * len(fem_comm_list), 1]
 para_dim = 2
 num_snapshots = np.product(pod_samples)
 itemsize = MPI.DOUBLE.Get_size()
@@ -295,6 +306,7 @@ else:
 
 win0 = MPI.Win.Allocate_shared(nbytes, itemsize, comm=MPI.COMM_WORLD)
 buf0, itemsize = win0.Shared_query(0)
+# TODO instead of casting as int, can one make dolfinx fem constant as integer?
 training_set = np.ndarray(buffer=buf0, dtype="d", shape=(num_snapshots, para_dim))
 
 if world_comm.rank == 0:
@@ -307,46 +319,83 @@ for i in range(len(fem_comm_list)):
         cpu_indices = np.arange(i, num_snapshots, len(fem_comm_list))
 
 print(f"World rank: {world_comm.rank}, CPU indices: {cpu_indices}")
-exit()
+
+if world_comm.rank == 0:
+    nbytes_theta = (num_snapshots * (problem_parametric.num_steps.value + 1)) * num_dofs_theta * itemsize
+    nbytes_mu = (num_snapshots * (problem_parametric.num_steps.value + 1)) * num_dofs_mu * itemsize
+    nbytes_u = (num_snapshots * (problem_parametric.num_steps.value + 1)) * num_dofs_u * itemsize
+else:
+    nbytes_theta = 0
+    nbytes_mu = 0
+    nbytes_u = 0
+
+world_comm.barrier()
+
+print("set up snapshots matrix")
+
+win1 = MPI.Win.Allocate_shared(nbytes_theta, itemsize, comm=MPI.COMM_WORLD)
+buf1, itemsize = win1.Shared_query(0)
+snapshot_arrays_theta = np.ndarray(buffer=buf1, dtype="d", shape=(num_snapshots * int(problem_parametric.num_steps.value + 1), num_dofs_theta))
+snapshots_matrix_theta = rbnicsx.backends.FunctionsList(problem_parametric._Theta)
+
+win2 = MPI.Win.Allocate_shared(nbytes_mu, itemsize, comm=MPI.COMM_WORLD)
+buf2, itemsize = win2.Shared_query(0)
+snapshot_arrays_mu = np.ndarray(buffer=buf2, dtype="d", shape=(num_snapshots * int(problem_parametric.num_steps.value + 1), num_dofs_mu))
+snapshots_matrix_mu = rbnicsx.backends.FunctionsList(problem_parametric._Mu)
+
+win3 = MPI.Win.Allocate_shared(nbytes_u, itemsize, comm=MPI.COMM_WORLD)
+buf3, itemsize = win3.Shared_query(0)
+snapshot_arrays_u = np.ndarray(buffer=buf3, dtype="d", shape=(num_snapshots * int(problem_parametric.num_steps.value + 1), num_dofs_u))
+snapshots_matrix_u = rbnicsx.backends.FunctionsList(problem_parametric._U)
 
 Nmax = 30
 
 print(rbnicsx.io.TextBox("POD offline phase begins", fill="="))
 print("")
 
-print("set up snapshots matrix")
-Theta, _ = problem_parametric._V.sub(0).collapse()
-Mu, _ = problem_parametric._V.sub(1).collapse()
-U, _ = problem_parametric._V.sub(2).collapse()
-snapshots_matrix_theta = rbnicsx.backends.FunctionsList(Theta)
-snapshots_matrix_mu = rbnicsx.backends.FunctionsList(Mu)
-snapshots_matrix_u = rbnicsx.backends.FunctionsList(U)
-
 print("set up reduced problem") # TODO
 
 print("")
 
-for (mu_index, mu) in enumerate(training_set):
-    print(rbnicsx.io.TextLine(str(mu_index+1), fill="#"))
-    theta_func = dolfinx.fem.Function(Theta)
-    mu_func = dolfinx.fem.Function(Mu)
-    u_func = dolfinx.fem
+for para_index in cpu_indices:
+    print(rbnicsx.io.TextLine(str(para_index+1), fill="#"))
+    theta_func = dolfinx.fem.Function(problem_parametric._Theta)
+    mu_func = dolfinx.fem.Function(problem_parametric._Mu)
+    u_func = dolfinx.fem.Function(problem_parametric._U)
 
-    print("Parameter number ", (mu_index+1), "of", training_set.shape[0])
-    print("high fidelity solve for mu =", mu)
-    time_steps, snapshot_list = problem_parametric.solve(mu)
+    print("Parameter number ", (para_index+1), "of", training_set.shape[0])
+    print("high fidelity solve for mu =", training_set[para_index, :])
+    time_steps, snapshot_list = problem_parametric.solve(training_set[para_index, :])
     for i in range(len(snapshot_list)):
+
         theta_func = snapshot_list[i].sub(0).collapse()
         mu_func = snapshot_list[i].sub(1).collapse()
         u_func = snapshot_list[i].sub(2).collapse()
 
         print("update snapshots matrix")
-        snapshots_matrix_theta.append(theta_func)
-        snapshots_matrix_mu.append(mu_func)
-        snapshots_matrix_u.append(u_func)
-    for k in range(len(snapshots_matrix_theta)):
-        print(f"Norms: {np.linalg.norm(snapshots_matrix_theta[k].vector)}, {np.linalg.norm(snapshots_matrix_mu[k].vector)}, {np.linalg.norm(snapshots_matrix_u[k].vector)}")
-        print("")
+        print(f"Indices: {para_index}, {int(problem_parametric.num_steps.value + 1)}, {i}, {rstart_theta}, {rend_theta}")
+        snapshot_arrays_theta[para_index * int(problem_parametric.num_steps.value + 1) + i, rstart_theta:rend_theta] = theta_func.vector[rstart_theta:rend_theta]
+        snapshot_arrays_mu[para_index * int(problem_parametric.num_steps.value + 1) + i, rstart_mu:rend_mu] = mu_func.vector[rstart_mu:rend_mu]
+        snapshot_arrays_u[para_index * int(problem_parametric.num_steps.value + 1) + i, rstart_u:rend_u] = u_func.vector[rstart_u:rend_u]
+
+world_comm.Barrier()
+
+for i in range(snapshot_arrays_theta.shape[0]):
+    solution_empty_theta = dolfinx.fem.Function(problem_parametric._Theta)
+    solution_empty_mu = dolfinx.fem.Function(problem_parametric._Mu)
+    solution_empty_u = dolfinx.fem.Function(problem_parametric._U)
+    solution_empty_theta.vector[rstart_theta:rend_theta] = snapshot_arrays_theta[i, rstart_theta:rend_theta]
+    solution_empty_mu.vector[rstart_mu:rend_mu] = snapshot_arrays_mu[i, rstart_mu:rend_mu]
+    solution_empty_u.vector[rstart_u:rend_u] = snapshot_arrays_u[i, rstart_u:rend_u]
+    solution_empty_theta.x.scatter_forward()
+    solution_empty_mu.x.scatter_forward()
+    solution_empty_u.x.scatter_forward()
+    solution_empty_theta.vector.assemble()
+    solution_empty_mu.vector.assemble()
+    solution_empty_u.vector.assemble()
+    snapshots_matrix_theta.append(solution_empty_theta)
+    snapshots_matrix_mu.append(solution_empty_mu)
+    snapshots_matrix_u.append(solution_empty_u)
 
 print(rbnicsx.io.TextLine("perform POD (Theta)", fill="#"))
 eigenvalues_theta, modes_theta, _ = \
