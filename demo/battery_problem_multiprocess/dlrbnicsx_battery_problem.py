@@ -24,9 +24,20 @@ class ProblemParametric(abc.ABC):
         self._mesh = mesh
         self._subdomains = subdomains
         self._boundaries = boundaries
+        self.reference_coordinates = self._mesh.geometry.x.copy()
+        self.mu_1_ref = 2.e-6 # Reference particle diameter
         self.dx = ufl.Measure("dx", domain=self._mesh, subdomain_data=self._subdomains)
         self.ds = ufl.Measure("ds", domain=self._mesh, subdomain_data=self._boundaries)
         self.pol_degree = 2
+
+        if self.pol_degree > 1:
+            V_sigma_el = basix.ufl.element("Lagrange", self._mesh.basix_cell(),
+                                           self.pol_degree - 1, shape=(4,))
+        else:
+            V_sigma_el = basix.ufl.element("DG", self._mesh.basix_cell(),
+                                           0, shape=(4,))
+
+        self._V_sigma = dolfinx.fem.FunctionSpace(self._mesh, V_sigma_el)
         self.gdim = self._mesh.geometry.dim
         Theta_el = basix.ufl.element("Lagrange", self._mesh.basix_cell(), self.pol_degree)
         Mu_el = basix.ufl.element("Lagrange", self._mesh.basix_cell(), self.pol_degree)
@@ -84,6 +95,11 @@ class ProblemParametric(abc.ABC):
         self.dt = (3600 / self.mu_0) / self.num_steps
         self.i_s = 4780 * self.mu_0 * self.mu_1 * 210 / 4
 
+        self.sigma_expr = dolfinx.fem.Expression(self.stiffness_tensor * (self.epsilon(self._sol_current.sub(2)) -
+                                                                          self.epsilon_theta(self._sol_current.sub(0))
+                                                                          ), self._V_sigma.element.interpolation_points())
+        self._sigma_func = dolfinx.fem.Function(self._V_sigma)
+
     def _inner_product_theta_action(self, fun_j):
         def _(fun_i):
             return fun_i.vector.dot(fun_j.vector)
@@ -95,6 +111,11 @@ class ProblemParametric(abc.ABC):
         return _
 
     def _inner_product_u_action(self, fun_j):
+        def _(fun_i):
+            return fun_i.vector.dot(fun_j.vector)
+        return _
+
+    def _inner_product_sigma_action(self, fun_j):
         def _(fun_i):
             return fun_i.vector.dot(fun_j.vector)
         return _
@@ -140,6 +161,7 @@ class ProblemParametric(abc.ABC):
         f_far = 96485.3321 # Faraday constant
         r_gas = 8.314 # Gas constant R
         ref_T = 298. # Reference temperature
+        # TODO self._u_current and self._theta_current are NOT updated at every new parameter. Is it ok??
         a0 = n_L * ufl.inner(self._theta_current - self._theta_previous, self._theta_test) * self._x[0] * self.dx - self.dt * (n_L / (r_gas * ref_T)) * self._theta_current * ufl.inner(self.diffusivity_Li(self._theta_current) * (f_far * self.dv_oc_dtheta * ufl.grad(self._theta_current) - ufl.grad(self._mu_current)), ufl.grad(self._theta_test)) * self._x[0] * self.dx + self.dt * (self.i_s / f_far) * self._theta_test * self._x[0] * (self.ds(2) + self.ds(3))
         a1 = ufl.inner(self._mu_current, self._mu_test) * self._x[0] * self.dx + (1 / n_L) * ufl.inner(ufl.inner(self.stiffness_tensor * (self.epsilon(self._u_current) - self.epsilon_theta(self._theta_current)), ufl.diff(self.epsilon_theta(self._theta_current), self._theta_current)), self._mu_test) * self._x[0] * self.dx
         a2 = ufl.inner(self.stiffness_tensor * self.epsilon(self._u_current), self.epsilon(self._u_test)) * self._x[0] * self.dx - ufl.inner(self.stiffness_tensor * self.epsilon_theta(self._theta_current), self.epsilon(self._u_test)) * self._x[0] * self.dx
@@ -153,7 +175,9 @@ class ProblemParametric(abc.ABC):
         return problem
 
     def solve(self, mu):
-        # TODO stress computation
+        # TODO organise where to deform mesh
+        # TODO benchmark solution of deformed mesh with dolfinx implementation
+        self._mesh.geometry.x[:, 0] = mu[1] / self.mu_1_ref * self._mesh.geometry.x[:, 0]
         self._sol_current.x.array[:] = 0.
         self._sol_current.x.scatter_forward()
         self._sol_previous.x.array[:] = 0.
@@ -170,6 +194,16 @@ class ProblemParametric(abc.ABC):
         self._solution_file.write_function(self._sol_current.sub(2), 0)
 
         self._x.interpolate(lambda x: (x[0], x[1]))
+        self._sigma_func.interpolate(self.sigma_expr)
+
+        self._computed_file_stress = f"battery_problem_dlrbnicsx/stress_computed_{mu[0]}_{mu[1]}.xdmf"
+        self._stress_file = dolfinx.io.XDMFFile(self._mesh.comm, self._computed_file_stress, "w")
+        self._stress_file.write_mesh(self._mesh)
+        self._stress_file.write_function(self._sigma_func.sub(0), 0)
+        self._stress_file.write_function(self._sigma_func.sub(1), 0)
+        self._stress_file.write_function(self._sigma_func.sub(2), 0)
+        self._stress_file.write_function(self._sigma_func.sub(3), 0)
+
         time_list = list()
         time_list.append(0)
 
@@ -178,6 +212,12 @@ class ProblemParametric(abc.ABC):
         solution_temp.x.array[:] = self._sol_current.x.array.copy()
         solution_temp.x.scatter_forward()
         solution_list.append(solution_temp)
+
+        stress_list = list()
+        stress_temp = dolfinx.fem.Function(self._V_sigma)
+        stress_temp.x.array[:] = self._sigma_func.x.array.copy()
+        stress_temp.x.scatter_forward()
+        stress_list.append(stress_temp)
 
         self.mu_0.value = mu[0]
         self.mu_1.value = mu[1]
@@ -189,68 +229,55 @@ class ProblemParametric(abc.ABC):
         # solver.atol = 1.e-10
         solver.max_it = 20
         dolfinx.log.set_log_level(dolfinx.log.LogLevel.INFO)
-        '''
-        self._theta_current = self._sol_current.sub(0)
-        self._mu_current = self._sol_current.sub(1)
-        self._disp_current = self._sol_current.sub(2)
-        '''
         current_time = 0
         for i in range(int(self.num_steps.value)):
             current_time += (3600 / self.mu_0.value) / self.num_steps.value # self.dt
             solution_temp = dolfinx.fem.Function(self._V)
+            stress_temp = dolfinx.fem.Function(self._V_sigma)
             print(f"Time: {current_time}, Step: {i}")
             n, converged = solver.solve(self._sol_current)
-            # TODO How to evaluate time when self.mu_0 is involved?
             print(f"Time: {current_time}, Iteration: {n}, Converged: {converged}, Step: {i}")
             self._sol_current.x.scatter_forward()
             self._sol_previous.x.array[:] = self._sol_current.x.array.copy()
             self._solution_file.write_function(self._sol_current.sub(0), current_time)
             self._solution_file.write_function(self._sol_current.sub(1), current_time)
             self._solution_file.write_function(self._sol_current.sub(2), current_time)
-            # self._solution_file.write_function(self._theta_current, current_time)
-            # self._solution_file.write_function(self._mu_current, current_time)
-            # self._solution_file.write_function(self._disp_current, current_time)
             solution_temp.x.array[:] = self._sol_current.x.array.copy()
             solution_temp.x.scatter_forward()
-            solution_list.append(solution_temp)
+
+            self._sigma_func.interpolate(self.sigma_expr)
+            self._stress_file.write_function(self._sigma_func.sub(0), current_time)
+            self._stress_file.write_function(self._sigma_func.sub(1), current_time)
+            self._stress_file.write_function(self._sigma_func.sub(2), current_time)
+            self._stress_file.write_function(self._sigma_func.sub(3), current_time)
+
             time_list.append(current_time)
-        return (time_list, solution_list)
+            solution_list.append(solution_temp)
+            stress_list.append(stress_temp)
+        self._mesh.geometry.x[:, :] = self.reference_coordinates
+        return (time_list, solution_list, stress_list)
 
 
 # Read mesh
 world_comm = MPI.COMM_WORLD
+fem_comm_list = list()
 
 if world_comm.size == 16:
     procs_per_communicator = 4
-    fem_comm_list = list()
-    for i in range(0, world_comm.size, procs_per_communicator):
-        fem_procs = world_comm.group.Incl(list(np.arange(i, i + procs_per_communicator).astype("int")))
-        fem_comm = world_comm.Create_group(fem_procs)
-        fem_comm_list.append(fem_comm)
 
 elif world_comm.size == 8:
     procs_per_communicator = 2
-    fem_comm_list = list()
-    for i in range(0, world_comm.size, procs_per_communicator):
-        fem_procs = world_comm.group.Incl(list(np.arange(i, i + procs_per_communicator).astype("int")))
-        fem_comm = world_comm.Create_group(fem_procs)
-        fem_comm_list.append(fem_comm)
 
 elif world_comm.size == 1:
     procs_per_communicator = 1
-    fem_comm_list = list()
-    for i in range(0, world_comm.size, procs_per_communicator):
-        fem_procs = world_comm.group.Incl(list(np.arange(i, i + procs_per_communicator).astype("int")))
-        fem_comm = world_comm.Create_group(fem_procs)
-        fem_comm_list.append(fem_comm)
 
 elif world_comm.size == 128:
     procs_per_communicator = 16
-    fem_comm_list = list()
-    for i in range(0, world_comm.size, procs_per_communicator):
-        fem_procs = world_comm.group.Incl(list(np.arange(i, i + procs_per_communicator).astype("int")))
-        fem_comm = world_comm.Create_group(fem_procs)
-        fem_comm_list.append(fem_comm)
+
+for i in range(0, world_comm.size, procs_per_communicator):
+    fem_procs = world_comm.group.Incl(list(np.arange(i, i + procs_per_communicator).astype("int")))
+    fem_comm = world_comm.Create_group(fem_procs)
+    fem_comm_list.append(fem_comm)
 
 for comm_i in fem_comm_list:
     if comm_i != MPI.COMM_NULL:
@@ -258,7 +285,6 @@ for comm_i in fem_comm_list:
         mesh_comm = comm_i
 
 gdim = 2
-# TODO clarify why does gmsh_model_rank correspond to rank of?world_comm and not of mesh_comm?
 gmsh_model_rank = 0
 mesh, cell_tags, facet_tags = \
     dolfinx.io.gmshio.read_from_msh("mesh_data/mesh.msh",
@@ -276,25 +302,37 @@ num_dofs_mu = mesh.comm.allreduce(rend_mu, op=MPI.MAX) - mesh.comm.allreduce(rst
 rstart_u, rend_u = sol_current_u.vector.getOwnershipRange()
 num_dofs_u = mesh.comm.allreduce(rend_u, op=MPI.MAX) - mesh.comm.allreduce(rstart_u, op=MPI.MIN)
 
-'''
+stress_current = dolfinx.fem.Function(problem_parametric._V_sigma)
+rstart_sigma, rend_sigma = stress_current.vector.getOwnershipRange()
+num_dofs_sigma = mesh.comm.allreduce(rend_sigma, op=MPI.MAX) - mesh.comm.allreduce(rstart_sigma, op=MPI.MIN)
+
 mu = np.array([5., 2.e-6])
 problem_parametric.num_steps.value = 5
-(time_list, sol_list) = problem_parametric.solve(mu)
+(time_list, sol_list, sigma_list) = problem_parametric.solve(mu)
+
+mu = np.array([5., 2.7e-6])
+problem_parametric.num_steps.value = 5
+(time_list, sol_list, sigma_list) = problem_parametric.solve(mu)
 
 mu = np.array([4., 2.e-6])
 problem_parametric.num_steps.value = 5
-(time_list, sol_list) = problem_parametric.solve(mu)
-'''
+(time_list, sol_list, sigma_list) = problem_parametric.solve(mu)
 
-pod_samples = [150, 1] # [3 * len(fem_comm_list), 1]
+mu = np.array([4., 2.7e-6])
+problem_parametric.num_steps.value = 5
+(time_list, sol_list, sigma_list) = problem_parametric.solve(mu)
+
+exit()
+
+pod_samples = [len(fem_comm_list), 3]
 para_dim = 2
 num_snapshots = np.product(pod_samples)
 itemsize = MPI.DOUBLE.Get_size()
 
 # POD Starts ###
 def generate_training_set(samples=pod_samples):
-    training_set_0 = np.linspace(1., 5., samples[0])
-    training_set_1 = np.linspace(2.e-6, 2.e-6, samples[1])
+    training_set_0 = np.linspace(1, 5, samples[0])
+    training_set_1 = np.linspace(2.e-6, 4.e-6, samples[1])
     training_set = np.array(list(itertools.product(training_set_0,
                                                    training_set_1)))
     return training_set
@@ -324,10 +362,12 @@ if world_comm.rank == 0:
     nbytes_theta = (num_snapshots * (problem_parametric.num_steps.value + 1)) * num_dofs_theta * itemsize
     nbytes_mu = (num_snapshots * (problem_parametric.num_steps.value + 1)) * num_dofs_mu * itemsize
     nbytes_u = (num_snapshots * (problem_parametric.num_steps.value + 1)) * num_dofs_u * itemsize
+    nbytes_sigma = (num_snapshots * (problem_parametric.num_steps.value + 1)) * num_dofs_sigma * itemsize
 else:
     nbytes_theta = 0
     nbytes_mu = 0
     nbytes_u = 0
+    nbytes_sigma = 0
 
 world_comm.barrier()
 
@@ -348,6 +388,11 @@ buf3, itemsize = win3.Shared_query(0)
 snapshot_arrays_u = np.ndarray(buffer=buf3, dtype="d", shape=(num_snapshots * int(problem_parametric.num_steps.value + 1), num_dofs_u))
 snapshots_matrix_u = rbnicsx.backends.FunctionsList(problem_parametric._U)
 
+win4 = MPI.Win.Allocate_shared(nbytes_sigma, itemsize, comm=MPI.COMM_WORLD)
+buf4, itemsize = win4.Shared_query(0)
+snapshot_arrays_sigma = np.ndarray(buffer=buf4, dtype="d", shape=(num_snapshots * int(problem_parametric.num_steps.value + 1), num_dofs_sigma))
+snapshots_matrix_sigma = rbnicsx.backends.FunctionsList(problem_parametric._V_sigma)
+
 Nmax = 30
 
 print(rbnicsx.io.TextBox("POD offline phase begins", fill="="))
@@ -362,21 +407,23 @@ for para_index in cpu_indices:
     theta_func = dolfinx.fem.Function(problem_parametric._Theta)
     mu_func = dolfinx.fem.Function(problem_parametric._Mu)
     u_func = dolfinx.fem.Function(problem_parametric._U)
+    sigma_func = dolfinx.fem.Function(problem_parametric._V_sigma)
 
     print("Parameter number ", (para_index+1), "of", training_set.shape[0])
-    print("high fidelity solve for mu =", training_set[para_index, :])
-    time_steps, snapshot_list = problem_parametric.solve(training_set[para_index, :])
+    print("High fidelity solve for mu =", training_set[para_index, :])
+    time_steps, snapshot_list, stress_snapshot_list = problem_parametric.solve(training_set[para_index, :])
     for i in range(len(snapshot_list)):
 
         theta_func = snapshot_list[i].sub(0).collapse()
         mu_func = snapshot_list[i].sub(1).collapse()
         u_func = snapshot_list[i].sub(2).collapse()
+        sigma_func = stress_snapshot_list[i]
 
-        print("update snapshots matrix")
-        print(f"Indices: {para_index}, {int(problem_parametric.num_steps.value + 1)}, {i}, {rstart_theta}, {rend_theta}")
+        print("Update snapshots matrix")
         snapshot_arrays_theta[para_index * int(problem_parametric.num_steps.value + 1) + i, rstart_theta:rend_theta] = theta_func.vector[rstart_theta:rend_theta]
         snapshot_arrays_mu[para_index * int(problem_parametric.num_steps.value + 1) + i, rstart_mu:rend_mu] = mu_func.vector[rstart_mu:rend_mu]
         snapshot_arrays_u[para_index * int(problem_parametric.num_steps.value + 1) + i, rstart_u:rend_u] = u_func.vector[rstart_u:rend_u]
+        snapshot_arrays_sigma[para_index * int(problem_parametric.num_steps.value + 1) + i, rstart_sigma:rend_sigma] = sigma_func.vector[rstart_sigma:rend_sigma]
 
 world_comm.Barrier()
 
@@ -384,18 +431,27 @@ for i in range(snapshot_arrays_theta.shape[0]):
     solution_empty_theta = dolfinx.fem.Function(problem_parametric._Theta)
     solution_empty_mu = dolfinx.fem.Function(problem_parametric._Mu)
     solution_empty_u = dolfinx.fem.Function(problem_parametric._U)
+    solution_empty_sigma = dolfinx.fem.Function(problem_parametric._V_sigma)
+
     solution_empty_theta.vector[rstart_theta:rend_theta] = snapshot_arrays_theta[i, rstart_theta:rend_theta]
     solution_empty_mu.vector[rstart_mu:rend_mu] = snapshot_arrays_mu[i, rstart_mu:rend_mu]
     solution_empty_u.vector[rstart_u:rend_u] = snapshot_arrays_u[i, rstart_u:rend_u]
+    solution_empty_sigma.vector[rstart_sigma:rend_sigma] = snapshot_arrays_sigma[i, rstart_sigma:rend_sigma]
+
     solution_empty_theta.x.scatter_forward()
     solution_empty_mu.x.scatter_forward()
     solution_empty_u.x.scatter_forward()
+    solution_empty_sigma.x.scatter_forward()
+
     solution_empty_theta.vector.assemble()
     solution_empty_mu.vector.assemble()
     solution_empty_u.vector.assemble()
+    solution_empty_sigma.vector.assemble()
+
     snapshots_matrix_theta.append(solution_empty_theta)
     snapshots_matrix_mu.append(solution_empty_mu)
     snapshots_matrix_u.append(solution_empty_u)
+    snapshots_matrix_sigma.append(solution_empty_sigma)
 
 print(rbnicsx.io.TextLine("perform POD (Theta)", fill="#"))
 eigenvalues_theta, modes_theta, _ = \
@@ -447,5 +503,22 @@ positive_eigenvalues_u = np.where(eigenvalues_u > 0., eigenvalues_u, np.nan)
 singular_values_u = np.sqrt(positive_eigenvalues_u)
 
 print(positive_eigenvalues_u)
+
+print(rbnicsx.io.TextLine("perform POD (Stress)", fill="#"))
+eigenvalues_sigma, modes_sigma, _ = \
+    rbnicsx.backends.\
+    proper_orthogonal_decomposition(snapshots_matrix_sigma,
+                                    problem_parametric._inner_product_sigma_action,
+                                    N=Nmax, tol=1.e-6)
+# reduced_problem._basis_functions.extend(modes)
+# reduced_size = len(reduced_problem._basis_functions)
+print("")
+
+print(rbnicsx.io.TextBox("POD-Galerkin (Stress) offline phase ends", fill="="))
+
+positive_eigenvalues_sigma = np.where(eigenvalues_sigma > 0., eigenvalues_sigma, np.nan)
+singular_values_sigma = np.sqrt(positive_eigenvalues_sigma)
+
+print(positive_eigenvalues_sigma)
 
 # POD Ends ###

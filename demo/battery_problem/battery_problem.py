@@ -21,6 +21,7 @@ gmsh_model_rank = 0
 mesh_comm = MPI.COMM_WORLD
 mesh, cell_tags, facet_tags = dolfinx.io.gmshio.read_from_msh(
     "mesh_data/mesh.msh", mesh_comm, gmsh_model_rank, gdim=gdim)
+
 n_vec = ufl.FacetNormal(mesh)
 
 k = 2

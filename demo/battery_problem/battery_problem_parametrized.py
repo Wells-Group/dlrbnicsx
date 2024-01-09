@@ -21,6 +21,7 @@ gmsh_model_rank = 0
 mesh_comm = MPI.COMM_WORLD
 mesh, cell_tags, facet_tags = dolfinx.io.gmshio.read_from_msh(
     "mesh_data/mesh.msh", mesh_comm, gmsh_model_rank, gdim=gdim)
+mesh.geometry.x[:, 0] = 1.2 * mesh.geometry.x[:, 0]
 n_vec = ufl.FacetNormal(mesh)
 
 k = 2
@@ -38,7 +39,6 @@ U, _ = V.sub(2).sub(1).collapse()
 
 V_x = dolfinx.fem.VectorFunctionSpace(mesh, ("Lagrange", k))
 x = dolfinx.fem.Function(V_x)
-x.interpolate(lambda x: (x[0], x[1]))
 
 theta_test, mu_test, u_test = ufl.TestFunctions(V)
 
@@ -155,6 +155,7 @@ stress_computed_file.write_function(sigma_func.sub(3), current_time)
 
 for i in range(num_steps):
     current_time += dt
+    x.interpolate(lambda x: (x[0], x[1]))
     n, converged = solver.solve(sol_current)
     print(f"Time: {current_time}, Iteration: {n}, Converged: {converged}, Step: {i}")
     sol_current.x.scatter_forward() # NOTE Why no scatter_forward in the tutorial
@@ -177,6 +178,10 @@ end_time = MPI.Wtime()
 run_time = end_time - start_time
 
 run_time = mesh.comm.allreduce(run_time, op=MPI.MAX)
+
+print(mesh.comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(theta_current, theta_current) * ufl.dx)), op=MPI.SUM))
+print(mesh.comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(mu_current, mu_current) * ufl.dx)), op=MPI.SUM))
+print(mesh.comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(disp_current, disp_current) * ufl.dx)), op=MPI.SUM))
 
 if mesh.comm.rank == 0:
     print(f"Run time: {run_time}")
