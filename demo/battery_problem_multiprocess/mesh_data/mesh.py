@@ -13,12 +13,12 @@ gdim = 2
 min_r, max_r = 0, 1.e-6
 min_z, max_z = -1.e-6, 1.e-6
 
-point_a = gmsh.model.occ.addPoint(min_r, min_z, 0., 9.e-9)
-point_b = gmsh.model.occ.addPoint(max_r, min_z, 0., 5.e-8)
-point_c = gmsh.model.occ.addPoint(max_r, 0, 0., 1.e-8)
-point_d = gmsh.model.occ.addPoint(max_r, max_z, 0., 5.e-8)
-point_e = gmsh.model.occ.addPoint(min_r, max_z, 0., 9.e-9)
-point_f = gmsh.model.occ.addPoint(min_r, 0, 0., 3.e-9)
+point_a = gmsh.model.occ.addPoint(min_r, min_z, 0., 1.e-8) # 9.e-9)
+point_b = gmsh.model.occ.addPoint(max_r, min_z, 0., 7.e-8)# 5.e-8)
+point_c = gmsh.model.occ.addPoint(max_r, 0, 0., 3.e-8) # 2.e-8)
+point_d = gmsh.model.occ.addPoint(max_r, max_z, 0., 7.e-8) # 5.e-8)
+point_e = gmsh.model.occ.addPoint(min_r, max_z, 0., 1.e-8) # 9.e-9)
+point_f = gmsh.model.occ.addPoint(min_r, 0, 0., 6.e-9) # 3.e-9)
 
 line_ab = gmsh.model.occ.addLine(point_a, point_b)
 line_bc = gmsh.model.occ.addLine(point_b, point_c)
@@ -32,12 +32,13 @@ plane_abcdefa = gmsh.model.occ.addPlaneSurface([loop_abcdefa], 1)
 
 gmsh.model.occ.synchronize()
 
+'''
 gmsh.model.mesh.field.add("Distance", 1)
 gmsh.model.mesh.field.setNumbers(1, "PointsList", [point_f])
 gmsh.model.mesh.field.add("MathEval", 2)
 gmsh.model.mesh.field.setString(2, "F",
                                 "x*x + y*y + 3e-9")
-
+'''
 
 # Create mesh
 # 8 = Frontal-Delaunay for Quads

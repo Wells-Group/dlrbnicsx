@@ -91,7 +91,7 @@ class ProblemParametric(abc.ABC):
         self.stiffness_tensor = ufl.as_tensor([
             [259.e9, 75.e9, 107.e9, 0.], [75.e9, 194.e9, 75.e9, 0.],
             [107.e9, 75.e9, 259.e9, 0.], [0., 0., 0., 59.e9]])
-        self.num_steps = dolfinx.fem.Constant(self._mesh, PETSc.ScalarType(5, dtype=int))
+        self.num_steps = dolfinx.fem.Constant(self._mesh, PETSc.ScalarType(20, dtype=int))
         self.dt = (3600 / self.mu_0) / self.num_steps
         self.i_s = 4780 * self.mu_0 * self.mu_1 * 210 / 4
 
@@ -306,25 +306,21 @@ stress_current = dolfinx.fem.Function(problem_parametric._V_sigma)
 rstart_sigma, rend_sigma = stress_current.vector.getOwnershipRange()
 num_dofs_sigma = mesh.comm.allreduce(rend_sigma, op=MPI.MAX) - mesh.comm.allreduce(rstart_sigma, op=MPI.MIN)
 
+'''
 mu = np.array([5., 2.e-6])
-problem_parametric.num_steps.value = 5
 (time_list, sol_list, sigma_list) = problem_parametric.solve(mu)
 
 mu = np.array([5., 2.7e-6])
-problem_parametric.num_steps.value = 5
 (time_list, sol_list, sigma_list) = problem_parametric.solve(mu)
 
 mu = np.array([4., 2.e-6])
-problem_parametric.num_steps.value = 5
 (time_list, sol_list, sigma_list) = problem_parametric.solve(mu)
 
 mu = np.array([4., 2.7e-6])
-problem_parametric.num_steps.value = 5
 (time_list, sol_list, sigma_list) = problem_parametric.solve(mu)
+'''
 
-exit()
-
-pod_samples = [len(fem_comm_list), 3]
+pod_samples = [3 * len(fem_comm_list), 3]
 para_dim = 2
 num_snapshots = np.product(pod_samples)
 itemsize = MPI.DOUBLE.Get_size()
