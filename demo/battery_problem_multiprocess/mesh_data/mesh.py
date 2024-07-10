@@ -32,13 +32,11 @@ plane_abcdefa = gmsh.model.occ.addPlaneSurface([loop_abcdefa], 1)
 
 gmsh.model.occ.synchronize()
 
-'''
 gmsh.model.mesh.field.add("Distance", 1)
 gmsh.model.mesh.field.setNumbers(1, "PointsList", [point_f])
 gmsh.model.mesh.field.add("MathEval", 2)
 gmsh.model.mesh.field.setString(2, "F",
                                 "x*x + y*y + 3e-9")
-'''
 
 # Create mesh
 # 8 = Frontal-Delaunay for Quads

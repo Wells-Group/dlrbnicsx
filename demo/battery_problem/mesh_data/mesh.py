@@ -77,7 +77,7 @@ gmsh.model.occ.remove(gmsh.model.getEntities(dim=gdim))
 
 # Save and visualise the mesh
 gmsh.write("mesh.msh")
-gmsh.fltk.run()
+# gmsh.fltk.run()
 
 # Import mesh in dolfinx
 gmsh_model_rank = 0
