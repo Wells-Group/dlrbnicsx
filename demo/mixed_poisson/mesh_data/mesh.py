@@ -48,7 +48,7 @@ gmsh.model.mesh.setOrder(1)
 gmsh.model.mesh.optimize("Netgen")
 
 ov = gmsh.model.geo.copy([(2, 1)])
-vol1 = gmsh.model.geo.extrude([ov[0]], 0, 0, 1, [20], [1], recombine=True)
+vol1 = gmsh.model.geo.extrude([ov[0]], 0, 0, 1, [200], [1], recombine=True)
 gmsh.model.geo.synchronize()
 gmsh.model.geo.addPhysicalGroup(3, [vol1[1][1]], 101)
 
