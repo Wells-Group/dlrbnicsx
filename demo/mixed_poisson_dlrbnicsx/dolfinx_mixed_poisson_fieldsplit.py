@@ -106,7 +106,7 @@ pc.setFieldSplitType(PETSc.PC.CompositeType.SCHUR)
 # CAUTION it is "assumed" that 1 means full see https://petsc.org/release/petsc4py/reference/petsc4py.PETSc.PC.FieldSplitSchurFactType.html #petsc4py.PETSc.PC.FieldSplitSchurFactType
 pc.setFieldSplitSchurFactType(1)
 # CAUTION it is "assumed" that 3 means selfp see https://web.cels.anl.gov/projects/petsc/vault/petsc-3.20/docs/petsc4py/reference/petsc4py.PETSc.PC.FieldSplitSchurPreType.html
-pc.setFieldSplitSchurPreType(56)
+pc.setFieldSplitSchurPreType(3)
 # ksp.getPC().setFactorSolverType("mumps")
 
 # NOTE Since setFieldSplitIS for ISq is called zero-th and for ISw is called first --> subksps[0] corressponds to ISq and subksps[1] corressponds to ISw
