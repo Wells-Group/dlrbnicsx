@@ -11,13 +11,15 @@ import dolfinx
 from dolfinx.fem.petsc import LinearProblem
 
 # Import mesh in dolfinx
+# Boundary markers: x=1 is 22, x=0 is 30, y=1 is 26, y=0 is 18, z=1 is 31, z=0 is 1
 gdim = 3
 gmsh_model_rank = 0
 mesh_comm = MPI.COMM_WORLD
 mesh, subdomains, boundaries = \
     dolfinx.io.gmshio.read_from_msh("mesh_data/3d_mesh.msh", mesh_comm,
                                     gmsh_model_rank, gdim=gdim)
-# Boundaries marker: x=1 is 22, x=0 is 30, y=1 is 26, y=0 is 18, z=1 is 31, z=0 is 1
+
+mu = np.array([-2., 0.5, 0.5, 0.5, 3.])
 
 k = 1
 Q_el = basix.ufl.element("BDMCF", mesh.basix_cell(), k)
@@ -29,7 +31,7 @@ V = dolfinx.fem.FunctionSpace(mesh, V_el)
 (tau, v) = ufl.TestFunctions(V)
 
 x = ufl.SpatialCoordinate(mesh)
-f = 10.0 * ufl.exp(-((x[0] - 0.5) * (x[0] - 0.5) + (x[1] - 0.5) * (x[1] - 0.5) + (x[2] - 0.5) * (x[2] - 0.5)) / 0.02)
+f = 10. * ufl.exp(-mu[0] * ((x[0] - mu[1]) * (x[0] - mu[1]) + (x[1] - mu[2]) * (x[1] - mu[2]) + (x[2] - mu[3]) * (x[2] - mu[3])))
 
 ds = ufl.Measure("ds", domain=mesh, subdomain_data=boundaries)
 dx = ufl.Measure("dx", domain=mesh, subdomain_data=subdomains)
@@ -45,7 +47,7 @@ dofs_x0 = dolfinx.fem.locate_dofs_topological((V0, Q), gdim-1, boundaries.find(3
 
 def f1(x):
     values = np.zeros((3, x.shape[1]))
-    values[0, :] = np.sin(5 * x[0])
+    values[0, :] = np.sin(mu[4] * x[0])
     return values
 
 
@@ -57,7 +59,7 @@ dofs_y0 = dolfinx.fem.locate_dofs_topological((V0, Q), gdim-1, boundaries.find(1
 
 def f2(x):
     values = np.zeros((3, x.shape[1]))
-    values[1, :] = np.sin(5 * x[1])
+    values[1, :] = np.sin(mu[4] * x[1])
     return values
 
 
@@ -69,7 +71,7 @@ dofs_z0 = dolfinx.fem.locate_dofs_topological((V0, Q), gdim-1, boundaries.find(1
 
 def f3(x):
     values = np.zeros((3, x.shape[1]))
-    values[2, :] = np.sin(5 * x[2])
+    values[2, :] = np.sin(mu[4] * x[2])
     return values
 
 
@@ -78,8 +80,7 @@ f_h3.interpolate(f3)
 bc_z0 = dolfinx.fem.dirichletbc(f_h3, dofs_z0, V0)
 
 # NOTE
-bcs = []
-# bcs = [bc_x0, bc_y0, bc_z0]
+bcs = [bc_x0, bc_y0, bc_z0]
 
 # TODO solver and preconditioner
 problem = LinearProblem(
@@ -99,7 +100,16 @@ except PETSc.Error as e:  # type: ignore
         raise e
 
 sigma_h, u_h = w_h.split()
+sigma_h = sigma_h.collapse()
+u_h = u_h.collapse()
+
+with dolfinx.io.XDMFFile(mesh.comm, "out_mixed_poisson/sigma.xdmf", "w") as sol_file:
+    sol_file.write_mesh(mesh)
+    sol_file.write_function(sigma_h)
 
 with dolfinx.io.XDMFFile(mesh.comm, "out_mixed_poisson/u.xdmf", "w") as sol_file:
     sol_file.write_mesh(mesh)
     sol_file.write_function(u_h)
+
+print(sigma_h.x.array, np.linalg.norm(sigma_h.x.array))
+print(u_h.x.array, np.linalg.norm(u_h.x.array))
