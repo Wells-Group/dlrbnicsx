@@ -343,6 +343,7 @@ print(f"Sigma eigenvalues: {positive_eigenvalues_sigma}")
 
 sigma_sol_projected = reduced_problem.project_snapshot_sigma(sigma_sol, reduced_size_sigma)
 sigma_sol_reconstructed = reduced_problem.reconstruct_solution_sigma(sigma_sol_projected)
+print(sigma_sol_reconstructed.x.array.shape, sigma_sol.x.array.shape)
 sigma_norm = reduced_problem.compute_norm_sigma(sigma_sol_reconstructed)
 sigma_error = reduced_problem.norm_error_sigma(sigma_sol, sigma_sol_reconstructed)
 print(f"Norm reconstructed: {sigma_norm}, Error: {sigma_error}")
