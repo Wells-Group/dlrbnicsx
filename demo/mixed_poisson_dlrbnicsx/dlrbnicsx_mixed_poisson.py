@@ -276,7 +276,7 @@ print("Set up snapshots matrix")
 snapshots_matrix = rbnicsx.backends.FunctionsList(problem_parametric._Q)
 
 print("Set up reduced problem")
-# reduced_problem = PODANNReducedProblem(problem_parametric)
+reduced_problem = PODANNReducedProblem(problem_parametric)
 
 print("")
 
