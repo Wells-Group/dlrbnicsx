@@ -305,7 +305,7 @@ eigenvalues_sigma, modes_sigma, _ = \
     rbnicsx.backends.\
     proper_orthogonal_decomposition(snapshots_matrix,
                                     problem_parametric._inner_product_sigma_action,
-                                    N=Nmax, tol=1e-10)
+                                    N=Nmax, tol=1e-6)
 
 reduced_problem._basis_functions_sigma.extend(modes_sigma)
 reduced_size_sigma = len(reduced_problem._basis_functions_sigma)
