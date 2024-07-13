@@ -254,7 +254,7 @@ with dolfinx.io.XDMFFile(mesh.comm, "parametric_mixed_poisson/u.xdmf", "w") as s
 # POD Starts ###
 
 
-def generate_training_set(samples=[2, 1, 2, 1, 2]):
+def generate_training_set(samples=[3, 3, 3, 3, 3]):
     # Select input samples for POD
     training_set_0 = np.linspace(-5., 5., samples[0])
     training_set_1 = np.linspace(0.2, 0.8, samples[1])
