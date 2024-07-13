@@ -149,6 +149,73 @@ class ParametricProblem(abc.ABC):
         u_sol = u_sol.collapse()
         return sigma_sol, u_sol
 
+class PODANNReducedProblem(abc.ABC):
+    def __init__(self, problem):
+        Q, _ = problem._V.sub(0).collapse()
+        W, _ = problem._V.sub(1).collapse()
+        self._basis_functions_sigma = rbnicsx.backends.FunctionsList(Q)
+        self._basis_functions_u = rbnicsx.backends.FunctionsList(W)
+        sigma, tau = ufl.TrialFunction(Q), ufl.TestFunction(Q)
+        u, v = ufl.TrialFunction(W), ufl.TestFunction(W)
+        self._inner_product_sigma_action = problem._inner_product_sigma_action
+        self._inner_product_u_action = problem._inner_product_u_action
+
+    def reconstruct_solution_sigma(self, reduced_solution_sigma):
+        return self._basis_functions_sigma[:reduced_solution_sigma.size] * \
+            reduced_solution_sigma
+    
+    def reconstruct_solution_u(self, reduced_solution_u):
+        return self._basis_functions_u[:reduced_solution_u.size] * \
+            reduced_solution_u
+    
+    def compute_norm_sigma(self, sigma_function):
+        return np.sqrt(self._inner_product_sigma_action(sigma_function)
+                       (sigma_function))
+
+    def compute_norm_u(self, u_function):
+        return np.sqrt(self._inner_product_u_action(u_function)
+                       (u_function))
+
+    def project_snapshot_sigma(self, sigma_function, N_sigma):
+        return self._project_snapshot_sigma(sigma_function, N_sigma)
+
+    def project_snapshot_u(self, u_function, N_u):
+        return self._project_snapshot_u(u_function, N_u)
+    
+    def _project_snapshot_sigma(self, sigma_function, N_sigma):
+        projected_snapshot_sigma = rbnicsx.online.create_vector(N_sigma)
+        A = rbnicsx.backends.\
+            project_matrix(self._inner_product_sigma_action,
+                           self._basis_functions_sigma[:N_sigma])
+        F = rbnicsx.backends.\
+            project_vector(self._inner_product_sigma_action(sigma_function),
+                           self._basis_functions_sigma[:N_sigma])
+        ksp = PETSc.KSP()
+        ksp.create(projected_snapshot_sigma.comm)
+        ksp.setOperators(A)
+        ksp.setType("preonly")
+        ksp.getPC().setType("lu")
+        ksp.setFromOptions()
+        ksp.solve(F, projected_snapshot_sigma)
+        return projected_snapshot_sigma
+
+    def _project_snapshot_u(self, u_function, N_u):
+        projected_snapshot_u = rbnicsx.online.create_vector(N_u)
+        A = rbnicsx.backends.\
+            project_matrix(self._inner_product_u_action,
+                           self._basis_functions_u[:N_u])
+        F = rbnicsx.backends.\
+            project_vector(self._inner_product_u_action(u_function),
+                           self._basis_functions_u[:N_u])
+        ksp = PETSc.KSP()
+        ksp.create(projected_snapshot_sigma.comm)
+        ksp.setOperators(A)
+        ksp.setType("preonly")
+        ksp.getPC().setType("lu")
+        ksp.setFromOptions()
+        ksp.solve(F, projected_snapshot_u)
+        return projected_snapshot_u
+
 # Import mesh in dolfinx
 gdim = 3
 gmsh_model_rank = 0
@@ -228,26 +295,26 @@ for (mu_index, mu) in enumerate(training_set):
     print("")
 
 print(rbnicsx.io.TextLine("Perform POD", fill="#"))
-eigenvalues, modes, _ = \
+eigenvalues_sigma, modes_sigma, _ = \
     rbnicsx.backends.\
     proper_orthogonal_decomposition(snapshots_matrix,
                                     problem_parametric._inner_product_sigma_action,
                                     N=Nmax, tol=1e-10)
-reduced_size = len(modes)
-# reduced_problem._basis_functions.extend(modes)
-# reduced_size = len(reduced_problem._basis_functions)
+
+reduced_problem._basis_functions_sigma.extend(modes_sigma)
+reduced_size_sigma = len(reduced_problem._basis_functions_sigma)
 print("")
 
 print(rbnicsx.io.TextBox("POD-Galerkin offline phase ends", fill="="))
 
-positive_eigenvalues = np.where(eigenvalues > 0., eigenvalues, np.nan)
-singular_values = np.sqrt(positive_eigenvalues)
+positive_eigenvalues_sigma = np.where(eigenvalues_sigma > 0., eigenvalues_sigma, np.nan)
+singular_values_sigma = np.sqrt(positive_eigenvalues_sigma)
 
 plt.figure(figsize=[8, 10])
 xint = list()
 yval = list()
 
-for x, y in enumerate(eigenvalues[:len(modes)]):
+for x, y in enumerate(eigenvalues_sigma[:len(modes_sigma)]):
     yval.append(y)
     xint.append(x+1)
 
@@ -256,12 +323,13 @@ plt.xlabel("Eigenvalue number", fontsize=18)
 plt.ylabel("Eigenvalue", fontsize=18)
 plt.xticks(xint)
 plt.yscale("log")
-plt.title("Eigenvalue decay", fontsize=24)
+plt.title("Eigenvalue decay sigma", fontsize=24)
 plt.tight_layout()
-plt.savefig("eigenvalue_decay")
+plt.savefig("eigenvalue_decay_sigma")
 
-print(f"Sigma eigenvalues: {positive_eigenvalues}")
+print(f"Sigma eigenvalues: {positive_eigenvalues_sigma}")
 
 # TODO POD for u
 
 # POD Ends ###
+
