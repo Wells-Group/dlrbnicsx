@@ -216,6 +216,14 @@ class PODANNReducedProblem(abc.ABC):
         ksp.solve(F, projected_snapshot_u)
         return projected_snapshot_u
 
+    def norm_error_sigma(self, sigma_true, sigma_rb):
+        # Relative error norm for VELOCITY
+        return self.compute_norm_sigma(sigma_true - sigma_rb)/self.compute_norm_u(sigma_true)
+
+    def norm_error_u(self, u_true, u_rb):
+        # Relative error norm for PRESSURE
+        return self.compute_norm_u(u_true - u_rb)/self.compute_norm_u(u_true)
+
 # Import mesh in dolfinx
 gdim = 3
 gmsh_model_rank = 0
@@ -335,3 +343,6 @@ print(f"Sigma eigenvalues: {positive_eigenvalues_sigma}")
 
 sigma_sol_projected = reduced_problem.project_snapshot_sigma(sigma_sol, reduced_size_sigma)
 sigma_sol_reconstructed = reduced_problem.reconstruct_solution_sigma(sigma_sol_projected)
+sigma_norm = reduced_problem.compute_norm_sigma(sigma_sol_reconstructed)
+sigma_error = reduced_problem.norm_error_sigma(sigma_sol, sigma_sol_reconstructed)
+print(f"Norm reconstructed: {sigma_norm}, Error: {sigma_error}")
