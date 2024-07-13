@@ -333,3 +333,5 @@ print(f"Sigma eigenvalues: {positive_eigenvalues_sigma}")
 
 # POD Ends ###
 
+sigma_sol_projected = reduced_problem.project_snapshot_sigma(sigma_sol, reduced_size_sigma)
+sigma_sol_reconstructed = reduced_problem.reconstruct_solution_sigma(sigma_sol_projected)
