@@ -217,11 +217,9 @@ class PODANNReducedProblem(abc.ABC):
         return projected_snapshot_u
 
     def norm_error_sigma(self, sigma_true, sigma_rb):
-        # Relative error norm for VELOCITY
-        return self.compute_norm_sigma(sigma_true - sigma_rb)/self.compute_norm_u(sigma_true)
+        return self.compute_norm_sigma(sigma_true - sigma_rb)/self.compute_norm_sigma(sigma_true)
 
     def norm_error_u(self, u_true, u_rb):
-        # Relative error norm for PRESSURE
         return self.compute_norm_u(u_true - u_rb)/self.compute_norm_u(u_true)
 
 # Import mesh in dolfinx
