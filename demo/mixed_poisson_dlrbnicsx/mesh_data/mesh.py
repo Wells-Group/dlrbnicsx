@@ -1,10 +1,6 @@
-import gmsh
-import sys
-import math
-import numpy as np
-
-from mpi4py import MPI
 import dolfinx
+import gmsh
+from mpi4py import MPI
 
 gmsh.initialize()
 gmsh.model.add("3d_mesh")

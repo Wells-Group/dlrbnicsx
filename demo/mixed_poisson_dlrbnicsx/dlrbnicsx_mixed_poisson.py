@@ -261,6 +261,7 @@ sigma_sol, u_sol = problem_parametric.solve(mu)
 print(sigma_sol.x.array, np.linalg.norm(sigma_sol.x.array))
 print(u_sol.x.array, np.linalg.norm(u_sol.x.array))
 
+'''
 with dolfinx.io.XDMFFile(mesh.comm, "parametric_mixed_poisson/sigma.xdmf", "w") as sol_file:
     sol_file.write_mesh(mesh)
     sol_file.write_function(sigma_sol)
@@ -268,6 +269,7 @@ with dolfinx.io.XDMFFile(mesh.comm, "parametric_mixed_poisson/sigma.xdmf", "w") 
 with dolfinx.io.XDMFFile(mesh.comm, "parametric_mixed_poisson/u.xdmf", "w") as sol_file:
     sol_file.write_mesh(mesh)
     sol_file.write_function(u_sol)
+'''
 
 # TODO more benchmarking with dolfinx implementation for correctness
 
@@ -559,6 +561,7 @@ rb_solution_u = \
 solution_sigma_error = dolfinx.fem.Function(problem_parametric._Q)
 solution_sigma_error.x.array[:] = abs(solution_sigma.x.array - rb_solution_sigma.x.array)
 
+'''
 with dolfinx.io.XDMFFile(mesh.comm, "dlrbnicsx_solution/fem_sigma_online_mu.xdmf",
                             "w") as solution_file:
     solution_file.write_mesh(mesh)
@@ -568,3 +571,4 @@ with dolfinx.io.XDMFFile(mesh.comm, "dlrbnicsx_solution/rb_sigma_online_mu.xdmf"
                             "w") as solution_file:
     solution_file.write_mesh(mesh)
     solution_file.write_function(rb_solution_sigma)
+'''
