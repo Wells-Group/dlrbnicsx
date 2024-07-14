@@ -160,6 +160,8 @@ class PODANNReducedProblem(abc.ABC):
         u, v = ufl.TrialFunction(W), ufl.TestFunction(W)
         self._inner_product_sigma_action = problem._inner_product_sigma_action
         self._inner_product_u_action = problem._inner_product_u_action
+        self.output_range_sigma = [None, None]
+        self.output_range_u = [None, None]
 
     def reconstruct_solution_sigma(self, reduced_solution_sigma):
         return self._basis_functions_sigma[:reduced_solution_sigma.size] * \
@@ -387,7 +389,8 @@ input_validation_set = ann_input_set[num_training_samples:, :]
 output_validation_set_sigma = ann_output_set_sigma[num_training_samples:, :]
 output_validation_set_u = ann_output_set_u[num_training_samples:, :]
 
-reduced_problem.output_range_u[0] = np.min(ann_output_set_sigma)
-reduced_problem.output_range_u[1] = np.max(ann_output_set_sigma)
-reduced_problem.output_range_p[0] = np.min(ann_output_set_u)
-reduced_problem.output_range_p[1] = np.max(ann_output_set_u)
+reduced_problem.output_range_sigma[0] = np.min(ann_output_set_sigma)
+reduced_problem.output_range_sigma[1] = np.max(ann_output_set_sigma)
+reduced_problem.output_range_u[0] = np.min(ann_output_set_u)
+reduced_problem.output_range_u[1] = np.max(ann_output_set_u)
+
