@@ -231,7 +231,7 @@ mesh, subdomains, boundaries = \
                                     gmsh_model_rank, gdim=gdim)
 # Boundary markers: x=1 is 22, x=0 is 30, y=1 is 26, y=0 is 18, z=1 is 31, z=0 is 1
 
-num_ann_samples = 300
+num_ann_samples = 30
 # Parameters
 mu = np.array([-2., 0.5, 0.5, 0.5, 3.])
 
