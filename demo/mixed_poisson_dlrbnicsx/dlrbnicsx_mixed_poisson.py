@@ -458,8 +458,8 @@ model_u = HiddenLayersNet(input_training_set.shape[1], [15, 15],
 # Start of training (Velocity)
 
 path = "model_sigma.pth"
-# save_model(model_sigma, path)
-load_model(model_sigma, path)
+save_model(model_sigma, path)
+# load_model(model_sigma, path)
 
 training_loss_sigma = list()
 validation_loss_sigma = list()
