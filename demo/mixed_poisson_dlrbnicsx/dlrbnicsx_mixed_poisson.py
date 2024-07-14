@@ -231,6 +231,7 @@ mesh, subdomains, boundaries = \
                                     gmsh_model_rank, gdim=gdim)
 # Boundary markers: x=1 is 22, x=0 is 30, y=1 is 26, y=0 is 18, z=1 is 31, z=0 is 1
 
+num_ann_samples = 300
 # Parameters
 mu = np.array([-2., 0.5, 0.5, 0.5, 3.])
 
@@ -345,3 +346,47 @@ print(sigma_sol_reconstructed.x.array.shape, sigma_sol.x.array.shape)
 sigma_norm = reduced_problem.compute_norm_sigma(sigma_sol_reconstructed)
 sigma_error = reduced_problem.norm_error_sigma(sigma_sol, sigma_sol_reconstructed)
 print(f"Norm reconstructed: {sigma_norm}, Error: {sigma_error}")
+
+# Creating dataset
+def generate_ann_input_set(num_anna_samples=243):
+    xlimits = np.array([[-5., 5.], [0.2, 0.8],
+                        [0.2, 0.8], [0.2, 0.8],
+                        [1., 5.]])
+    sampling = LHS(xlimits=xlimits)
+    training_set = sampling(num_ann_samples)
+    return training_set
+
+def generate_ann_output_set(problem, reduced_problem, input_set, mode=None):
+    output_set_sigma = np.zeros([input_set.shape[0], len(reduced_problem._basis_functions_sigma)])
+    output_set_u = np.zeros([input_set.shape[0], len(reduced_problem._basis_functions_u)])
+    for i in range(input_set.shape[0]):
+        if mode is None:
+            print(f"Parameter number {i+1} of {input_set.shape[0]}: {input_set[i,:]}")
+        else:
+            print(f"{mode} parameter number {i+1} of {input_set.shape[0]}: {input_set[i,:]}")
+        solution_sigma, solution_u = problem.solve(input_set[i, :])
+        output_set_sigma[i, :] = reduced_problem.project_snapshot_sigma(solution_sigma, len(reduced_problem._basis_functions_sigma)).array  # .astype("f")
+        # output_set_u[i, :] = reduced_problem.project_snapshot_u(solution_u, len(reduced_problem._basis_functions_u)).array  # .astype("f")
+    return output_set_sigma, output_set_u
+
+ann_input_set = generate_ann_input_set(samples=num_ann_samples)
+# np.random.shuffle(ann_input_set)
+ann_output_set_sigma, ann_output_set_u = \
+    generate_ann_output_set(problem_parametric, reduced_problem,
+                            ann_input_set, mode="Training")
+
+num_training_samples = int(0.7 * ann_input_set.shape[0])
+num_validation_samples = ann_input_set.shape[0] - num_training_samples
+
+input_training_set = ann_input_set[:num_training_samples, :]
+output_training_set_sigma = ann_output_set_sigma[:num_training_samples, :]
+output_training_set_u = ann_output_set_u[:num_training_samples, :]
+
+input_validation_set = ann_input_set[num_training_samples:, :]
+output_validation_set_sigma = ann_output_set_sigma[num_training_samples:, :]
+output_validation_set_u = ann_output_set_u[num_training_samples:, :]
+
+reduced_problem.output_range_u[0] = np.min(ann_output_set_sigma)
+reduced_problem.output_range_u[1] = np.max(ann_output_set_sigma)
+reduced_problem.output_range_p[0] = np.min(ann_output_set_u)
+reduced_problem.output_range_p[1] = np.max(ann_output_set_u)
