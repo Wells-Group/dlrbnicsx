@@ -16,6 +16,14 @@ import rbnicsx
 import rbnicsx.online
 import rbnicsx.backends
 
+from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
+from dlrbnicsx.activation_function.activation_function_factory import Tanh, Sigmoid
+from dlrbnicsx.dataset.custom_dataset import CustomDataset
+from dlrbnicsx.interface.wrappers import DataLoader, save_model, load_model, \
+    save_checkpoint, load_checkpoint, get_optimiser, get_loss_func
+from dlrbnicsx.train_validate_test.train_validate_test import \
+    train_nn, validate_nn, online_nn, error_analysis
+
 class ParametricProblem(abc.ABC):
     def __init__(self, mesh, subdomains, boundaries):
         self._mesh = mesh
@@ -160,7 +168,13 @@ class PODANNReducedProblem(abc.ABC):
         u, v = ufl.TrialFunction(W), ufl.TestFunction(W)
         self._inner_product_sigma_action = problem._inner_product_sigma_action
         self._inner_product_u_action = problem._inner_product_u_action
+        self.input_scaling_range = [-1., 1.]
+        self.input_range = \
+            np.array([[-5., 0.2, 0.2, 0.2, 1.],
+                      [5., 0.8, 0.8, 0.8, 5.]])
+        self.output_scaling_range_sigma = [-1., 1.]
         self.output_range_sigma = [None, None]
+        self.output_scaling_range_u = [-1., 1.]
         self.output_range_u = [None, None]
 
     def reconstruct_solution_sigma(self, reduced_solution_sigma):
@@ -394,3 +408,36 @@ reduced_problem.output_range_sigma[1] = np.max(ann_output_set_sigma)
 reduced_problem.output_range_u[0] = np.min(ann_output_set_u)
 reduced_problem.output_range_u[1] = np.max(ann_output_set_u)
 
+customDataset = CustomDataset(reduced_problem, input_training_set,
+                              output_training_set_sigma,
+                              input_scaling_range=[-1., 1.],
+                              output_scaling_range=reduced_problem.output_scaling_range_sigma,
+                              input_range=reduced_problem.input_range_u,
+                              output_range=reduced_problem.output_range_u, verbose=False)
+train_dataloader_u = DataLoader(customDataset, batch_size=6, shuffle=False) # shuffle=True)
+
+customDataset = CustomDataset(reduced_problem, input_validation_set,
+                              output_validation_set_u,
+                              input_scaling_range=reduced_problem.input_scaling_range_u,
+                              output_scaling_range=reduced_problem.output_scaling_range_u,
+                              input_range=reduced_problem.input_range_u,
+                              output_range=reduced_problem.output_range_u, verbose=False)
+valid_dataloader_u = DataLoader(customDataset, shuffle=False)
+
+customDataset = \
+    CustomDataset(reduced_problem, input_training_set,
+                  output_training_set_p,
+                  input_scaling_range=reduced_problem.input_scaling_range_p,
+                  output_scaling_range=reduced_problem.output_scaling_range_p,
+                  input_range=reduced_problem.input_range_p,
+                  output_range=reduced_problem.output_range_p, verbose=False)
+train_dataloader_p = DataLoader(customDataset, batch_size=6, shuffle=False) # shuffle=True)
+
+customDataset = \
+    CustomDataset(reduced_problem, input_validation_set,
+                  output_validation_set_p,
+                  input_scaling_range=reduced_problem.input_scaling_range_p,
+                  output_scaling_range=reduced_problem.output_scaling_range_p,
+                  input_range=reduced_problem.input_range_p,
+                  output_range=reduced_problem.output_range_p, verbose=False)
+valid_dataloader_p = DataLoader(customDataset, shuffle=False)
