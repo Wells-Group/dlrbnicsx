@@ -369,7 +369,7 @@ def generate_ann_output_set(problem, reduced_problem, input_set, mode=None):
         # output_set_u[i, :] = reduced_problem.project_snapshot_u(solution_u, len(reduced_problem._basis_functions_u)).array  # .astype("f")
     return output_set_sigma, output_set_u
 
-ann_input_set = generate_ann_input_set(samples=num_ann_samples)
+ann_input_set = generate_ann_input_set(num_ann_samples=num_ann_samples)
 # np.random.shuffle(ann_input_set)
 ann_output_set_sigma, ann_output_set_u = \
     generate_ann_output_set(problem_parametric, reduced_problem,
