@@ -249,6 +249,7 @@ mesh, subdomains, boundaries = \
 # Boundary markers: x=1 is 22, x=0 is 30, y=1 is 26, y=0 is 18, z=1 is 31, z=0 is 1
 
 num_ann_samples = 30
+error_analysis_samples = 10
 # Parameters
 mu = np.array([-2., 0.5, 0.5, 0.5, 3.])
 
@@ -405,39 +406,121 @@ output_validation_set_u = ann_output_set_u[num_training_samples:, :]
 
 reduced_problem.output_range_sigma[0] = np.min(ann_output_set_sigma)
 reduced_problem.output_range_sigma[1] = np.max(ann_output_set_sigma)
-reduced_problem.output_range_u[0] = np.min(ann_output_set_u)
-reduced_problem.output_range_u[1] = np.max(ann_output_set_u)
+# reduced_problem.output_range_u[0] = np.min(ann_output_set_u)
+# reduced_problem.output_range_u[1] = np.max(ann_output_set_u)
 
 customDataset = CustomDataset(reduced_problem, input_training_set,
                               output_training_set_sigma,
                               input_scaling_range=[-1., 1.],
                               output_scaling_range=reduced_problem.output_scaling_range_sigma,
-                              input_range=reduced_problem.input_range_u,
-                              output_range=reduced_problem.output_range_u, verbose=False)
-train_dataloader_u = DataLoader(customDataset, batch_size=6, shuffle=False) # shuffle=True)
+                              input_range=reduced_problem.input_range,
+                              output_range=reduced_problem.output_range_sigma, verbose=False)
+train_dataloader_sigma = DataLoader(customDataset, batch_size=6, shuffle=False) # shuffle=True)
 
 customDataset = CustomDataset(reduced_problem, input_validation_set,
                               output_validation_set_u,
-                              input_scaling_range=reduced_problem.input_scaling_range_u,
+                              input_scaling_range=[-1., 1.],
                               output_scaling_range=reduced_problem.output_scaling_range_u,
-                              input_range=reduced_problem.input_range_u,
+                              input_range=reduced_problem.input_range,
                               output_range=reduced_problem.output_range_u, verbose=False)
-valid_dataloader_u = DataLoader(customDataset, shuffle=False)
+valid_dataloader_sigma = DataLoader(customDataset, shuffle=False)
 
+'''
 customDataset = \
     CustomDataset(reduced_problem, input_training_set,
-                  output_training_set_p,
-                  input_scaling_range=reduced_problem.input_scaling_range_p,
-                  output_scaling_range=reduced_problem.output_scaling_range_p,
-                  input_range=reduced_problem.input_range_p,
-                  output_range=reduced_problem.output_range_p, verbose=False)
-train_dataloader_p = DataLoader(customDataset, batch_size=6, shuffle=False) # shuffle=True)
+                  output_training_set_u,
+                  input_scaling_range=[-1., 1.],
+                  output_scaling_range=reduced_problem.output_scaling_range_u,
+                  input_range=reduced_problem.input_range,
+                  output_range=reduced_problem.output_range_u, verbose=False)
+train_dataloader_u = DataLoader(customDataset, batch_size=6, shuffle=False) # shuffle=True)
 
 customDataset = \
     CustomDataset(reduced_problem, input_validation_set,
-                  output_validation_set_p,
-                  input_scaling_range=reduced_problem.input_scaling_range_p,
-                  output_scaling_range=reduced_problem.output_scaling_range_p,
-                  input_range=reduced_problem.input_range_p,
-                  output_range=reduced_problem.output_range_p, verbose=False)
-valid_dataloader_p = DataLoader(customDataset, shuffle=False)
+                  output_validation_set_u,
+                  input_scaling_range=[-1., 1.],
+                  output_scaling_range=reduced_problem.output_scaling_range_u,
+                  input_range=reduced_problem.input_range,
+                  output_range=reduced_problem.output_range_u, verbose=False)
+valid_dataloader_u = DataLoader(customDataset, shuffle=False)
+'''
+
+# ANN model
+model_sigma = HiddenLayersNet(input_training_set.shape[1], [30, 30],
+                              len(reduced_problem._basis_functions_sigma),
+                              Tanh())
+'''
+model_u = HiddenLayersNet(input_training_set.shape[1], [15, 15],
+                          len(reduced_problem._basis_functions_u),
+                          Tanh())
+'''
+
+# Start of training (Velocity)
+
+path = "model_sigma.pth"
+# save_model(model_sigma, path)
+load_model(model_sigma, path)
+
+training_loss_sigma = list()
+validation_loss_sigma = list()
+
+max_epochs_sigma = 50 # 20000
+min_validation_loss_sigma = None
+start_epoch_sigma = 0
+checkpoint_path_sigma = "checkpoint_sigma"
+checkpoint_epoch_sigma = 10
+
+learning_rate_sigma = 5.e-6
+optimiser_sigma = get_optimiser(model_sigma, "Adam", learning_rate_sigma)
+loss_fn_sigma = get_loss_func("MSE", reduction="sum")
+
+if os.path.exists(checkpoint_path_sigma):
+    start_epoch_sigma, min_validation_loss_sigma = \
+        load_checkpoint(checkpoint_path_sigma, model_sigma, optimiser_sigma)
+
+import time
+start_time = time.time()
+for epochs in range(start_epoch_sigma, max_epochs_sigma):
+    if epochs > 0 and epochs % checkpoint_epoch_sigma == 0:
+        save_checkpoint(checkpoint_path_sigma, epochs, model_sigma,
+                        optimiser_sigma, min_validation_loss_sigma)
+    print(f"Epoch: {epochs+1}/{max_epochs_sigma}")
+    current_training_loss = train_nn(reduced_problem, train_dataloader_sigma,
+                                     model_sigma, loss_fn_sigma,
+                                     optimiser_sigma)
+    training_loss_sigma.append(current_training_loss)
+    current_validation_loss = validate_nn(reduced_problem, valid_dataloader_sigma,
+                                          model_sigma, loss_fn_sigma)
+    validation_loss_sigma.append(current_validation_loss)
+    if epochs > 0 and current_validation_loss > 1.01 * min_validation_loss_sigma \
+       and reduced_problem.regularisation_u == "EarlyStopping":
+        # 1% safety margin against min_validation_loss
+        # before invoking early stopping criteria
+        print(f"Early stopping criteria invoked at epoch: {epochs+1}")
+        break
+    min_validation_loss_sigma = min(validation_loss_sigma)
+end_time = time.time()
+elapsed_time = end_time - start_time
+os.system(f"rm {checkpoint_path_sigma}")
+
+# Error analysis dataset
+print("\n")
+print("Generating error analysis (only input/parameters) dataset")
+print("\n")
+error_analysis_set_sigma = generate_ann_input_set(samples=error_analysis_samples)
+error_numpy_sigma = np.zeros(error_analysis_set_sigma.shape[0])
+
+for i in range(error_analysis_set_sigma.shape[0]):
+    print(f"Error analysis parameter number {i+1} of ")
+    print(f"{error_analysis_set_sigma.shape[0]}: {error_analysis_set_sigma[i,:]}")
+    error_numpy_sigma[i] = error_analysis(reduced_problem, problem_parametric,
+                                      error_analysis_set_sigma[i, :], model_sigma,
+                                      len(reduced_problem._basis_functions_sigma), online_nn,
+                                      norm_error=reduced_problem.norm_error_sigma,
+                                      reconstruct_solution=reduced_problem.reconstruct_solution_sigma,
+                                      input_scaling_range=[-1., 1.],
+                                      output_scaling_range=reduced_problem.output_scaling_range_sigma,
+                                      input_range=reduced_problem.input_range,
+                                      output_range=reduced_problem.output_range_sigma,
+                                      index=0, verbose=True)
+    print(f"Error: {error_numpy_sigma[i]}")
