@@ -507,7 +507,7 @@ os.system(f"rm {checkpoint_path_sigma}")
 print("\n")
 print("Generating error analysis (only input/parameters) dataset")
 print("\n")
-error_analysis_set_sigma = generate_ann_input_set(samples=error_analysis_samples)
+error_analysis_set_sigma = generate_ann_input_set(num_ann_samples=error_analysis_samples)
 error_numpy_sigma = np.zeros(error_analysis_set_sigma.shape[0])
 
 for i in range(error_analysis_set_sigma.shape[0]):
