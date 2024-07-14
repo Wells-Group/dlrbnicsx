@@ -248,8 +248,8 @@ mesh, subdomains, boundaries = \
                                     gmsh_model_rank, gdim=gdim)
 # Boundary markers: x=1 is 22, x=0 is 30, y=1 is 26, y=0 is 18, z=1 is 31, z=0 is 1
 
-num_ann_samples = 12
-error_analysis_samples = 10
+num_ann_samples = 250
+error_analysis_samples = 300
 # Parameters
 mu = np.array([-2., 0.5, 0.5, 0.5, 3.])
 
@@ -534,7 +534,7 @@ online_mu = np.array([-2.3, 0.47, 0.57, 0.67, 3.4])
 
 # Compute RB solution
 rb_solution_sigma = \
-    reduced_problem.reconstruct_solution_u(online_nn(reduced_problem,
+    reduced_problem.reconstruct_solution_sigma(online_nn(reduced_problem,
                                                      problem_parametric,
                                                      online_mu, model_sigma,
                                                      len(reduced_problem._basis_functions_sigma),
@@ -545,7 +545,7 @@ rb_solution_sigma = \
 
 '''
 rb_solution_u = \
-    reduced_problem.reconstruct_solution_p(online_nn(reduced_problem,
+    reduced_problem.reconstruct_solution_u(online_nn(reduced_problem,
                                                      problem_parametric,
                                                      online_mu, model_u,
                                                      len(reduced_problem._basis_functions_u),
