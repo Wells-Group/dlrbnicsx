@@ -248,7 +248,7 @@ mesh, subdomains, boundaries = \
                                     gmsh_model_rank, gdim=gdim)
 # Boundary markers: x=1 is 22, x=0 is 30, y=1 is 26, y=0 is 18, z=1 is 31, z=0 is 1
 
-num_ann_samples = 30
+num_ann_samples = 12
 error_analysis_samples = 10
 # Parameters
 mu = np.array([-2., 0.5, 0.5, 0.5, 3.])
@@ -418,11 +418,11 @@ customDataset = CustomDataset(reduced_problem, input_training_set,
 train_dataloader_sigma = DataLoader(customDataset, batch_size=6, shuffle=False) # shuffle=True)
 
 customDataset = CustomDataset(reduced_problem, input_validation_set,
-                              output_validation_set_u,
+                              output_validation_set_sigma,
                               input_scaling_range=[-1., 1.],
-                              output_scaling_range=reduced_problem.output_scaling_range_u,
+                              output_scaling_range=reduced_problem.output_scaling_range_sigma,
                               input_range=reduced_problem.input_range,
-                              output_range=reduced_problem.output_range_u, verbose=False)
+                              output_range=reduced_problem.output_range_sigma, verbose=False)
 valid_dataloader_sigma = DataLoader(customDataset, shuffle=False)
 
 '''
