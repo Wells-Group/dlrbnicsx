@@ -250,6 +250,7 @@ mesh, subdomains, boundaries = \
 
 num_ann_samples = 12
 error_analysis_samples = 11
+
 # Parameters
 mu = np.array([-2., 0.5, 0.5, 0.5, 3.])
 
@@ -273,7 +274,7 @@ with dolfinx.io.XDMFFile(mesh.comm, "parametric_mixed_poisson/u.xdmf", "w") as s
 # POD Starts ###
 
 
-def generate_training_set(samples=[2, 1, 2, 2, 1]):
+def generate_training_set(samples=[4, 4, 4, 4, 2]):
     # Select input samples for POD
     training_set_0 = np.linspace(-5., 5., samples[0])
     training_set_1 = np.linspace(0.2, 0.8, samples[1])
