@@ -6,6 +6,7 @@ import os
 
 from mpi4py import MPI
 from petsc4py import PETSc
+from smt.sampling_methods import LHS
 
 import ufl
 import basix
