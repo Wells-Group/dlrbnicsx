@@ -449,7 +449,7 @@ valid_dataloader_u = DataLoader(customDataset, shuffle=False)
 '''
 
 # ANN model
-model_sigma = HiddenLayersNet(input_training_set.shape[1], [30, 30],
+model_sigma = HiddenLayersNet(input_training_set.shape[1], [30, 30, 30],
                               len(reduced_problem._basis_functions_sigma),
                               Tanh())
 '''
