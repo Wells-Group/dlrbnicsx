@@ -440,8 +440,6 @@ sigma_norm = reduced_problem.compute_norm_sigma(sigma_sol_reconstructed)
 sigma_error = reduced_problem.norm_error_sigma(sigma_sol, sigma_sol_reconstructed)
 print(f"Norm reconstructed: {sigma_norm}, Error: {sigma_error}")
 
-exit()
-
 # Creating dataset
 def generate_ann_input_set(num_ann_samples=10):
     xlimits = np.array([[-5., 5.], [0.2, 0.8],
