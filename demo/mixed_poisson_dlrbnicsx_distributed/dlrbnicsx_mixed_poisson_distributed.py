@@ -347,7 +347,8 @@ if world_comm.rank == 0:
 world_comm.barrier()
 
 for i in range(len(fem_comm_list)):
-    cpu_indices_sigma = np.arange(i, para_matrix_sigma.shape[0], len(fem_comm_list))
+    if fem_comm_list[i] != MPI.COMM_NULL:
+        cpu_indices_sigma = np.arange(i, para_matrix_sigma.shape[0], len(fem_comm_list))
 
 print(f"cpu_indices_sigma: {cpu_indices_sigma}")
 
