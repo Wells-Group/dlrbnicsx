@@ -150,6 +150,7 @@ class ParametricProblem(abc.ABC):
         sigma_sol, u_sol = solution.split()
         sigma_sol = sigma_sol.collapse()
         u_sol = u_sol.collapse()
+        ksp.destroy()
         return sigma_sol, u_sol
 
 class PODANNReducedProblem(abc.ABC):
@@ -301,16 +302,15 @@ print(sigma_sol.x.array, np.sqrt((mesh.comm.allreduce(np.linalg.norm(sigma_sol.x
 print(u_sol.x.array, np.sqrt((mesh.comm.allreduce(np.linalg.norm(u_sol.x.array)**2, op=MPI.SUM))))
 
 itemsize = MPI.DOUBLE.Get_size()
-num_snapshots = 24
 para_dim_sigma = 5
 rstart_sigma, rend_sigma = sigma_sol.vector.getOwnershipRange()
 num_dofs_sigma = mesh_comm.allreduce(rend_sigma, op=MPI.MAX) - mesh_comm.allreduce(rstart_sigma, op=MPI.MIN)
 rstart_u, rend_u = u_sol.vector.getOwnershipRange()
 num_dofs_u = mesh_comm.allreduce(rend_u, op=MPI.MAX) - mesh_comm.allreduce(rstart_u, op=MPI.MIN)
 
-num_pod_samples_sigma = [5, 3, 4, 3, 1]
-num_ann_samples_sigma = [2, 2, 2, 2, 2]
-num_error_analysis_samples_sigma = [2, 2, 2, 2, 2]
+num_pod_samples_sigma = [3, 2, 3, 2, 1]
+num_ann_samples_sigma = [2, 2, 2, 2, 1]
+num_error_analysis_samples_sigma = [2, 2, 2, 2, 1]
 num_snapshots_sigma = np.product(num_pod_samples_sigma)
 nbytes_para_sigma = itemsize * num_snapshots_sigma * para_dim_sigma
 nbytes_dofs_sigma = itemsize * num_snapshots_sigma * num_dofs_sigma
@@ -421,3 +421,113 @@ if world_comm.rank == 0:
     plt.title("Eigenvalue decay", fontsize=24)
     plt.tight_layout()
     plt.savefig("eigenvalue_decay_sigma")
+
+# ### POD Ends ###
+
+sigma_sol_projected = reduced_problem.project_snapshot_sigma(sigma_sol, reduced_size_sigma)
+sigma_sol_reconstructed = reduced_problem.reconstruct_solution_sigma(sigma_sol_projected)
+print(sigma_sol_reconstructed.x.array.shape, sigma_sol.x.array.shape)
+sigma_norm = reduced_problem.compute_norm_sigma(sigma_sol_reconstructed)
+sigma_error = reduced_problem.norm_error_sigma(sigma_sol, sigma_sol_reconstructed)
+print(f"Norm reconstructed: {sigma_norm}, Error: {sigma_error}")
+
+exit()
+
+# Creating dataset
+def generate_ann_input_set(num_ann_samples=243):
+    xlimits = np.array([[-5., 5.], [0.2, 0.8],
+                        [0.2, 0.8], [0.2, 0.8],
+                        [2., 2.]])
+    sampling = LHS(xlimits=xlimits)
+    training_set = sampling(num_ann_samples)
+    return training_set
+
+def generate_ann_output_set_sigma(problem, reduced_problem, input_set,
+                                  output_set_sigma, indices, mode=None):
+    # Solve the FE problem at given input_sets and
+    # project on the RB space
+    rb_size_sigma = len(reduced_problem._basis_functions_sigma)
+    for i in indices:
+        if mode is None:
+            print(f"Parameter {i+1}/{input_set.shape[0]}")
+        else:
+            print(f"{mode} parameter number {i+1}/{input_set.shape[0]}")
+        solution_sigma, _ = problem.solve(input_set[i, :])
+        output_set_sigma[i, :] = \
+            reduced_problem.project_snapshot_sigma(solution_sigma,
+                                                   rb_size_sigma).array
+
+num_ann_input_samples_sigma = np.product(num_ann_samples_sigma)
+num_training_samples_sigma = int(0.7 * num_ann_input_samples_sigma)
+num_validation_samples_sigma = \
+    num_ann_input_samples_sigma - int(0.7 * num_ann_input_samples_sigma)
+itemsize = MPI.DOUBLE.Get_size()
+
+if world_comm.rank == 0:
+    ann_input_set_sigma = generate_ann_input_set(samples=num_ann_samples_sigma)
+    np.random.shuffle(ann_input_set_sigma)
+    nbytes_para_ann_training_sigma = num_training_samples_sigma * itemsize * para_dim_sigma
+    nbytes_dofs_ann_training_sigma = num_training_samples_sigma * itemsize * \
+        len(reduced_problem._basis_functions_sigma)
+    nbytes_para_ann_validation_sigma = num_validation_samples_sigma * itemsize * para_dim_sigma
+    nbytes_dofs_ann_validation_sigma = num_validation_samples_sigma * itemsize * \
+        len(reduced_problem._basis_functions_sigma)
+else:
+    nbytes_para_ann_training_sigma = 0
+    nbytes_dofs_ann_training_sigma = 0
+    nbytes_para_ann_validation_sigma = 0
+    nbytes_dofs_ann_validation_sigma = 0
+
+world_comm.barrier()
+
+win2 = MPI.Win.Allocate_shared(nbytes_para_ann_training_sigma, itemsize,
+                               comm=MPI.COMM_WORLD)
+buf2, itemsize = win2.Shared_query(0)
+input_training_set_sigma = \
+    np.ndarray(buffer=buf2, dtype="d",
+               shape=(num_training_samples_sigma, para_dim_sigma))
+
+win3 = MPI.Win.Allocate_shared(nbytes_para_ann_validation_sigma, itemsize,
+                               comm=MPI.COMM_WORLD)
+buf3, itemsize = win3.Shared_query(0)
+input_validation_set_sigma = \
+    np.ndarray(buffer=buf3, dtype="d",
+               shape=(num_validation_samples_sigma, para_dim_sigma))
+
+win4 = MPI.Win.Allocate_shared(nbytes_dofs_ann_training_sigma, itemsize,
+                               comm=MPI.COMM_WORLD)
+buf4, itemsize = win4.Shared_query(0)
+output_training_set_sigma = \
+    np.ndarray(buffer=buf4, dtype="d",
+               shape=(num_training_samples_sigma,
+                      len(reduced_problem._basis_functions_sigma)))
+
+win5 = MPI.Win.Allocate_shared(nbytes_dofs_ann_validation_sigma, itemsize,
+                               comm=MPI.COMM_WORLD)
+buf5, itemsize = win5.Shared_query(0)
+output_validation_set_sigma = \
+    np.ndarray(buffer=buf5, dtype="d",
+               shape=(num_validation_samples_sigma,
+                      len(reduced_problem._basis_functions_sigma)))
+
+if world_comm.rank == 0:
+    input_training_set_sigma[:, :] = \
+        ann_input_set_sigma[:num_training_samples_sigma, :]
+    input_validation_set_sigma[:, :] = \
+        ann_input_set_sigma[num_training_samples_sigma:, :]
+    output_training_set_sigma[:, :] = \
+        np.zeros([num_training_samples_sigma,
+                  len(reduced_problem._basis_functions_sigma)])
+    output_validation_set_sigma[:, :] = \
+        np.zeros([num_validation_samples_sigma,
+                  len(reduced_problem._basis_functions_sigma)])
+
+world_comm.Barrier()
+
+for j in range(len(fem_comm_list)):
+    if fem_comm_list[j] != MPI.COMM_NULL:
+        training_set_indices_sigma = \
+            np.arange(j, input_training_set_sigma.shape[0], len(fem_comm_list))
+
+        validation_set_indices_sigma = \
+            np.arange(j, input_validation_set_sigma.shape[0], len(fem_comm_list))
