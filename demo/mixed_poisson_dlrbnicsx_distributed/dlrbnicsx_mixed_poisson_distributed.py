@@ -308,7 +308,7 @@ num_dofs_sigma = mesh_comm.allreduce(rend_sigma, op=MPI.MAX) - mesh_comm.allredu
 rstart_u, rend_u = u_sol.vector.getOwnershipRange()
 num_dofs_u = mesh_comm.allreduce(rend_u, op=MPI.MAX) - mesh_comm.allreduce(rstart_u, op=MPI.MIN)
 
-num_pod_samples_sigma = [5, 3, 4, 3, 2]
+num_pod_samples_sigma = [5, 3, 4, 3, 1]
 num_ann_samples_sigma = [2, 2, 2, 2, 2]
 num_error_analysis_samples_sigma = [2, 2, 2, 2, 2]
 num_snapshots_sigma = np.product(num_pod_samples_sigma)
@@ -323,7 +323,7 @@ def generate_training_set(samples=num_pod_samples_sigma):
     training_set_1 = np.linspace(0.2, 0.8, samples[1])
     training_set_2 = np.linspace(0.2, 0.8, samples[2])
     training_set_3 = np.linspace(0.2, 0.8, samples[3])
-    training_set_4 = np.linspace(1., 5., samples[4])
+    training_set_4 = np.linspace(2., 2., samples[4])
     training_set = np.array(list(itertools.product(training_set_0,
                                                    training_set_1,
                                                    training_set_2,
