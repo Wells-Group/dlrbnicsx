@@ -349,6 +349,8 @@ world_comm.barrier()
 for i in range(len(fem_comm_list)):
     cpu_indices_sigma = np.arange(i, para_matrix_sigma.shape[0], len(fem_comm_list))
 
+print(f"cpu_indices_sigma: {cpu_indices_sigma}")
+
 if world_comm.rank == 0:
     nbytes_dofs_sigma = num_snapshots_sigma * num_dofs_sigma * itemsize
 else:
