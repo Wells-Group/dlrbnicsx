@@ -16,7 +16,16 @@ import rbnicsx
 import rbnicsx.online
 import rbnicsx.backends
 
-
+from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
+from dlrbnicsx.activation_function.activation_function_factory \
+    import Tanh, Sigmoid
+from dlrbnicsx.dataset.custom_partitioned_dataset \
+    import CustomPartitionedDataset
+from dlrbnicsx.interface.wrappers import DataLoader, save_model, \
+    load_model, save_checkpoint, load_checkpoint, model_synchronise, \
+    init_cpu_process_group, get_optimiser, get_loss_func, share_model
+from dlrbnicsx.train_validate_test.train_validate_test_distributed \
+    import train_nn, validate_nn, online_nn, error_analysis
 
 class ParametricProblem(abc.ABC):
     def __init__(self, mesh, subdomains, boundaries):
@@ -308,8 +317,8 @@ num_dofs_sigma = mesh_comm.allreduce(rend_sigma, op=MPI.MAX) - mesh_comm.allredu
 rstart_u, rend_u = u_sol.vector.getOwnershipRange()
 num_dofs_u = mesh_comm.allreduce(rend_u, op=MPI.MAX) - mesh_comm.allreduce(rstart_u, op=MPI.MIN)
 
-num_pod_samples_sigma = [4, 3, 3, 3, 2]
-num_ann_samples_sigma = [2, 2, 2, 2, 1]
+num_pod_samples_sigma = [3, 2, 3, 2, 2]  # [4, 3, 3, 3, 2]
+num_ann_samples_sigma = 32
 num_error_analysis_samples_sigma = [2, 2, 2, 2, 1]
 num_snapshots_sigma = np.product(num_pod_samples_sigma)
 nbytes_para_sigma = itemsize * num_snapshots_sigma * para_dim_sigma
@@ -434,7 +443,7 @@ print(f"Norm reconstructed: {sigma_norm}, Error: {sigma_error}")
 exit()
 
 # Creating dataset
-def generate_ann_input_set(num_ann_samples=243):
+def generate_ann_input_set(num_ann_samples=10):
     xlimits = np.array([[-5., 5.], [0.2, 0.8],
                         [0.2, 0.8], [0.2, 0.8],
                         [2., 2.]])
@@ -652,55 +661,56 @@ for j in range(len(ann_comm_list_sigma)):
             np.arange(ann_comm_list_sigma[j].rank, input_validation_set_sigma.shape[0],
                       ann_comm_list_sigma[j].size)
         
-        customDataset = CustomPartitionedDataset(reduced_problem, input_training_set,
-                                                 output_training_set, training_set_indices_cpu)
-        train_dataloader = DataLoader(customDataset, batch_size=input_training_set.shape[0], shuffle=False)# shuffle=True)
+        customDataset_sigma = CustomPartitionedDataset(reduced_problem, input_training_set_sigma,
+                                                 output_training_set_sigma, training_set_indices_cpu_sigma)
+        train_dataloader_sigma = DataLoader(customDataset_sigma, batch_size=input_training_set_sigma.shape[0], shuffle=False)# shuffle=True)
 
-        customDataset = CustomPartitionedDataset(reduced_problem, input_validation_set,
-                                                 output_validation_set, validation_set_indices_cpu)
-        valid_dataloader = DataLoader(customDataset, batch_size=input_validation_set.shape[0], shuffle=False)
+        customDataset_sigma = CustomPartitionedDataset(reduced_problem, input_validation_set_sigma,
+                                                 output_validation_set_sigma, validation_set_indices_cpu_sigma)
+        valid_dataloader_sigma = DataLoader(customDataset_sigma, batch_size=input_validation_set_sigma.shape[0], shuffle=False)
         
-        save_model(ann_model_list[j], path_list[j])
-        # load_model(ann_model_list[j], path_list[j])
+        save_model(ann_model_list_sigma[j], path_list_sigma[j])
+        # load_model(ann_model_list_sigma[j], path_list_sigma[j])
         
-        model_synchronise(ann_model_list[j], verbose=False)
+        model_synchronise(ann_model_list_sigma[j], verbose=False)
         
         # Training of ANN
         training_loss = list()
         validation_loss = list()
         
-        max_epochs = 2 # 20000
-        min_validation_loss = None
-        start_epoch = 0
-        checkpoint_epoch = 10
+        max_epochs_sigma = 2 # 20000
+        min_validation_loss_sigma = None
+        start_epoch_sigma = 0
+        checkpoint_epoch_sigma = 10
         
-        learning_rate = 1.e-4
-        optimiser = get_optimiser(ann_model_list[j], "Adam", learning_rate)
-        loss_fn = get_loss_func("MSE", reduction="sum")
+        learning_rate_sigma = 1.e-4
+        optimiser_sigma = get_optimiser(ann_model_list_sigma[j], "Adam", learning_rate_sigma)
+        loss_fn_sigma = get_loss_func("MSE", reduction="sum")
     
-        if os.path.exists(checkpoint_path_list[j]):
-            start_epoch, min_validation_loss = \
-                load_checkpoint(checkpoint_path_list[j], ann_model_list[j], optimiser)
+        if os.path.exists(checkpoint_path_list_sigma[j]):
+            start_epoch_sigma, min_validation_loss_sigma = \
+                load_checkpoint(checkpoint_path_list_sigma[j], ann_model_list_sigma[j],
+                                optimiser_sigma)
         
         import time
         start_time = time.time()
-        for epochs in range(start_epoch, max_epochs):
-            if epochs > 0 and epochs % checkpoint_epoch == 0:
-                save_checkpoint(checkpoint_path_list[j], epochs,
-                                ann_model_list[j], optimiser,
-                                min_validation_loss)
-            print(f"Epoch: {epochs+1}/{max_epochs}")
+        for epochs in range(start_epoch_sigma, max_epochs_sigma):
+            if epochs > 0 and epochs % checkpoint_epoch_sigma == 0:
+                save_checkpoint(checkpoint_path_list_sigma[j], epochs,
+                                ann_model_list_sigma[j], optimiser_sigma,
+                                min_validation_loss_sigma)
+            print(f"Epoch: {epochs+1}/{max_epochs_sigma}")
             current_training_loss = train_nn(reduced_problem,
-                                             train_dataloader,
-                                             ann_model_list[j],
-                                             loss_fn, optimiser)
+                                             train_dataloader_sigma,
+                                             ann_model_list_sigma[j],
+                                             loss_fn_sigma, optimiser_sigma)
             training_loss.append(current_training_loss)
             current_validation_loss = validate_nn(reduced_problem,
-                                                  valid_dataloader,
-                                                  ann_model_list[j],
-                                                  loss_fn)
+                                                  valid_dataloader_sigma,
+                                                  ann_model_list_sigma[j],
+                                                  loss_fn_sigma)
             validation_loss.append(current_validation_loss)
-            if epochs > 0 and current_validation_loss > 1.01 * min_validation_loss \
+            if epochs > 0 and current_validation_loss > 1.01 * min_validation_loss_sigma \
             and reduced_problem.regularisation == "EarlyStopping":
                 # 1% safety margin against min_validation_loss
                 # before invoking early stopping criteria
@@ -710,10 +720,130 @@ for j in range(len(ann_comm_list_sigma)):
         end_time = time.time()
         elapsed_time = end_time - start_time
 
-        os.system(f"rm {checkpoint_path_list[j]}")
+        os.system(f"rm {checkpoint_path_list_sigma[j]}")
 
 world_comm.Barrier()
 
-for j in range(len(model_root_process_list)):
-    share_model(ann_model_list[j], world_comm, model_root_process_list[j])
-    save_model(ann_model_list[j], trained_model_path_list[j])
+for j in range(len(model_root_process_list_sigma)):
+    share_model(ann_model_list_sigma[j], world_comm,
+                model_root_process_list_sigma[j])
+    save_model(ann_model_list_sigma[j], trained_model_path_list_sigma[j])
+
+# Error analysis dataset
+print("\n")
+print("Generating error analysis (only input/parameters) dataset")
+print("\n")
+
+error_analysis_num_para_sigma = np.product(num_error_analysis_samples_sigma)
+itemsize = MPI.DOUBLE.Get_size()
+
+if world_comm.rank == 0:
+    nbytes_para_sigma = error_analysis_num_para_sigma * itemsize * para_dim_sigma
+    nbytes_error_sigma = error_analysis_num_para_sigma * itemsize
+else:
+    nbytes_para_sigma = 0
+    nbytes_error_sigma = 0
+
+win6 = MPI.Win.Allocate_shared(nbytes_para_sigma, itemsize,
+                               comm=world_comm)
+buf6, itemsize = win6.Shared_query(0)
+error_analysis_set_sigma = \
+    np.ndarray(buffer=buf6, dtype="d",
+               shape=(error_analysis_num_para_sigma,
+                      para_dim_sigma))
+
+win7 = MPI.Win.Allocate_shared(nbytes_error_sigma, itemsize,
+                               comm=world_comm)
+buf7, itemsize = win7.Shared_query(0)
+error_numpy_sigma0 = np.ndarray(buffer=buf7, dtype="d",
+                         shape=(error_analysis_num_para_sigma))
+
+win8 = MPI.Win.Allocate_shared(nbytes_error_sigma, itemsize,
+                               comm=world_comm)
+buf8, itemsize = win8.Shared_query(0)
+error_numpy_sigma1 = np.ndarray(buffer=buf8, dtype="d",
+                         shape=(error_analysis_num_para_sigma))
+
+win9 = MPI.Win.Allocate_shared(nbytes_error_sigma, itemsize,
+                               comm=world_comm)
+buf9, itemsize = win9.Shared_query(0)
+error_numpy_sigma2 = np.ndarray(buffer=buf9, dtype="d",
+                         shape=(error_analysis_num_para_sigma))
+
+win10 = MPI.Win.Allocate_shared(nbytes_error_sigma, itemsize,
+                               comm=world_comm)
+buf10, itemsize = win10.Shared_query(0)
+error_numpy_sigma3 = np.ndarray(buffer=buf10, dtype="d",
+                         shape=(error_analysis_num_para_sigma))
+
+if world_comm.rank == 0:
+    error_analysis_set[:, :] = generate_ann_input_set(samples=num_error_analysis_samples_sigma)
+
+world_comm.Barrier()
+
+if world_comm.size != 1:
+    error_array_list_sigma = [error_numpy_sigma0, error_numpy_sigma1,
+                        error_numpy_sigma2, error_numpy_sigma3]
+else:
+    error_array_list_sigma = [error_numpy_sigma0]
+
+for j in range(len(fem_comm_list)):
+    error_analysis_indices_sigma = \
+        np.arange(j, error_analysis_set_sigma.shape[0], len(fem_comm_list))
+    for i in error_analysis_indices_sigma:
+        for array_num in range(len(error_array_list_sigma)):
+            error_array_list_sigma[array_num][i] = \
+                error_analysis(reduced_problem, problem_parametric,
+                               error_analysis_set_sigma[i, :],
+                               ann_model_list_sigma[array_num],
+                               len(reduced_problem._basis_functions_sigma),
+                               online_nn)
+            # print(f"Error analysis {i+1} of {error_analysis_set.shape[0]}, Model {array_num}, Error: {error_array_list[array_num][i]}")
+
+if fem_comm_list[0] != MPI.COMM_NULL:
+    # Online phase at parameter online_mu
+    online_mu = np.array([1., 0.4, 0.55, 0.27, 3.])
+    fem_start_time_0 = time.process_time()
+    fem_solution_sigma, _ = problem_parametric.solve(online_mu)
+    fem_end_time_0 = time.process_time()
+    # First compute the RB solution using online_nn.
+    # Next this solution is reconstructed on FE space
+    rb_start_time_0 = time.process_time()
+    rb_solution_sigma = \
+        reduced_problem.reconstruct_solution_sigma(
+            online_nn(reduced_problem, problem_parametric, online_mu, model_sigma0,
+                      len(reduced_problem._basis_functions_sigma)))
+            # TODO Replace model_sigma0 with best model model_sigmaX
+    rb_end_time_0 = time.process_time()
+
+    # Post processing
+    # TODO make plotting work on CSD3
+    fem_online_file \
+        = "dlrbnicsx_solution_mixed_poisson_0/fem_online_mu_computed_sigma.xdmf"
+    with dolfinx.io.XDMFFile(mesh.comm, fem_online_file,
+                            "w") as solution_file:
+        solution_file.write_mesh(mesh)
+        solution_file.write_function(fem_solution_sigma)
+
+    rb_online_file \
+        = "dlrbnicsx_solution_mixed_poisson_0/rb_online_mu_computed_sigma.xdmf"
+    with dolfinx.io.XDMFFile(mesh.comm, rb_online_file,
+                            "w") as solution_file:
+        # NOTE scatter_forward not considered for online solution
+        solution_file.write_mesh(mesh)
+        solution_file.write_function(rb_solution_sigma)
+
+    error_function_sigma = dolfinx.fem.Function(problem_parametric._Q)
+    error_function_sigma.vector[rstart_sigma:rend_sigma] = \
+        abs(fem_solution_sigma.vector[rstart_sigma:rend_sigma] -
+            rb_solution_sigma.vector[rstart_sigma:rend_sigma])
+    fem_rb_error_file \
+        = "dlrbnicsx_solution_mixed_poisson_0/fem_rb_error_computed_sigma.xdmf"
+    with dolfinx.io.XDMFFile(mesh.comm, fem_rb_error_file,
+                            "w") as solution_file:
+        solution_file.write_mesh(mesh)
+        solution_file.write_function(error_function_sigma)
+
+    print(f"FEM time 0: {fem_end_time_0 - fem_start_time_0}")
+    print(f"RB time 0: {rb_end_time_0 - rb_start_time_0}")
+    print(f"Speedup 0: {(fem_end_time_0 - fem_start_time_0)/(rb_end_time_0 - rb_start_time_0)}")
