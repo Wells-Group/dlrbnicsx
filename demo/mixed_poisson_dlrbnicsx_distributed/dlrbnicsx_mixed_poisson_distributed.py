@@ -308,7 +308,7 @@ num_dofs_sigma = mesh_comm.allreduce(rend_sigma, op=MPI.MAX) - mesh_comm.allredu
 rstart_u, rend_u = u_sol.vector.getOwnershipRange()
 num_dofs_u = mesh_comm.allreduce(rend_u, op=MPI.MAX) - mesh_comm.allreduce(rstart_u, op=MPI.MIN)
 
-num_pod_samples_sigma = [2, 2, 2, 2, 2]
+num_pod_samples_sigma = [5, 3, 4, 3, 2]
 num_ann_samples_sigma = [2, 2, 2, 2, 2]
 num_error_analysis_samples_sigma = [2, 2, 2, 2, 2]
 num_snapshots_sigma = np.product(num_pod_samples_sigma)
@@ -397,7 +397,7 @@ eigenvalues_sigma, modes_sigma, _ = \
 
 reduced_problem._basis_functions_sigma.extend(modes_sigma)
 reduced_size_sigma = len(reduced_problem._basis_functions_sigma)
-print(f"Sigma RB size: {reduced_size_sigma}")
+print(f"Sigma RB size: {reduced_size_sigma}, Sigma eigenvalues: {eigenvalues_sigma}")
 
 print(rbnicsx.io.TextBox("POD-Galerkin offline phase ends", fill="="))
 
