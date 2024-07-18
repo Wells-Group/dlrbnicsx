@@ -1,0 +1,24 @@
+#!/bin/bash
+#SBATCH -J dlrbnicsx_mixed_poisson
+#SBATCH -A WELLS-SL3-CPU
+#SBATCH --output=test_job_%A_%a.out
+#SBATCH --error=test_job_%A_%a.err
+
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --time=04:00:00
+#SBATCH --mem=4200mb
+
+#SBATCH -p icelake
+#SBATCH --mail-type=ALL
+
+module purge
+source ../../../fenics_branch/share/spack/setup-env.sh
+spack env activate fenicsx-env
+spack env status
+spack load py-pip@23.1.2
+spack clean
+cd mesh_data
+mpiexec -n 1 python3 mesh.py
+cd ..
+mpiexec -n 1 python3 dlrbnicsx_mixed_poisson.py
