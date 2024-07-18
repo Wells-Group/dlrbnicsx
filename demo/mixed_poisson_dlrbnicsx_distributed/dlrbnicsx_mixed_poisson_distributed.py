@@ -308,7 +308,7 @@ num_dofs_sigma = mesh_comm.allreduce(rend_sigma, op=MPI.MAX) - mesh_comm.allredu
 rstart_u, rend_u = u_sol.vector.getOwnershipRange()
 num_dofs_u = mesh_comm.allreduce(rend_u, op=MPI.MAX) - mesh_comm.allreduce(rstart_u, op=MPI.MIN)
 
-num_pod_samples_sigma = [3, 2, 3, 2, 1]
+num_pod_samples_sigma = [4, 3, 3, 3, 2]
 num_ann_samples_sigma = [2, 2, 2, 2, 1]
 num_error_analysis_samples_sigma = [2, 2, 2, 2, 1]
 num_snapshots_sigma = np.product(num_pod_samples_sigma)
@@ -319,11 +319,11 @@ nbytes_dofs_sigma = itemsize * num_snapshots_sigma * num_dofs_sigma
 
 def generate_training_set(samples=num_pod_samples_sigma):
     # Select input samples for POD
-    training_set_0 = np.linspace(-5., 5., samples[0])
-    training_set_1 = np.linspace(0.2, 0.8, samples[1])
-    training_set_2 = np.linspace(0.2, 0.8, samples[2])
+    training_set_0 = np.linspace(-5., 4., samples[0])
+    training_set_1 = np.linspace(0.2, 0.7, samples[1])
+    training_set_2 = np.linspace(0.3, 0.8, samples[2])
     training_set_3 = np.linspace(0.2, 0.8, samples[3])
-    training_set_4 = np.linspace(2., 2., samples[4])
+    training_set_4 = np.linspace(1., 5., samples[4])
     training_set = np.array(list(itertools.product(training_set_0,
                                                    training_set_1,
                                                    training_set_2,
@@ -531,3 +531,189 @@ for j in range(len(fem_comm_list)):
 
         validation_set_indices_sigma = \
             np.arange(j, input_validation_set_sigma.shape[0], len(fem_comm_list))
+
+# world_comm.Barrier()
+
+# Training dataset
+generate_ann_output_set_sigma(problem_parametric, reduced_problem,
+                              input_training_set_sigma, output_training_set_sigma,
+                              training_set_indices_sigma, mode="Training")
+
+generate_ann_output_set(problem_parametric, reduced_problem,
+                        input_validation_set_sigma, output_validation_set_sigma,
+                        validation_set_indices_sigma, mode="Validation")
+
+world_comm.Barrier()
+
+reduced_problem.output_range_sigma[0] = min(np.min(output_training_set_sigma), np.min(output_validation_set_sigma))
+reduced_problem.output_range_sigma[1] = max(np.max(output_training_set_sigma), np.max(output_validation_set_sigma))
+
+print("\n")
+
+if world_comm.size == 8:
+    cpu_group0_procs_sigma = world_comm.group.Incl([0, 1])
+    cpu_group0_comm_sigma = world_comm.Create_group(cpu_group0_procs_sigma)
+
+    cpu_group1_procs_sigma = world_comm.group.Incl([2, 3])
+    cpu_group1_comm_sigma = world_comm.Create_group(cpu_group1_procs_sigma)
+
+    cpu_group2_procs_sigma = world_comm.group.Incl([4, 5])
+    cpu_group2_comm_sigma = world_comm.Create_group(cpu_group2_procs_sigma)
+
+    cpu_group3_procs_sigma = world_comm.group.Incl([6, 7])
+    cpu_group3_comm_sigma = world_comm.Create_group(cpu_group3_procs_sigma)
+
+    ann_comm_list_sigma = \
+        [cpu_group0_comm_sigma, cpu_group1_comm_sigma,
+         cpu_group2_comm_sigma, cpu_group3_comm_sigma]
+
+elif world_comm.size == 4:
+    cpu_group0_procs_sigma = world_comm.group.Incl([0])
+    cpu_group0_comm_sigma = \
+        world_comm.Create_group(cpu_group0_procs_sigma)
+
+    cpu_group1_procs_sigma = world_comm.group.Incl([1])
+    cpu_group1_comm_sigma = \
+        world_comm.Create_group(cpu_group1_procs_sigma)
+
+    cpu_group2_procs_sigma = world_comm.group.Incl([2])
+    cpu_group2_comm_sigma = \
+        world_comm.Create_group(cpu_group2_procs_sigma)
+
+    cpu_group3_procs_sigma = world_comm.group.Incl([3])
+    cpu_group3_comm_sigma = world_comm.Create_group(cpu_group3_procs_sigma)
+
+    ann_comm_list_sigma = \
+        [cpu_group0_comm_sigma, cpu_group1_comm_sigma,
+         cpu_group2_comm_sigma, cpu_group3_comm_sigma]
+
+elif world_comm.size == 1:
+    cpu_group0_procs_sigma = world_comm.group.Incl([0])
+    cpu_group0_comm_sigma = world_comm.Create_group(cpu_group0_procs_sigma)
+    
+    ann_comm_list_sigma = [cpu_group0_comm_sigma]
+
+else:
+    raise NotImplementedError("Please use 1,4 or 8 processes")
+
+# ANN model
+model_sigma0 = HiddenLayersNet(input_training_set_sigma.shape[1], [35, 35],
+                         len(reduced_problem._basis_functions_sigma), Tanh())
+
+model_sigma1 = HiddenLayersNet(input_training_set_sigma.shape[1], [30, 30],
+                         len(reduced_problem._basis_functions_sigma), Tanh())
+
+model_sigma2 = HiddenLayersNet(input_training_set_sigma.shape[1], [25, 25],
+                         len(reduced_problem._basis_functions_sigma), Tanh())
+
+model_sigma3 = HiddenLayersNet(input_training_set_sigma.shape[1], [15, 15],
+                         len(reduced_problem._basis_functions_sigma), Tanh())
+
+if world_comm.size == 8:
+    ann_model_list_sigma = [model_sigma0, model_sigma1,
+                            model_sigma2, model_sigma3]
+    path_list_sigma = ["model_sigma0.pth", "model_sigma1.pth",
+                       "model_sigma2.pth", "model_sigma3.pth"]
+    checkpoint_path_list_sigma = \
+        ["checkpoint_sigma0", "checkpoint_sigma1",
+         "checkpoint_sigma2", "checkpoint_sigma3"]
+    model_root_process_list_sigma = [0, 3, 4, 7]
+    trained_model_path_list_sigma = \
+        ["trained_model_sigma0.pth", "trained_model_sigma1.pth",
+         "trained_model_sigma2.pth", "trained_model_sigma3.pth"]
+elif world_comm.size == 4:
+    ann_model_list_sigma = [model_sigma0, model_sigma1,
+                            model_sigma2, model_sigma3]
+    path_list_sigma = ["model_sigma0.pth", "model_sigma1.pth",
+                       "model_sigma2.pth", "model_sigma3.pth"]
+    checkpoint_path_list_sigma = \
+        ["checkpoint_sigma0", "checkpoint_sigma1",
+         "checkpoint_sigma2", "checkpoint_sigma3"]
+    model_root_process_list_sigma = [0, 1, 2, 3]
+    trained_model_path_list_sigma = \
+        ["trained_model_sigma0.pth", "trained_model_sigma1.pth",
+         "trained_model_sigma2.pth", "trained_model_sigma3.pth"]
+elif world_comm.size == 1:
+    ann_model_list_sigma = [model_sigma0]
+    path_list_sigma = ["model_sigma0.pth"]
+    checkpoint_path_list_sigma = ["checkpoint_sigma0"]
+    model_root_process_list_sigma = [0]
+    trained_model_path_list_sigma = ["trained_model_sigma0.pth"]
+
+
+for j in range(len(ann_comm_list_sigma)):
+    if ann_comm_list_sigma[j] != MPI.COMM_NULL:
+        init_cpu_process_group(ann_comm_list_sigma[j])
+
+        training_set_indices_cpu_sigma = \
+            np.arange(ann_comm_list_sigma[j].rank, input_training_set_sigma.shape[0],
+                      ann_comm_list_sigma[j].size)
+        validation_set_indices_cpu_sigma = \
+            np.arange(ann_comm_list_sigma[j].rank, input_validation_set_sigma.shape[0],
+                      ann_comm_list_sigma[j].size)
+        
+        customDataset = CustomPartitionedDataset(reduced_problem, input_training_set,
+                                                 output_training_set, training_set_indices_cpu)
+        train_dataloader = DataLoader(customDataset, batch_size=input_training_set.shape[0], shuffle=False)# shuffle=True)
+
+        customDataset = CustomPartitionedDataset(reduced_problem, input_validation_set,
+                                                 output_validation_set, validation_set_indices_cpu)
+        valid_dataloader = DataLoader(customDataset, batch_size=input_validation_set.shape[0], shuffle=False)
+        
+        save_model(ann_model_list[j], path_list[j])
+        # load_model(ann_model_list[j], path_list[j])
+        
+        model_synchronise(ann_model_list[j], verbose=False)
+        
+        # Training of ANN
+        training_loss = list()
+        validation_loss = list()
+        
+        max_epochs = 2 # 20000
+        min_validation_loss = None
+        start_epoch = 0
+        checkpoint_epoch = 10
+        
+        learning_rate = 1.e-4
+        optimiser = get_optimiser(ann_model_list[j], "Adam", learning_rate)
+        loss_fn = get_loss_func("MSE", reduction="sum")
+    
+        if os.path.exists(checkpoint_path_list[j]):
+            start_epoch, min_validation_loss = \
+                load_checkpoint(checkpoint_path_list[j], ann_model_list[j], optimiser)
+        
+        import time
+        start_time = time.time()
+        for epochs in range(start_epoch, max_epochs):
+            if epochs > 0 and epochs % checkpoint_epoch == 0:
+                save_checkpoint(checkpoint_path_list[j], epochs,
+                                ann_model_list[j], optimiser,
+                                min_validation_loss)
+            print(f"Epoch: {epochs+1}/{max_epochs}")
+            current_training_loss = train_nn(reduced_problem,
+                                             train_dataloader,
+                                             ann_model_list[j],
+                                             loss_fn, optimiser)
+            training_loss.append(current_training_loss)
+            current_validation_loss = validate_nn(reduced_problem,
+                                                  valid_dataloader,
+                                                  ann_model_list[j],
+                                                  loss_fn)
+            validation_loss.append(current_validation_loss)
+            if epochs > 0 and current_validation_loss > 1.01 * min_validation_loss \
+            and reduced_problem.regularisation == "EarlyStopping":
+                # 1% safety margin against min_validation_loss
+                # before invoking early stopping criteria
+                print(f"Early stopping criteria invoked at epoch: {epochs+1}")
+                break
+            min_validation_loss = min(validation_loss)
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+
+        os.system(f"rm {checkpoint_path_list[j]}")
+
+world_comm.Barrier()
+
+for j in range(len(model_root_process_list)):
+    share_model(ann_model_list[j], world_comm, model_root_process_list[j])
+    save_model(ann_model_list[j], trained_model_path_list[j])
