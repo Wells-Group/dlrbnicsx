@@ -368,7 +368,7 @@ Nmax_sigma = 10
 for mu_index in cpu_indices_sigma:
     print(f"Parameter number {mu_index+1} of {para_matrix_sigma.shape[0]}: {para_matrix_sigma[mu_index,:]}")
     solution_sigma, solution_u = problem_parametric.solve(para_matrix_sigma[mu_index, :])
-    snapshot_arrays_sigma[mu_index, rstart_sigma:rend_sigma] = solution.vector[rstart_sigma:rend_sigma]
+    snapshot_arrays_sigma[mu_index, rstart_sigma:rend_sigma] = solution_sigma.vector[rstart_sigma:rend_sigma]
 
 world_comm.barrier()
 
