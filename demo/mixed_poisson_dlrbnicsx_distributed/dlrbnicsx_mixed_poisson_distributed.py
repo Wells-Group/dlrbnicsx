@@ -471,7 +471,7 @@ num_validation_samples_sigma = \
 itemsize = MPI.DOUBLE.Get_size()
 
 if world_comm.rank == 0:
-    ann_input_set_sigma = generate_ann_input_set(samples=num_ann_samples_sigma)
+    ann_input_set_sigma = generate_ann_input_set(num_ann_samples=num_ann_samples_sigma)
     np.random.shuffle(ann_input_set_sigma)
     nbytes_para_ann_training_sigma = num_training_samples_sigma * itemsize * para_dim_sigma
     nbytes_dofs_ann_training_sigma = num_training_samples_sigma * itemsize * \
