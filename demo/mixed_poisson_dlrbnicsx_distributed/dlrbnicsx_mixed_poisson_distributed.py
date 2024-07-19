@@ -546,7 +546,7 @@ generate_ann_output_set_sigma(problem_parametric, reduced_problem,
                               input_training_set_sigma, output_training_set_sigma,
                               training_set_indices_sigma, mode="Training")
 
-generate_ann_output_set(problem_parametric, reduced_problem,
+generate_ann_output_set_sigma(problem_parametric, reduced_problem,
                         input_validation_set_sigma, output_validation_set_sigma,
                         validation_set_indices_sigma, mode="Validation")
 
