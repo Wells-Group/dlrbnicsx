@@ -317,9 +317,9 @@ num_dofs_sigma = mesh_comm.allreduce(rend_sigma, op=MPI.MAX) - mesh_comm.allredu
 rstart_u, rend_u = u_sol.vector.getOwnershipRange()
 num_dofs_u = mesh_comm.allreduce(rend_u, op=MPI.MAX) - mesh_comm.allreduce(rstart_u, op=MPI.MIN)
 
-num_pod_samples_sigma = [3, 2, 3, 2, 2]  # [4, 3, 3, 3, 2]
-num_ann_samples_sigma = 32
-num_error_analysis_samples_sigma = [2, 2, 2, 2, 1]
+num_pod_samples_sigma = [4, 3, 4, 3, 2]
+num_ann_samples_sigma = 300
+num_error_analysis_samples_sigma = 200
 num_snapshots_sigma = np.product(num_pod_samples_sigma)
 nbytes_para_sigma = itemsize * num_snapshots_sigma * para_dim_sigma
 nbytes_dofs_sigma = itemsize * num_snapshots_sigma * num_dofs_sigma
@@ -328,9 +328,9 @@ nbytes_dofs_sigma = itemsize * num_snapshots_sigma * num_dofs_sigma
 
 def generate_training_set(samples=num_pod_samples_sigma):
     # Select input samples for POD
-    training_set_0 = np.linspace(-5., 4., samples[0])
-    training_set_1 = np.linspace(0.2, 0.7, samples[1])
-    training_set_2 = np.linspace(0.3, 0.8, samples[2])
+    training_set_0 = np.linspace(-5., 5., samples[0])
+    training_set_1 = np.linspace(0.2, 0.8, samples[1])
+    training_set_2 = np.linspace(0.2, 0.8, samples[2])
     training_set_3 = np.linspace(0.2, 0.8, samples[3])
     training_set_4 = np.linspace(1., 5., samples[4])
     training_set = np.array(list(itertools.product(training_set_0,
@@ -384,8 +384,8 @@ for mu_index in cpu_indices_sigma:
 
 world_comm.barrier()
 
-solution_empty = dolfinx.fem.Function(problem_parametric._Q)
 for i in range(snapshot_arrays_sigma.shape[0]):
+    solution_empty = dolfinx.fem.Function(problem_parametric._Q)
     solution_empty.vector[rstart_sigma:rend_sigma] = snapshot_arrays_sigma[i, rstart_sigma:rend_sigma]
     solution_empty.x.scatter_forward()
     # TODO Recall why .assemble()?
@@ -444,7 +444,7 @@ print(f"Norm reconstructed: {sigma_norm}, Error: {sigma_error}")
 def generate_ann_input_set(num_ann_samples=10):
     xlimits = np.array([[-5., 5.], [0.2, 0.8],
                         [0.2, 0.8], [0.2, 0.8],
-                        [2., 2.]])
+                        [1., 5.]])
     sampling = LHS(xlimits=xlimits)
     training_set = sampling(num_ann_samples)
     return training_set
@@ -734,7 +734,7 @@ for j in range(len(ann_comm_list_sigma)):
                 # before invoking early stopping criteria
                 print(f"Early stopping criteria invoked at epoch: {epochs+1}")
                 break
-            min_validation_loss = min(validation_loss)
+            min_validation_loss_sigma = min(validation_loss)
         end_time = time.process_time()
         elapsed_time = end_time - start_time
 
@@ -795,7 +795,9 @@ error_numpy_sigma3 = np.ndarray(buffer=buf10, dtype="d",
                          shape=(error_analysis_num_para_sigma))
 
 if world_comm.rank == 0:
-    error_analysis_set[:, :] = generate_ann_input_set(samples=num_error_analysis_samples_sigma)
+    error_analysis_set_sigma[:, :] = \
+        generate_ann_input_set(num_ann_samples=num_error_analysis_samples_sigma)
+    print(f"Error analysis set generated")
 
 world_comm.Barrier()
 
@@ -806,17 +808,27 @@ else:
     error_array_list_sigma = [error_numpy_sigma0]
 
 for j in range(len(fem_comm_list)):
-    error_analysis_indices_sigma = \
-        np.arange(j, error_analysis_set_sigma.shape[0], len(fem_comm_list))
-    for i in error_analysis_indices_sigma:
-        for array_num in range(len(error_array_list_sigma)):
-            error_array_list_sigma[array_num][i] = \
-                error_analysis(reduced_problem, problem_parametric,
-                               error_analysis_set_sigma[i, :],
-                               ann_model_list_sigma[array_num],
-                               len(reduced_problem._basis_functions_sigma),
-                               online_nn)
-            # print(f"Error analysis {i+1} of {error_analysis_set.shape[0]}, Model {array_num}, Error: {error_array_list[array_num][i]}")
+    if fem_comm_list[j] != MPI.COMM_NULL:
+        error_analysis_indices_sigma = \
+            np.arange(j, error_analysis_set_sigma.shape[0], len(fem_comm_list))
+        print(f"Error analysis indices (sigma): {error_analysis_indices_sigma}")
+        for i in error_analysis_indices_sigma:
+            for array_num in range(len(error_array_list_sigma)):
+                error_array_list_sigma[array_num][i] = \
+                    error_analysis(reduced_problem, problem_parametric,
+                                error_analysis_set_sigma[i, :],
+                                ann_model_list_sigma[array_num],
+                                len(reduced_problem._basis_functions_sigma),
+                                online_nn,
+                                norm_error=reduced_problem.norm_error_sigma,
+                                reconstruct_solution=reduced_problem.reconstruct_solution_sigma,
+                                input_scaling_range=reduced_problem.input_scaling_range,
+                                output_scaling_range=reduced_problem.output_scaling_range_sigma,
+                                input_range=reduced_problem.input_range,
+                                output_range=reduced_problem.output_range_sigma,
+                                index=0
+                                )
+                print(f"Error analysis (sigma) {i+1} of {error_analysis_set_sigma.shape[0]}, Model {array_num}, Error: {error_array_list_sigma[array_num][i]}")
 
 if fem_comm_list[0] != MPI.COMM_NULL:
     # Online phase at parameter online_mu
@@ -830,7 +842,12 @@ if fem_comm_list[0] != MPI.COMM_NULL:
     rb_solution_sigma = \
         reduced_problem.reconstruct_solution_sigma(
             online_nn(reduced_problem, problem_parametric, online_mu, model_sigma0,
-                      len(reduced_problem._basis_functions_sigma)))
+                      len(reduced_problem._basis_functions_sigma),
+                      input_scaling_range=reduced_problem.input_scaling_range,
+                      output_scaling_range=reduced_problem.output_scaling_range_sigma,
+                      input_range=reduced_problem.input_range,
+                      output_range=reduced_problem.output_range_sigma
+                      ))
             # TODO Replace model_sigma0 with best model model_sigmaX
     rb_end_time_0 = time.process_time()
 
