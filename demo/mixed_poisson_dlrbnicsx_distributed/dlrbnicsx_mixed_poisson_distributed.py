@@ -696,7 +696,7 @@ for j in range(len(ann_comm_list_sigma)):
         training_loss = list()
         validation_loss = list()
         
-        max_epochs_sigma = 5 # 20000
+        max_epochs_sigma = 20000
         min_validation_loss_sigma = None
         start_epoch_sigma = 0
         checkpoint_epoch_sigma = 10
@@ -853,6 +853,7 @@ if fem_comm_list[0] != MPI.COMM_NULL:
 
     # Post processing
     # TODO make plotting work on CSD3
+    '''
     fem_online_file \
         = "dlrbnicsx_solution_mixed_poisson_0/fem_online_mu_computed_sigma.xdmf"
     with dolfinx.io.XDMFFile(mesh.comm, fem_online_file,
@@ -878,6 +879,7 @@ if fem_comm_list[0] != MPI.COMM_NULL:
                             "w") as solution_file:
         solution_file.write_mesh(mesh)
         solution_file.write_function(error_function_sigma)
+    '''
 
     print(f"FEM time 0: {fem_end_time_0 - fem_start_time_0}")
     print(f"RB time 0: {rb_end_time_0 - rb_start_time_0}")
