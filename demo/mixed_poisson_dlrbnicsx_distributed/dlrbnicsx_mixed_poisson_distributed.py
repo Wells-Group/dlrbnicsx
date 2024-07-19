@@ -653,19 +653,39 @@ for j in range(len(ann_comm_list_sigma)):
         init_cpu_process_group(ann_comm_list_sigma[j])
 
         training_set_indices_cpu_sigma = \
-            np.arange(ann_comm_list_sigma[j].rank, input_training_set_sigma.shape[0],
+            np.arange(ann_comm_list_sigma[j].rank,
+                      input_training_set_sigma.shape[0],
                       ann_comm_list_sigma[j].size)
         validation_set_indices_cpu_sigma = \
-            np.arange(ann_comm_list_sigma[j].rank, input_validation_set_sigma.shape[0],
+            np.arange(ann_comm_list_sigma[j].rank,
+                      input_validation_set_sigma.shape[0],
                       ann_comm_list_sigma[j].size)
         
-        customDataset_sigma = CustomPartitionedDataset(reduced_problem, input_training_set_sigma,
-                                                 output_training_set_sigma, training_set_indices_cpu_sigma)
-        train_dataloader_sigma = DataLoader(customDataset_sigma, batch_size=input_training_set_sigma.shape[0], shuffle=False)# shuffle=True)
+        customDataset_sigma = \
+            CustomPartitionedDataset(reduced_problem,
+                                     input_training_set_sigma,
+                                     output_training_set_sigma,
+                                     training_set_indices_cpu_sigma,
+                                     input_scaling_range=reduced_problem.input_scaling_range,
+                                     output_scaling_range=reduced_problem.output_scaling_range_sigma,
+                                     input_range=reduced_problem.input_range,
+                                     output_range=reduced_problem.output_range_sigma
+                                     )
+        train_dataloader_sigma = \
+            DataLoader(customDataset_sigma, batch_size=input_training_set_sigma.shape[0], shuffle=False)# shuffle=True)
 
-        customDataset_sigma = CustomPartitionedDataset(reduced_problem, input_validation_set_sigma,
-                                                 output_validation_set_sigma, validation_set_indices_cpu_sigma)
-        valid_dataloader_sigma = DataLoader(customDataset_sigma, batch_size=input_validation_set_sigma.shape[0], shuffle=False)
+        customDataset_sigma = \
+            CustomPartitionedDataset(reduced_problem,
+                                     input_validation_set_sigma,
+                                     output_validation_set_sigma,
+                                     validation_set_indices_cpu_sigma,
+                                     input_scaling_range=reduced_problem.input_scaling_range,
+                                     output_scaling_range=reduced_problem.output_scaling_range_sigma,
+                                     input_range=reduced_problem.input_range,
+                                     output_range=reduced_problem.output_range_sigma
+                                    )
+        valid_dataloader_sigma = \
+            DataLoader(customDataset_sigma, batch_size=input_validation_set_sigma.shape[0], shuffle=False)
         
         save_model(ann_model_list_sigma[j], path_list_sigma[j])
         # load_model(ann_model_list_sigma[j], path_list_sigma[j])
