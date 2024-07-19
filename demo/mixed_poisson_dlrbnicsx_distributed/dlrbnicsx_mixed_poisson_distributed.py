@@ -676,7 +676,7 @@ for j in range(len(ann_comm_list_sigma)):
         training_loss = list()
         validation_loss = list()
         
-        max_epochs_sigma = 2 # 20000
+        max_epochs_sigma = 5 # 20000
         min_validation_loss_sigma = None
         start_epoch_sigma = 0
         checkpoint_epoch_sigma = 10
@@ -691,7 +691,7 @@ for j in range(len(ann_comm_list_sigma)):
                                 optimiser_sigma)
         
         import time
-        start_time = time.time()
+        start_time = time.process_time()
         for epochs in range(start_epoch_sigma, max_epochs_sigma):
             if epochs > 0 and epochs % checkpoint_epoch_sigma == 0:
                 save_checkpoint(checkpoint_path_list_sigma[j], epochs,
@@ -715,7 +715,7 @@ for j in range(len(ann_comm_list_sigma)):
                 print(f"Early stopping criteria invoked at epoch: {epochs+1}")
                 break
             min_validation_loss = min(validation_loss)
-        end_time = time.time()
+        end_time = time.process_time()
         elapsed_time = end_time - start_time
 
         os.system(f"rm {checkpoint_path_list_sigma[j]}")
