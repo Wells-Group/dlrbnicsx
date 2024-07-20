@@ -85,7 +85,7 @@ gmsh.model.occ.remove(gmsh.model.getEntities(dim=gdim))
 
 gmsh.write("3d_mesh.msh")
 
-gmsh.fltk.run()
+# gmsh.fltk.run()
 
 # gmsh.finalize()
 
