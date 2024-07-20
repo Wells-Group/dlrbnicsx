@@ -607,16 +607,16 @@ else:
     raise NotImplementedError("Please use 1,4 or 8 processes")
 
 # ANN model
-model_sigma0 = HiddenLayersNet(input_training_set_sigma.shape[1], [65, 65, 65],
+model_sigma0 = HiddenLayersNet(input_training_set_sigma.shape[1], [80, 80, 80],
                          len(reduced_problem._basis_functions_sigma), Tanh())
 
-model_sigma1 = HiddenLayersNet(input_training_set_sigma.shape[1], [60, 60, 60],
+model_sigma1 = HiddenLayersNet(input_training_set_sigma.shape[1], [90, 90, 90],
                          len(reduced_problem._basis_functions_sigma), Tanh())
 
-model_sigma2 = HiddenLayersNet(input_training_set_sigma.shape[1], [55, 55, 55],
+model_sigma2 = HiddenLayersNet(input_training_set_sigma.shape[1], [100, 100, 100],
                          len(reduced_problem._basis_functions_sigma), Tanh())
 
-model_sigma3 = HiddenLayersNet(input_training_set_sigma.shape[1], [50, 50, 50],
+model_sigma3 = HiddenLayersNet(input_training_set_sigma.shape[1], [110, 110, 110],
                          len(reduced_problem._basis_functions_sigma), Tanh())
 
 if world_comm.size == 8:
