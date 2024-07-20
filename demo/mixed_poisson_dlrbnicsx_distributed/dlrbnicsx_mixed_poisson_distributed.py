@@ -180,6 +180,7 @@ class PODANNReducedProblem(abc.ABC):
         self.output_range_sigma = [None, None]
         self.output_scaling_range_u = [-1., 1.]
         self.output_range_u = [None, None]
+        self.regularisation = "EarlyStopping"
 
     def reconstruct_solution_sigma(self, reduced_solution_sigma):
         return self._basis_functions_sigma[:reduced_solution_sigma.size] * \
@@ -319,7 +320,7 @@ num_dofs_u = mesh_comm.allreduce(rend_u, op=MPI.MAX) - mesh_comm.allreduce(rstar
 
 num_pod_samples_sigma = [4, 3, 4, 3, 2]
 num_ann_samples_sigma = 300
-num_error_analysis_samples_sigma = 200
+num_error_analysis_samples_sigma = 100
 num_snapshots_sigma = np.product(num_pod_samples_sigma)
 nbytes_para_sigma = itemsize * num_snapshots_sigma * para_dim_sigma
 nbytes_dofs_sigma = itemsize * num_snapshots_sigma * num_dofs_sigma
