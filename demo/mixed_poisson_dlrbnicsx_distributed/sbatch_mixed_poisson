@@ -6,7 +6,7 @@
 
 #SBATCH --nodes=1
 #SBATCH --ntasks=8
-#SBATCH --time=05:00:00
+#SBATCH --time=03:00:00
 #SBATCH --mem=40000mb
 
 #SBATCH -p icelake

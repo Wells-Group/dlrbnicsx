@@ -374,7 +374,7 @@ buf1, itemsize = win1.Shared_query(0)
 snapshot_arrays_sigma = np.ndarray(buffer=buf1, dtype="d",
                              shape=(num_snapshots_sigma, num_dofs_sigma))
 snapshots_matrix_sigma = rbnicsx.backends.FunctionsList(problem_parametric._Q)
-Nmax_sigma = 10
+Nmax_sigma = 50
 
 # NOTE  Redundant check of if fem_comm_list[i] != MPI.COMM_NULL is removed
 
@@ -433,6 +433,8 @@ if world_comm.rank == 0:
     plt.savefig("eigenvalue_decay_sigma")
 
 # ### POD Ends ###
+
+del(snapshot_arrays_sigma)
 
 sigma_sol_projected = reduced_problem.project_snapshot_sigma(sigma_sol, reduced_size_sigma)
 sigma_sol_reconstructed = reduced_problem.reconstruct_solution_sigma(sigma_sol_projected)
@@ -605,16 +607,16 @@ else:
     raise NotImplementedError("Please use 1,4 or 8 processes")
 
 # ANN model
-model_sigma0 = HiddenLayersNet(input_training_set_sigma.shape[1], [35, 35],
+model_sigma0 = HiddenLayersNet(input_training_set_sigma.shape[1], [65, 65, 65],
                          len(reduced_problem._basis_functions_sigma), Tanh())
 
-model_sigma1 = HiddenLayersNet(input_training_set_sigma.shape[1], [30, 30],
+model_sigma1 = HiddenLayersNet(input_training_set_sigma.shape[1], [60, 60, 60],
                          len(reduced_problem._basis_functions_sigma), Tanh())
 
-model_sigma2 = HiddenLayersNet(input_training_set_sigma.shape[1], [25, 25],
+model_sigma2 = HiddenLayersNet(input_training_set_sigma.shape[1], [55, 55, 55],
                          len(reduced_problem._basis_functions_sigma), Tanh())
 
-model_sigma3 = HiddenLayersNet(input_training_set_sigma.shape[1], [15, 15],
+model_sigma3 = HiddenLayersNet(input_training_set_sigma.shape[1], [50, 50, 50],
                          len(reduced_problem._basis_functions_sigma), Tanh())
 
 if world_comm.size == 8:
