@@ -1,0 +1,888 @@
+==> In environment fenicsx-env
+==> Removing all temporary build stages
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Line)
+Info    : [ 30%] Meshing curve 2 (Line)
+Info    : [ 50%] Meshing curve 3 (Line)
+Info    : [ 80%] Meshing curve 4 (Line)
+Info    : Done meshing 1D (Wall 0.000496252s, CPU 0.000334s)
+Info    : Meshing 2D...
+Info    : Meshing surface 1 (Plane, Frontal-Delaunay for Quads)
+Info    : Simple recombination completed (Wall 0.00112044s, CPU 0.000952s): 100 quads, 0 triangles, 0 invalid quads, 0 quads with Q < 0.1, avg Q = 0.999171, min Q = 0.989626
+Info    : Simple recombination completed (Wall 0.0020634s, CPU 0.002053s): 400 quads, 0 triangles, 0 invalid quads, 0 quads with Q < 0.1, avg Q = 0.999573, min Q = 0.994685
+Info    : Done meshing 2D (Wall 0.00685588s, CPU 0.004864s)
+Info    : Meshing 3D...
+Info    : Done meshing 3D (Wall 1.46963e-05s, CPU 5e-06s)
+Info    : Refining mesh...
+Info    : Meshing order 2 (curvilinear on)...
+Info    : [  0%] Meshing curve 1 order 2
+Info    : [ 20%] Meshing curve 2 order 2
+Info    : [ 40%] Meshing curve 3 order 2
+Info    : [ 60%] Meshing curve 4 order 2
+Info    : [ 80%] Meshing surface 1 order 2
+Info    : Done meshing order 2 (Wall 0.00235184s, CPU 0.001829s)
+Info    : Done refining mesh (Wall 0.00312311s, CPU 0.002082s)
+Info    : 1681 nodes 1764 elements
+Info    : Optimizing mesh (Netgen)...
+Info    : Done optimizing mesh (Wall 6.42613e-07s, CPU 2e-06s)
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Line)
+Info    : [ 10%] Meshing curve 2 (Line)
+Info    : [ 20%] Meshing curve 3 (Line)
+Info    : [ 30%] Meshing curve 4 (Line)
+Info    : [ 40%] Meshing curve 11 (Extruded)
+Info    : [ 50%] Meshing curve 12 (Extruded)
+Info    : [ 50%] Meshing curve 13 (Extruded)
+Info    : [ 60%] Meshing curve 14 (Extruded)
+Info    : [ 70%] Meshing curve 16 (Extruded)
+Info    : [ 80%] Meshing curve 17 (Extruded)
+Info    : [ 90%] Meshing curve 21 (Extruded)
+Info    : [100%] Meshing curve 25 (Extruded)
+Info    : Done meshing 1D (Wall 0.000333404s, CPU 6.9e-05s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Plane, Frontal-Delaunay for Quads)
+Info    : [  0%] Simple recombination completed (Wall 0.000890402s, CPU 0.000887s): 100 quads, 0 triangles, 0 invalid quads, 0 quads with Q < 0.1, avg Q = 0.999171, min Q = 0.989626
+Info    : [  0%] Simple recombination completed (Wall 0.00214585s, CPU 0.002066s): 400 quads, 0 triangles, 0 invalid quads, 0 quads with Q < 0.1, avg Q = 0.999573, min Q = 0.994685
+Info    : [ 20%] Meshing surface 18 (Extruded)
+Info    : [ 40%] Meshing surface 22 (Extruded)
+Info    : [ 50%] Meshing surface 26 (Extruded)
+Info    : [ 70%] Meshing surface 30 (Extruded)
+Info    : [ 90%] Meshing surface 31 (Extruded)
+Info    : Done meshing 2D (Wall 0.0128345s, CPU 0.01245s)
+Info    : Meshing 3D...
+Info    : Meshing volume 1 (Extruded)
+Info    : Done meshing 3D (Wall 0.0270463s, CPU 0.025673s)
+Info    : Optimizing mesh...
+Info    : Done optimizing mesh (Wall 0.000223672s, CPU 0.000217s)
+Info    : 9261 nodes 10648 elements
+Info    : Optimizing mesh (Netgen)...
+Info    : Done optimizing mesh (Wall 0.000202114s, CPU 0.000204s)
+[(3, 1)]
+[(2, 1), (2, 18), (2, 22), (2, 26), (2, 30), (2, 31)]
+Info    : Writing '3d_mesh.msh'...
+Info    : Done writing '3d_mesh.msh'
+Info    : Reading '3d_mesh.msh'...
+Info    : 27 entities
+Info    : 9261 nodes
+Info    : 10400 elements
+Info    : Done reading '3d_mesh.msh'
+3
+(9261, 3)
+Info    : Reading 'mesh_data/3d_mesh.msh'...
+Info    : 27 entities
+Info    : 9261 nodes
+Info    : 10400 elements
+Info    : Done reading 'mesh_data/3d_mesh.msh'
+[-2.60208521e-21 -1.30104262e-20 -1.30104259e-20 ...  4.57567616e-03
+ -2.06050121e-03  2.72210756e-05] 1.0974314675471055
+[0.26736702 0.74773805 0.26320236 ... 0.08172369 0.03400163 0.03532606] 144.98455585715533
+===============================================================================
+=                          POD offline phase begins                           =
+===============================================================================
+
+Set up snapshots matrix
+Set up reduced problem
+
+###################################### 1 ######################################
+Parameter number  1 of 48
+High fidelity solve for mu = [-5.   0.2  0.2  0.2  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.48440443e-01
+ -1.27563928e-01  2.10080403e-03]
+Sigma solution norm: 33.664039449075084
+Update snapshots matrix
+
+###################################### 2 ######################################
+Parameter number  2 of 48
+High fidelity solve for mu = [-5.   0.2  0.2  0.2  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.48440443e-01
+ -1.27563928e-01  2.10080403e-03]
+Sigma solution norm: 33.664039449075084
+Update snapshots matrix
+
+###################################### 3 ######################################
+Parameter number  3 of 48
+High fidelity solve for mu = [-5.   0.2  0.2  0.5  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  5.89111737e-02
+ -2.25633141e-02  3.27497763e-04]
+Sigma solution norm: 12.117034268275493
+Update snapshots matrix
+
+###################################### 4 ######################################
+Parameter number  4 of 48
+High fidelity solve for mu = [-5.   0.2  0.2  0.5  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  5.89111737e-02
+ -2.25633141e-02  3.27497763e-04]
+Sigma solution norm: 12.117034268275491
+Update snapshots matrix
+
+###################################### 5 ######################################
+Parameter number  5 of 48
+High fidelity solve for mu = [-5.   0.2  0.2  0.8  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.03723012e-02
+ -1.31131677e-02  1.25255569e-04]
+Sigma solution norm: 45.22885797298605
+Update snapshots matrix
+
+###################################### 6 ######################################
+Parameter number  6 of 48
+High fidelity solve for mu = [-5.   0.2  0.2  0.8  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.03723012e-02
+ -1.31131677e-02  1.25255569e-04]
+Sigma solution norm: 45.22885797298605
+Update snapshots matrix
+
+###################################### 7 ######################################
+Parameter number  7 of 48
+High fidelity solve for mu = [-5.   0.2  0.8  0.2  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.09473099e-02
+ -1.39226240e-02  1.32663723e-04]
+Sigma solution norm: 45.22797327221208
+Update snapshots matrix
+
+###################################### 8 ######################################
+Parameter number  8 of 48
+High fidelity solve for mu = [-5.   0.2  0.8  0.2  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.09473099e-02
+ -1.39226240e-02  1.32663723e-04]
+Sigma solution norm: 45.22797327221209
+Update snapshots matrix
+
+###################################### 9 ######################################
+Parameter number  9 of 48
+High fidelity solve for mu = [-5.   0.2  0.8  0.5  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  8.30851992e-03
+ -4.18364564e-03  2.11549406e-05]
+Sigma solution norm: 18.946466610991706
+Update snapshots matrix
+
+##################################### 10 ######################################
+Parameter number  10 of 48
+High fidelity solve for mu = [-5.   0.2  0.8  0.5  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  8.30851992e-03
+ -4.18364564e-03  2.11549406e-05]
+Sigma solution norm: 18.946466610991706
+Update snapshots matrix
+
+##################################### 11 ######################################
+Parameter number  11 of 48
+High fidelity solve for mu = [-5.   0.2  0.8  0.8  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.44653590e-02
+ -8.11349272e-03  1.14082963e-05]
+Sigma solution norm: 69.97414787125426
+Update snapshots matrix
+
+##################################### 12 ######################################
+Parameter number  12 of 48
+High fidelity solve for mu = [-5.   0.2  0.8  0.8  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.44653590e-02
+ -8.11349272e-03  1.14082963e-05]
+Sigma solution norm: 69.97414787125427
+Update snapshots matrix
+
+##################################### 13 ######################################
+Parameter number  13 of 48
+High fidelity solve for mu = [-5.   0.8  0.2  0.2  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  5.50391308e+00
+ -1.92456978e+00  1.62325605e-01]
+Sigma solution norm: 45.227978329320486
+Update snapshots matrix
+
+##################################### 14 ######################################
+Parameter number  14 of 48
+High fidelity solve for mu = [-5.   0.8  0.2  0.2  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  5.50391308e+00
+ -1.92456978e+00  1.62325605e-01]
+Sigma solution norm: 45.227978329320486
+Update snapshots matrix
+
+##################################### 15 ######################################
+Parameter number  15 of 48
+High fidelity solve for mu = [-5.   0.8  0.2  0.5  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  8.97219741e-01
+ -3.23333205e-01  2.55996868e-02]
+Sigma solution norm: 18.94647047509823
+Update snapshots matrix
+
+##################################### 16 ######################################
+Parameter number  16 of 48
+High fidelity solve for mu = [-5.   0.8  0.2  0.5  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  8.97219741e-01
+ -3.23333205e-01  2.55996868e-02]
+Sigma solution norm: 18.94647047509823
+Update snapshots matrix
+
+##################################### 17 ######################################
+Parameter number  17 of 48
+High fidelity solve for mu = [-5.   0.8  0.2  0.8  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.87619503e-01
+ -1.48840992e-01  1.00779828e-02]
+Sigma solution norm: 69.97416102239849
+Update snapshots matrix
+
+##################################### 18 ######################################
+Parameter number  18 of 48
+High fidelity solve for mu = [-5.   0.8  0.2  0.8  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.87619503e-01
+ -1.48840992e-01  1.00779828e-02]
+Sigma solution norm: 69.97416102239849
+Update snapshots matrix
+
+##################################### 19 ######################################
+Parameter number  19 of 48
+High fidelity solve for mu = [-5.   0.8  0.8  0.2  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.96636690e-01
+ -1.61410397e-01  1.06496783e-02]
+Sigma solution norm: 69.90898833966065
+Update snapshots matrix
+
+##################################### 20 ######################################
+Parameter number  20 of 48
+High fidelity solve for mu = [-5.   0.8  0.8  0.2  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.96636690e-01
+ -1.61410397e-01  1.06496783e-02]
+Sigma solution norm: 69.90898833966065
+Update snapshots matrix
+
+##################################### 21 ######################################
+Parameter number  21 of 48
+High fidelity solve for mu = [-5.   0.8  0.8  0.5  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  7.62519969e-02
+ -3.35157127e-02  1.71109826e-03]
+Sigma solution norm: 34.952345409767815
+Update snapshots matrix
+
+##################################### 22 ######################################
+Parameter number  22 of 48
+High fidelity solve for mu = [-5.   0.8  0.8  0.5  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  7.62519969e-02
+ -3.35157127e-02  1.71109826e-03]
+Sigma solution norm: 34.95234540976781
+Update snapshots matrix
+
+##################################### 23 ######################################
+Parameter number  23 of 48
+High fidelity solve for mu = [-5.   0.8  0.8  0.8  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.75532125e-02
+ -3.49423313e-02  7.25535570e-04]
+Sigma solution norm: 126.90815739785656
+Update snapshots matrix
+
+##################################### 24 ######################################
+Parameter number  24 of 48
+High fidelity solve for mu = [-5.   0.8  0.8  0.8  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.75532125e-02
+ -3.49423313e-02  7.25535570e-04]
+Sigma solution norm: 126.90815739785658
+Update snapshots matrix
+
+##################################### 25 ######################################
+Parameter number  25 of 48
+High fidelity solve for mu = [5.  0.2 0.2 0.2 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.47585812e-04
+ -8.48968283e-05  1.06351882e-07]
+Sigma solution norm: 0.2526642128203543
+Update snapshots matrix
+
+##################################### 26 ######################################
+Parameter number  26 of 48
+High fidelity solve for mu = [5.  0.2 0.2 0.2 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.47585812e-04
+ -8.48968283e-05  1.06351882e-07]
+Sigma solution norm: 0.2526642128203544
+Update snapshots matrix
+
+##################################### 27 ######################################
+Parameter number  27 of 48
+High fidelity solve for mu = [5.  0.2 0.2 0.5 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.23744149e-04
+ -1.27525956e-04  4.22120898e-08]
+Sigma solution norm: 0.25727504720787936
+Update snapshots matrix
+
+##################################### 28 ######################################
+Parameter number  28 of 48
+High fidelity solve for mu = [5.  0.2 0.2 0.5 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.23744149e-04
+ -1.27525956e-04  4.22120898e-08]
+Sigma solution norm: 0.25727504720787925
+Update snapshots matrix
+
+##################################### 29 ######################################
+Parameter number  29 of 48
+High fidelity solve for mu = [5.  0.2 0.2 0.8 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.30118836e-04
+ -1.28631956e-04 -1.68081738e-07]
+Sigma solution norm: 0.1804469488528073
+Update snapshots matrix
+
+##################################### 30 ######################################
+Parameter number  30 of 48
+High fidelity solve for mu = [5.  0.2 0.2 0.8 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.30118836e-04
+ -1.28631956e-04 -1.68081738e-07]
+Sigma solution norm: 0.18044694885280727
+Update snapshots matrix
+
+##################################### 31 ######################################
+Parameter number  31 of 48
+High fidelity solve for mu = [5.  0.2 0.8 0.2 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.27671481e-04
+ -1.24916714e-04 -1.47915100e-07]
+Sigma solution norm: 0.18048108346476097
+Update snapshots matrix
+
+##################################### 32 ######################################
+Parameter number  32 of 48
+High fidelity solve for mu = [5.  0.2 0.8 0.2 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.27671481e-04
+ -1.24916714e-04 -1.47915100e-07]
+Sigma solution norm: 0.1804810834647609
+Update snapshots matrix
+
+##################################### 33 ######################################
+Parameter number  33 of 48
+High fidelity solve for mu = [5.  0.2 0.8 0.5 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.23716807e-04
+ -3.22363870e-04 -1.46752954e-06]
+Sigma solution norm: 0.18562428769327383
+Update snapshots matrix
+
+##################################### 34 ######################################
+Parameter number  34 of 48
+High fidelity solve for mu = [5.  0.2 0.8 0.5 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.23716807e-04
+ -3.22363870e-04 -1.46752954e-06]
+Sigma solution norm: 0.18562428769327383
+Update snapshots matrix
+
+##################################### 35 ######################################
+Parameter number  35 of 48
+High fidelity solve for mu = [5.  0.2 0.8 0.8 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.05846964e-03
+ -5.16865667e-04 -3.94394256e-06]
+Sigma solution norm: 0.13580736638279606
+Update snapshots matrix
+
+##################################### 36 ######################################
+Parameter number  36 of 48
+High fidelity solve for mu = [5.  0.2 0.8 0.8 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.05846964e-03
+ -5.16865667e-04 -3.94394256e-06]
+Sigma solution norm: 0.13580736638279609
+Update snapshots matrix
+
+##################################### 37 ######################################
+Parameter number  37 of 48
+High fidelity solve for mu = [5.  0.8 0.2 0.2 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.50006103e-05
+ -3.75114131e-05 -5.45937365e-08]
+Sigma solution norm: 0.1804810246331843
+Update snapshots matrix
+
+##################################### 38 ######################################
+Parameter number  38 of 48
+High fidelity solve for mu = [5.  0.8 0.2 0.2 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.50006103e-05
+ -3.75114131e-05 -5.45937365e-08]
+Sigma solution norm: 0.1804810246331843
+Update snapshots matrix
+
+##################################### 39 ######################################
+Parameter number  39 of 48
+High fidelity solve for mu = [5.  0.8 0.2 0.5 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  8.15037994e-05
+ -4.70008550e-05 -1.84197066e-07]
+Sigma solution norm: 0.18562424004581773
+Update snapshots matrix
+
+##################################### 40 ######################################
+Parameter number  40 of 48
+High fidelity solve for mu = [5.  0.8 0.2 0.5 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  8.15037994e-05
+ -4.70008550e-05 -1.84197066e-07]
+Sigma solution norm: 0.18562424004581773
+Update snapshots matrix
+
+##################################### 41 ######################################
+Parameter number  41 of 48
+High fidelity solve for mu = [5.  0.8 0.2 0.8 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.54501871e-05
+ -3.76129783e-05 -2.99904542e-07]
+Sigma solution norm: 0.13580736505316138
+Update snapshots matrix
+
+##################################### 42 ######################################
+Parameter number  42 of 48
+High fidelity solve for mu = [5.  0.8 0.2 0.8 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.54501871e-05
+ -3.76129783e-05 -2.99904542e-07]
+Sigma solution norm: 0.13580736505316138
+Update snapshots matrix
+
+##################################### 43 ######################################
+Parameter number  43 of 48
+High fidelity solve for mu = [5.  0.8 0.8 0.2 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.51667020e-05
+ -3.71672232e-05 -2.88360210e-07]
+Sigma solution norm: 0.13580598597893637
+Update snapshots matrix
+
+##################################### 44 ######################################
+Parameter number  44 of 48
+High fidelity solve for mu = [5.  0.8 0.8 0.2 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.51667020e-05
+ -3.71672232e-05 -2.88360210e-07]
+Sigma solution norm: 0.13580598597893634
+Update snapshots matrix
+
+##################################### 45 ######################################
+Parameter number  45 of 48
+High fidelity solve for mu = [5.  0.8 0.8 0.5 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.14138875e-04
+ -6.35739018e-05 -1.17483081e-06]
+Sigma solution norm: 0.14124092454307274
+Update snapshots matrix
+
+##################################### 46 ######################################
+Parameter number  46 of 48
+High fidelity solve for mu = [5.  0.8 0.8 0.5 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.14138875e-04
+ -6.35739018e-05 -1.17483081e-06]
+Sigma solution norm: 0.14124092454307272
+Update snapshots matrix
+
+##################################### 47 ######################################
+Parameter number  47 of 48
+High fidelity solve for mu = [5.  0.8 0.8 0.8 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.36412500e-04
+ -7.31204187e-05 -2.36288342e-06]
+Sigma solution norm: 0.10782872707722405
+Update snapshots matrix
+
+##################################### 48 ######################################
+Parameter number  48 of 48
+High fidelity solve for mu = [5.  0.8 0.8 0.8 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.36412500e-04
+ -7.31204187e-05 -2.36288342e-06]
+Sigma solution norm: 0.10782872707722405
+Update snapshots matrix
+
+################################# Perform POD #################################
+
+===============================================================================
+=                       POD-Galerkin offline phase ends                       =
+===============================================================================
+Sigma eigenvalues: [2.58259575e+07 1.77407690e+07 1.75552809e+07 1.66281426e+07
+ 1.21082289e+07 1.14452296e+07 1.13903816e+07 7.84944946e+06
+ 7.65534060e+04 5.26021628e+04 5.21814784e+04 3.59727977e+04
+ 8.14421945e+01 2.44496042e+01 2.42857087e+01 1.72834516e+01
+ 7.16952463e+00 5.51709595e+00 5.50267262e+00 1.73419894e+00
+ 1.01223134e+00 3.24853159e-01 3.24709545e-01 1.02104407e-01
+ 7.22994619e-09 5.32828439e-09 3.53197644e-09 2.88987736e-09
+ 1.07065435e-09 7.15182258e-10 4.33212557e-13 1.28367460e-13
+ 1.14122757e-13 5.93128658e-14 2.11548207e-14 2.85059147e-15
+ 1.68962796e-16            nan            nan            nan
+            nan            nan            nan            nan
+            nan            nan            nan            nan]
+(75600,) (75600,)
+Norm reconstructed: 2.405536670152947, Error: 0.6338584157488312
+Training parameter number 1 of 30: [-4.16666667  0.63        0.49        0.65        3.33333333]
+Training parameter number 2 of 30: [-0.83333333  0.29        0.55        0.31        1.73333333]
+Training parameter number 3 of 30: [1.5  0.75 0.47 0.43 4.4 ]
+Training parameter number 4 of 30: [-3.83333333  0.55        0.51        0.47        2.13333333]
+Training parameter number 5 of 30: [4.16666667 0.79       0.31       0.45       1.6       ]
+Training parameter number 6 of 30: [1.16666667 0.23       0.37       0.79       2.93333333]
+Training parameter number 7 of 30: [-1.83333333  0.53        0.69        0.35        4.8       ]
+Training parameter number 8 of 30: [2.16666667 0.45       0.79       0.51       3.06666667]
+Training parameter number 9 of 30: [4.83333333 0.71       0.33       0.49       1.06666667]
+Training parameter number 10 of 30: [1.83333333 0.67       0.73       0.39       2.66666667]
+Training parameter number 11 of 30: [3.83333333 0.51       0.71       0.23       1.2       ]
+Training parameter number 12 of 30: [-0.5         0.33        0.75        0.69        4.26666667]
+Training parameter number 13 of 30: [-4.5         0.73        0.35        0.63        1.46666667]
+Training parameter number 14 of 30: [-1.16666667  0.57        0.27        0.59        2.4       ]
+Training parameter number 15 of 30: [3.16666667 0.35       0.21       0.27       3.86666667]
+Training parameter number 16 of 30: [-2.5         0.27        0.63        0.21        3.73333333]
+Training parameter number 17 of 30: [0.16666667 0.69       0.67       0.53       2.8       ]
+Training parameter number 18 of 30: [-0.16666667  0.31        0.43        0.57        3.46666667]
+Training parameter number 19 of 30: [-3.5         0.61        0.45        0.55        4.66666667]
+Training parameter number 20 of 30: [4.5        0.49       0.41       0.75       2.26666667]
+Training parameter number 21 of 30: [-2.16666667  0.25        0.65        0.71        4.        ]
+Training parameter number 22 of 30: [3.5  0.37 0.25 0.25 3.6 ]
+Training parameter number 23 of 30: [-4.83333333  0.77        0.77        0.73        4.13333333]
+Training parameter number 24 of 30: [0.83333333 0.39       0.23       0.67       3.2       ]
+Training parameter number 25 of 30: [-1.5         0.43        0.39        0.61        4.93333333]
+Training parameter number 26 of 30: [0.5  0.41 0.53 0.77 2.  ]
+Training parameter number 27 of 30: [2.83333333 0.59       0.57       0.33       1.86666667]
+Training parameter number 28 of 30: [2.5        0.21       0.61       0.41       4.53333333]
+Training parameter number 29 of 30: [-2.83333333  0.65        0.59        0.29        2.53333333]
+Training parameter number 30 of 30: [-3.16666667  0.47        0.29        0.37        1.33333333]
+Epoch: 1/50
+Loss: 1.2863140106201172 6/21
+Loss: 1.4943032264709473 12/21
+Loss: 1.422298789024353 18/21
+Loss: 0.7204484343528748 21/21
+Validation loss: 4.953180
+Epoch: 2/50
+Loss: 1.282991647720337 6/21
+Loss: 1.4907488822937012 12/21
+Loss: 1.4190624952316284 18/21
+Loss: 0.7186074256896973 21/21
+Validation loss: 4.948081
+Epoch: 3/50
+Loss: 1.2798333168029785 6/21
+Loss: 1.4873098134994507 12/21
+Loss: 1.4158471822738647 18/21
+Loss: 0.716766893863678 21/21
+Validation loss: 4.942996
+Epoch: 4/50
+Loss: 1.2766950130462646 6/21
+Loss: 1.4838972091674805 12/21
+Loss: 1.4126399755477905 18/21
+Loss: 0.714928388595581 21/21
+Validation loss: 4.937920
+Epoch: 5/50
+Loss: 1.2735673189163208 6/21
+Loss: 1.480498194694519 12/21
+Loss: 1.4094398021697998 18/21
+Loss: 0.7130923867225647 21/21
+Validation loss: 4.932855
+Epoch: 6/50
+Loss: 1.2704473733901978 6/21
+Loss: 1.4771078824996948 12/21
+Loss: 1.4062461853027344 18/21
+Loss: 0.7112596035003662 21/21
+Validation loss: 4.927800
+Epoch: 7/50
+Loss: 1.2673341035842896 6/21
+Loss: 1.4737253189086914 12/21
+Loss: 1.4030587673187256 18/21
+Loss: 0.7094302773475647 21/21
+Validation loss: 4.922755
+Epoch: 8/50
+Loss: 1.2642276287078857 6/21
+Loss: 1.4703491926193237 12/21
+Loss: 1.3998781442642212 18/21
+Loss: 0.7076046466827393 21/21
+Validation loss: 4.917721
+Epoch: 9/50
+Loss: 1.2611273527145386 6/21
+Loss: 1.4669795036315918 12/21
+Loss: 1.3967037200927734 18/21
+Loss: 0.7057827115058899 21/21
+Validation loss: 4.912697
+Epoch: 10/50
+Loss: 1.2580335140228271 6/21
+Loss: 1.4636155366897583 12/21
+Loss: 1.393535852432251 18/21
+Loss: 0.7039648294448853 21/21
+Validation loss: 4.907685
+Epoch: 11/50
+Loss: 1.2549461126327515 6/21
+Loss: 1.4602580070495605 12/21
+Loss: 1.3903751373291016 18/21
+Loss: 0.7021509408950806 21/21
+Validation loss: 4.902683
+Epoch: 12/50
+Loss: 1.2518655061721802 6/21
+Loss: 1.456906795501709 12/21
+Loss: 1.387221336364746 18/21
+Loss: 0.7003411054611206 21/21
+Validation loss: 4.897694
+Epoch: 13/50
+Loss: 1.248791217803955 6/21
+Loss: 1.4535620212554932 12/21
+Loss: 1.3840744495391846 18/21
+Loss: 0.698535680770874 21/21
+Validation loss: 4.892715
+Epoch: 14/50
+Loss: 1.245723843574524 6/21
+Loss: 1.4502232074737549 12/21
+Loss: 1.3809343576431274 18/21
+Loss: 0.6967343091964722 21/21
+Validation loss: 4.887749
+Epoch: 15/50
+Loss: 1.2426631450653076 6/21
+Loss: 1.4468907117843628 12/21
+Loss: 1.377801537513733 18/21
+Loss: 0.6949370503425598 21/21
+Validation loss: 4.882794
+Epoch: 16/50
+Loss: 1.2396091222763062 6/21
+Loss: 1.4435648918151855 12/21
+Loss: 1.3746757507324219 18/21
+Loss: 0.6931442022323608 21/21
+Validation loss: 4.877851
+Epoch: 17/50
+Loss: 1.2365620136260986 6/21
+Loss: 1.440245509147644 12/21
+Loss: 1.3715571165084839 18/21
+Loss: 0.6913556456565857 21/21
+Validation loss: 4.872920
+Epoch: 18/50
+Loss: 1.233521819114685 6/21
+Loss: 1.4369326829910278 12/21
+Loss: 1.3684455156326294 18/21
+Loss: 0.6895712614059448 21/21
+Validation loss: 4.868000
+Epoch: 19/50
+Loss: 1.2304884195327759 6/21
+Loss: 1.4336262941360474 12/21
+Loss: 1.3653411865234375 18/21
+Loss: 0.6877909898757935 21/21
+Validation loss: 4.863093
+Epoch: 20/50
+Loss: 1.227461814880371 6/21
+Loss: 1.4303264617919922 12/21
+Loss: 1.3622440099716187 18/21
+Loss: 0.6860151886940002 21/21
+Validation loss: 4.858197
+Epoch: 21/50
+Loss: 1.2244421243667603 6/21
+Loss: 1.4270334243774414 12/21
+Loss: 1.3591538667678833 18/21
+Loss: 0.6842437982559204 21/21
+Validation loss: 4.853313
+Epoch: 22/50
+Loss: 1.2214293479919434 6/21
+Loss: 1.4237468242645264 12/21
+Loss: 1.3560709953308105 18/21
+Loss: 0.6824764013290405 21/21
+Validation loss: 4.848440
+Epoch: 23/50
+Loss: 1.2184232473373413 6/21
+Loss: 1.4204668998718262 12/21
+Loss: 1.3529950380325317 18/21
+Loss: 0.6807132959365845 21/21
+Validation loss: 4.843580
+Epoch: 24/50
+Loss: 1.2154241800308228 6/21
+Loss: 1.4171935319900513 12/21
+Loss: 1.3499263525009155 18/21
+Loss: 0.6789544820785522 21/21
+Validation loss: 4.838731
+Epoch: 25/50
+Loss: 1.2124320268630981 6/21
+Loss: 1.4139269590377808 12/21
+Loss: 1.346864938735962 18/21
+Loss: 0.6771999597549438 21/21
+Validation loss: 4.833895
+Epoch: 26/50
+Loss: 1.2094467878341675 6/21
+Loss: 1.4106671810150146 12/21
+Loss: 1.3438103199005127 18/21
+Loss: 0.675449550151825 21/21
+Validation loss: 4.829069
+Epoch: 27/50
+Loss: 1.2064683437347412 6/21
+Loss: 1.4074136018753052 12/21
+Loss: 1.3407628536224365 18/21
+Loss: 0.6737033724784851 21/21
+Validation loss: 4.824256
+Epoch: 28/50
+Loss: 1.2034966945648193 6/21
+Loss: 1.4041668176651 12/21
+Loss: 1.3377225399017334 18/21
+Loss: 0.6719616055488586 21/21
+Validation loss: 4.819454
+Epoch: 29/50
+Loss: 1.2005319595336914 6/21
+Loss: 1.4009268283843994 12/21
+Loss: 1.3346891403198242 18/21
+Loss: 0.6702237129211426 21/21
+Validation loss: 4.814664
+Epoch: 30/50
+Loss: 1.1975740194320679 6/21
+Loss: 1.3976932764053345 12/21
+Loss: 1.331662654876709 18/21
+Loss: 0.6684901714324951 21/21
+Validation loss: 4.809886
+Epoch: 31/50
+Loss: 1.1946227550506592 6/21
+Loss: 1.3944662809371948 12/21
+Loss: 1.3286433219909668 18/21
+Loss: 0.6667606830596924 21/21
+Validation loss: 4.805118
+Epoch: 32/50
+Loss: 1.1916780471801758 6/21
+Loss: 1.39124596118927 12/21
+Loss: 1.3256309032440186 18/21
+Loss: 0.6650353670120239 21/21
+Validation loss: 4.800363
+Epoch: 33/50
+Loss: 1.1887404918670654 6/21
+Loss: 1.3880321979522705 12/21
+Loss: 1.3226253986358643 18/21
+Loss: 0.6633142232894897 21/21
+Validation loss: 4.795619
+Epoch: 34/50
+Loss: 1.1858094930648804 6/21
+Loss: 1.3848248720169067 12/21
+Loss: 1.319626808166504 18/21
+Loss: 0.6615970730781555 21/21
+Validation loss: 4.790885
+Epoch: 35/50
+Loss: 1.1828850507736206 6/21
+Loss: 1.381624460220337 12/21
+Loss: 1.3166348934173584 18/21
+Loss: 0.6598840355873108 21/21
+Validation loss: 4.786164
+Epoch: 36/50
+Loss: 1.1799672842025757 6/21
+Loss: 1.3784300088882446 12/21
+Loss: 1.3136498928070068 18/21
+Loss: 0.6581751704216003 21/21
+Validation loss: 4.781454
+Epoch: 37/50
+Loss: 1.1770561933517456 6/21
+Loss: 1.3752423524856567 12/21
+Loss: 1.3106718063354492 18/21
+Loss: 0.6564704179763794 21/21
+Validation loss: 4.776755
+Epoch: 38/50
+Loss: 1.1741517782211304 6/21
+Loss: 1.372061014175415 12/21
+Loss: 1.307700753211975 18/21
+Loss: 0.6547695994377136 21/21
+Validation loss: 4.772068
+Epoch: 39/50
+Loss: 1.1712539196014404 6/21
+Loss: 1.3688862323760986 12/21
+Loss: 1.3047360181808472 18/21
+Loss: 0.6530728936195374 21/21
+Validation loss: 4.767391
+Epoch: 40/50
+Loss: 1.1683626174926758 6/21
+Loss: 1.365717887878418 12/21
+Loss: 1.3017781972885132 18/21
+Loss: 0.651380181312561 21/21
+Validation loss: 4.762726
+Epoch: 41/50
+Loss: 1.1654778718948364 6/21
+Loss: 1.362555980682373 12/21
+Loss: 1.2988271713256836 18/21
+Loss: 0.6496915817260742 21/21
+Validation loss: 4.758072
+Epoch: 42/50
+Loss: 1.162599802017212 6/21
+Loss: 1.3594005107879639 12/21
+Loss: 1.2958829402923584 18/21
+Loss: 0.6480068564414978 21/21
+Validation loss: 4.753429
+Epoch: 43/50
+Loss: 1.1597282886505127 6/21
+Loss: 1.3562513589859009 12/21
+Loss: 1.292945384979248 18/21
+Loss: 0.6463261246681213 21/21
+Validation loss: 4.748797
+Epoch: 44/50
+Loss: 1.1568629741668701 6/21
+Loss: 1.3531086444854736 12/21
+Loss: 1.2900142669677734 18/21
+Loss: 0.6446492075920105 21/21
+Validation loss: 4.744176
+Epoch: 45/50
+Loss: 1.1540043354034424 6/21
+Loss: 1.3499722480773926 12/21
+Loss: 1.2870897054672241 18/21
+Loss: 0.6429764628410339 21/21
+Validation loss: 4.739566
+Epoch: 46/50
+Loss: 1.1511521339416504 6/21
+Loss: 1.3468422889709473 12/21
+Loss: 1.2841720581054688 18/21
+Loss: 0.6413075923919678 21/21
+Validation loss: 4.734968
+Epoch: 47/50
+Loss: 1.148306131362915 6/21
+Loss: 1.3437185287475586 12/21
+Loss: 1.2812609672546387 18/21
+Loss: 0.6396426558494568 21/21
+Validation loss: 4.730380
+Epoch: 48/50
+Loss: 1.1454665660858154 6/21
+Loss: 1.3406012058258057 12/21
+Loss: 1.2783563137054443 18/21
+Loss: 0.637981653213501 21/21
+Validation loss: 4.725802
+Epoch: 49/50
+Loss: 1.1426335573196411 6/21
+Loss: 1.3374900817871094 12/21
+Loss: 1.2754580974578857 18/21
+Loss: 0.6363245248794556 21/21
+Validation loss: 4.721236
+Epoch: 50/50
+Loss: 1.1398069858551025 6/21
+Loss: 1.3343852758407593 12/21
+Loss: 1.272566795349121 18/21
+Loss: 0.6346713304519653 21/21
+Validation loss: 4.716681
+
+
+Generating error analysis (only input/parameters) dataset
+
+
+Error analysis parameter number 1 of 
+13: [0.         0.54615385 0.31538462 0.59230769 4.84615385]
+Using reconstruct_solution_sigma,ignoring RB to FEM solution construction specified in PODANNReducedProblem
+Using norm_error_sigma, ignoring error norm specified in PODANNReducedProblem
+Error: 20.742910471141137
+Error analysis parameter number 2 of 
+13: [3.84615385 0.63846154 0.40769231 0.63846154 1.76923077]
+Using reconstruct_solution_sigma,ignoring RB to FEM solution construction specified in PODANNReducedProblem
+Using norm_error_sigma, ignoring error norm specified in PODANNReducedProblem
+Error: 47.41943348733803
+Error analysis parameter number 3 of 
+13: [2.30769231 0.68461538 0.68461538 0.40769231 1.15384615]
+Using reconstruct_solution_sigma,ignoring RB to FEM solution construction specified in PODANNReducedProblem
+Using norm_error_sigma, ignoring error norm specified in PODANNReducedProblem
+Error: 40.651826177352625
+Error analysis parameter number 4 of 
+13: [-4.61538462  0.77692308  0.73076923  0.26923077  3.92307692]
+Using reconstruct_solution_sigma,ignoring RB to FEM solution construction specified in PODANNReducedProblem
+Using norm_error_sigma, ignoring error norm specified in PODANNReducedProblem
+Error: 1.0733708928774683
+Error analysis parameter number 5 of 
+13: [0.76923077 0.22307692 0.45384615 0.45384615 4.53846154]
+Using reconstruct_solution_sigma,ignoring RB to FEM solution construction specified in PODANNReducedProblem
+Using norm_error_sigma, ignoring error norm specified in PODANNReducedProblem
+Error: 30.681720577064308
+Error analysis parameter number 6 of 
+13: [-3.07692308  0.31538462  0.36153846  0.73076923  3.        ]
+Using reconstruct_solution_sigma,ignoring RB to FEM solution construction specified in PODANNReducedProblem
+Using norm_error_sigma, ignoring error norm specified in PODANNReducedProblem
+Error: 4.644069229184077
+Error analysis parameter number 7 of 
+13: [-1.53846154  0.59230769  0.22307692  0.68461538  2.07692308]
+Using reconstruct_solution_sigma,ignoring RB to FEM solution construction specified in PODANNReducedProblem
+Using norm_error_sigma, ignoring error norm specified in PODANNReducedProblem
+Error: 10.11006898465778
+Error analysis parameter number 8 of 
+13: [1.53846154 0.26923077 0.77692308 0.54615385 1.46153846]
+Using reconstruct_solution_sigma,ignoring RB to FEM solution construction specified in PODANNReducedProblem
+Using norm_error_sigma, ignoring error norm specified in PODANNReducedProblem
+Error: 39.16889753699394
+Error analysis parameter number 9 of 
+13: [-3.84615385  0.40769231  0.26923077  0.5         3.61538462]
+Using reconstruct_solution_sigma,ignoring RB to FEM solution construction specified in PODANNReducedProblem
+Using norm_error_sigma, ignoring error norm specified in PODANNReducedProblem
+Error: 3.980403120813007
+Error analysis parameter number 10 of 
+13: [-2.30769231  0.5         0.63846154  0.77692308  2.38461538]
+Using reconstruct_solution_sigma,ignoring RB to FEM solution construction specified in PODANNReducedProblem
+Using norm_error_sigma, ignoring error norm specified in PODANNReducedProblem
+Error: 6.97578782531268
+Error analysis parameter number 11 of 
+13: [-0.76923077  0.73076923  0.5         0.22307692  4.23076923]
+Using reconstruct_solution_sigma,ignoring RB to FEM solution construction specified in PODANNReducedProblem
+Using norm_error_sigma, ignoring error norm specified in PODANNReducedProblem
+Error: 17.887542889765705
+Error analysis parameter number 12 of 
+13: [4.61538462 0.45384615 0.59230769 0.31538462 3.30769231]
+Using reconstruct_solution_sigma,ignoring RB to FEM solution construction specified in PODANNReducedProblem
+Using norm_error_sigma, ignoring error norm specified in PODANNReducedProblem
+Error: 59.02670150405313
+Error analysis parameter number 13 of 
+13: [3.07692308 0.36153846 0.54615385 0.36153846 2.69230769]
+Using reconstruct_solution_sigma,ignoring RB to FEM solution construction specified in PODANNReducedProblem
+Using norm_error_sigma, ignoring error norm specified in PODANNReducedProblem
+Error: 45.21719882092598

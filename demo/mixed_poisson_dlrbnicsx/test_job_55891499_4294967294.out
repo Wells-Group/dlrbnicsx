@@ -1,0 +1,4182 @@
+==> In environment fenicsx-env
+==> Removing all temporary build stages
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Line)
+Info    : [ 30%] Meshing curve 2 (Line)
+Info    : [ 50%] Meshing curve 3 (Line)
+Info    : [ 80%] Meshing curve 4 (Line)
+Info    : Done meshing 1D (Wall 0.00615441s, CPU 0.000146s)
+Info    : Meshing 2D...
+Info    : Meshing surface 1 (Plane, Frontal-Delaunay for Quads)
+Info    : Simple recombination completed (Wall 0.00541749s, CPU 0.000868s): 100 quads, 0 triangles, 0 invalid quads, 0 quads with Q < 0.1, avg Q = 0.999171, min Q = 0.989626
+Info    : Simple recombination completed (Wall 0.00203973s, CPU 0.00203s): 400 quads, 0 triangles, 0 invalid quads, 0 quads with Q < 0.1, avg Q = 0.999573, min Q = 0.994685
+Info    : Done meshing 2D (Wall 0.0360163s, CPU 0.005873s)
+Info    : Meshing 3D...
+Info    : Done meshing 3D (Wall 2.15769e-05s, CPU 2.2e-05s)
+Info    : Refining mesh...
+Info    : Meshing order 2 (curvilinear on)...
+Info    : [  0%] Meshing curve 1 order 2
+Info    : [ 20%] Meshing curve 2 order 2
+Info    : [ 40%] Meshing curve 3 order 2
+Info    : [ 60%] Meshing curve 4 order 2
+Info    : [ 80%] Meshing surface 1 order 2
+Info    : Done meshing order 2 (Wall 0.00220612s, CPU 0.002199s)
+Info    : Done refining mesh (Wall 0.0150986s, CPU 0.002519s)
+Info    : 1681 nodes 1764 elements
+Info    : Optimizing mesh (Netgen)...
+Info    : Done optimizing mesh (Wall 5.28991e-07s, CPU 1e-06s)
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Line)
+Info    : [ 10%] Meshing curve 2 (Line)
+Info    : [ 20%] Meshing curve 3 (Line)
+Info    : [ 30%] Meshing curve 4 (Line)
+Info    : [ 40%] Meshing curve 11 (Extruded)
+Info    : [ 50%] Meshing curve 12 (Extruded)
+Info    : [ 50%] Meshing curve 13 (Extruded)
+Info    : [ 60%] Meshing curve 14 (Extruded)
+Info    : [ 70%] Meshing curve 16 (Extruded)
+Info    : [ 80%] Meshing curve 17 (Extruded)
+Info    : [ 90%] Meshing curve 21 (Extruded)
+Info    : [100%] Meshing curve 25 (Extruded)
+Info    : Done meshing 1D (Wall 0.00035931s, CPU 0.000358s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Plane, Frontal-Delaunay for Quads)
+Info    : [  0%] Simple recombination completed (Wall 0.000869207s, CPU 0.000865s): 100 quads, 0 triangles, 0 invalid quads, 0 quads with Q < 0.1, avg Q = 0.999171, min Q = 0.989626
+Info    : [  0%] Simple recombination completed (Wall 0.00207997s, CPU 0.002073s): 400 quads, 0 triangles, 0 invalid quads, 0 quads with Q < 0.1, avg Q = 0.999573, min Q = 0.994685
+Info    : [ 20%] Meshing surface 18 (Extruded)
+Info    : [ 40%] Meshing surface 22 (Extruded)
+Info    : [ 50%] Meshing surface 26 (Extruded)
+Info    : [ 70%] Meshing surface 30 (Extruded)
+Info    : [ 90%] Meshing surface 31 (Extruded)
+Info    : Done meshing 2D (Wall 0.012854s, CPU 0.012805s)
+Info    : Meshing 3D...
+Info    : Meshing volume 1 (Extruded)
+Info    : Done meshing 3D (Wall 0.0288808s, CPU 0.026668s)
+Info    : Optimizing mesh...
+Info    : Done optimizing mesh (Wall 0.000191312s, CPU 0.000186s)
+Info    : 9261 nodes 10648 elements
+Info    : Optimizing mesh (Netgen)...
+Info    : Done optimizing mesh (Wall 0.000177754s, CPU 0.000175s)
+[(3, 1)]
+[(2, 1), (2, 18), (2, 22), (2, 26), (2, 30), (2, 31)]
+Info    : Writing '3d_mesh.msh'...
+Info    : Done writing '3d_mesh.msh'
+Info    : Reading '3d_mesh.msh'...
+Info    : 27 entities
+Info    : 9261 nodes
+Info    : 10400 elements
+Info    : Done reading '3d_mesh.msh'
+3
+(9261, 3)
+Info    : Reading 'mesh_data/3d_mesh.msh'...
+Info    : 27 entities
+Info    : 9261 nodes
+Info    : 10400 elements
+Info    : Done reading 'mesh_data/3d_mesh.msh'
+[-2.60208521e-21 -1.30104262e-20 -1.30104259e-20 ...  4.57567616e-03
+ -2.06050121e-03  2.72210756e-05] 1.0974314675471055
+[0.26736702 0.74773805 0.26320236 ... 0.08172369 0.03400163 0.03532606] 144.98455585715533
+===============================================================================
+=                          POD offline phase begins                           =
+===============================================================================
+
+Set up snapshots matrix
+Set up reduced problem
+
+###################################### 1 ######################################
+Parameter number  1 of 512
+High fidelity solve for mu = [-5.   0.2  0.2  0.2  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.48440443e-01
+ -1.27563928e-01  2.10080403e-03]
+Sigma solution norm: 33.664039449075084
+Update snapshots matrix
+
+###################################### 2 ######################################
+Parameter number  2 of 512
+High fidelity solve for mu = [-5.   0.2  0.2  0.2  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.48440443e-01
+ -1.27563928e-01  2.10080403e-03]
+Sigma solution norm: 33.664039449075084
+Update snapshots matrix
+
+###################################### 3 ######################################
+Parameter number  3 of 512
+High fidelity solve for mu = [-5.   0.2  0.2  0.4  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  9.55073806e-02
+ -3.58932919e-02  5.50502691e-04]
+Sigma solution norm: 13.075979134223775
+Update snapshots matrix
+
+###################################### 4 ######################################
+Parameter number  4 of 512
+High fidelity solve for mu = [-5.   0.2  0.2  0.4  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  9.55073806e-02
+ -3.58932919e-02  5.50502691e-04]
+Sigma solution norm: 13.075979134223775
+Update snapshots matrix
+
+###################################### 5 ######################################
+Parameter number  5 of 512
+High fidelity solve for mu = [-5.   0.2  0.2  0.6  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.09220040e-02
+ -1.60925595e-02  2.15284443e-04]
+Sigma solution norm: 15.28759730629222
+Update snapshots matrix
+
+###################################### 6 ######################################
+Parameter number  6 of 512
+High fidelity solve for mu = [-5.   0.2  0.2  0.6  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.09220040e-02
+ -1.60925595e-02  2.15284443e-04]
+Sigma solution norm: 15.28759730629222
+Update snapshots matrix
+
+###################################### 7 ######################################
+Parameter number  7 of 512
+High fidelity solve for mu = [-5.   0.2  0.2  0.8  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.03723012e-02
+ -1.31131677e-02  1.25255569e-04]
+Sigma solution norm: 45.22885797298605
+Update snapshots matrix
+
+###################################### 8 ######################################
+Parameter number  8 of 512
+High fidelity solve for mu = [-5.   0.2  0.2  0.8  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.03723012e-02
+ -1.31131677e-02  1.25255569e-04]
+Sigma solution norm: 45.22885797298605
+Update snapshots matrix
+
+###################################### 9 ######################################
+Parameter number  9 of 512
+High fidelity solve for mu = [-5.   0.2  0.4  0.2  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  9.62105833e-02
+ -3.68667665e-02  5.60280361e-04]
+Sigma solution norm: 13.075962229474474
+Update snapshots matrix
+
+##################################### 10 ######################################
+Parameter number  10 of 512
+High fidelity solve for mu = [-5.   0.2  0.4  0.2  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  9.62105833e-02
+ -3.68667665e-02  5.60280361e-04]
+Sigma solution norm: 13.075962229474474
+Update snapshots matrix
+
+##################################### 11 ######################################
+Parameter number  11 of 512
+High fidelity solve for mu = [-5.   0.2  0.4  0.4  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.69247498e-02
+ -1.06587989e-02  1.46812382e-04]
+Sigma solution norm: 5.468126166079556
+Update snapshots matrix
+
+##################################### 12 ######################################
+Parameter number  12 of 512
+High fidelity solve for mu = [-5.   0.2  0.4  0.4  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.69247498e-02
+ -1.06587989e-02  1.46812382e-04]
+Sigma solution norm: 5.468126166079556
+Update snapshots matrix
+
+##################################### 13 ######################################
+Parameter number  13 of 512
+High fidelity solve for mu = [-5.   0.2  0.4  0.6  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.22187435e-02
+ -5.14089631e-03  5.74374360e-05]
+Sigma solution norm: 6.701611132195294
+Update snapshots matrix
+
+##################################### 14 ######################################
+Parameter number  14 of 512
+High fidelity solve for mu = [-5.   0.2  0.4  0.6  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.22187435e-02
+ -5.14089631e-03  5.74374360e-05]
+Sigma solution norm: 6.701611132195294
+Update snapshots matrix
+
+##################################### 15 ######################################
+Parameter number  15 of 512
+High fidelity solve for mu = [-5.   0.2  0.4  0.8  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.06722744e-02
+ -5.03658025e-03  3.36531819e-05]
+Sigma solution norm: 19.47149645124743
+Update snapshots matrix
+
+##################################### 16 ######################################
+Parameter number  16 of 512
+High fidelity solve for mu = [-5.   0.2  0.4  0.8  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.06722744e-02
+ -5.03658025e-03  3.36531819e-05]
+Sigma solution norm: 19.47149645124743
+Update snapshots matrix
+
+##################################### 17 ######################################
+Parameter number  17 of 512
+High fidelity solve for mu = [-5.   0.2  0.6  0.2  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.15154422e-02
+ -1.69196120e-02  2.23330928e-04]
+Sigma solution norm: 15.287411792815785
+Update snapshots matrix
+
+##################################### 18 ######################################
+Parameter number  18 of 512
+High fidelity solve for mu = [-5.   0.2  0.6  0.2  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.15154422e-02
+ -1.69196120e-02  2.23330928e-04]
+Sigma solution norm: 15.287411792815785
+Update snapshots matrix
+
+##################################### 19 ######################################
+Parameter number  19 of 512
+High fidelity solve for mu = [-5.   0.2  0.6  0.4  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.23028226e-02
+ -5.25892669e-03  5.85422883e-05]
+Sigma solution norm: 6.701541379568991
+Update snapshots matrix
+
+##################################### 20 ######################################
+Parameter number  20 of 512
+High fidelity solve for mu = [-5.   0.2  0.6  0.4  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.23028226e-02
+ -5.25892669e-03  5.85422883e-05]
+Sigma solution norm: 6.701541379568991
+Update snapshots matrix
+
+##################################### 21 ######################################
+Parameter number  21 of 512
+High fidelity solve for mu = [-5.   0.2  0.6  0.6  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.51999715e-03
+ -3.04179091e-03  2.30637962e-05]
+Sigma solution norm: 8.417056435921625
+Update snapshots matrix
+
+##################################### 22 ######################################
+Parameter number  22 of 512
+High fidelity solve for mu = [-5.   0.2  0.6  0.6  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.51999715e-03
+ -3.04179091e-03  2.30637962e-05]
+Sigma solution norm: 8.417056435921625
+Update snapshots matrix
+
+##################################### 23 ######################################
+Parameter number  23 of 512
+High fidelity solve for mu = [-5.   0.2  0.6  0.8  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  7.93038230e-03
+ -4.15292936e-03  1.42112249e-05]
+Sigma solution norm: 24.224075788637112
+Update snapshots matrix
+
+##################################### 24 ######################################
+Parameter number  24 of 512
+High fidelity solve for mu = [-5.   0.2  0.6  0.8  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  7.93038230e-03
+ -4.15292936e-03  1.42112249e-05]
+Sigma solution norm: 24.224075788637112
+Update snapshots matrix
+
+##################################### 25 ######################################
+Parameter number  25 of 512
+High fidelity solve for mu = [-5.   0.2  0.8  0.2  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.09473099e-02
+ -1.39226240e-02  1.32663723e-04]
+Sigma solution norm: 45.22797327221208
+Update snapshots matrix
+
+##################################### 26 ######################################
+Parameter number  26 of 512
+High fidelity solve for mu = [-5.   0.2  0.8  0.2  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.09473099e-02
+ -1.39226240e-02  1.32663723e-04]
+Sigma solution norm: 45.22797327221209
+Update snapshots matrix
+
+##################################### 27 ######################################
+Parameter number  27 of 512
+High fidelity solve for mu = [-5.   0.2  0.8  0.4  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.07834606e-02
+ -5.19469256e-03  3.50033591e-05]
+Sigma solution norm: 19.471163913544437
+Update snapshots matrix
+
+##################################### 28 ######################################
+Parameter number  28 of 512
+High fidelity solve for mu = [-5.   0.2  0.8  0.4  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.07834606e-02
+ -5.19469256e-03  3.50033591e-05]
+Sigma solution norm: 19.471163913544437
+Update snapshots matrix
+
+##################################### 29 ######################################
+Parameter number  29 of 512
+High fidelity solve for mu = [-5.   0.2  0.8  0.6  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  7.95578992e-03
+ -4.18963797e-03  1.44844055e-05]
+Sigma solution norm: 24.22393096552955
+Update snapshots matrix
+
+##################################### 30 ######################################
+Parameter number  30 of 512
+High fidelity solve for mu = [-5.   0.2  0.8  0.6  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  7.95578992e-03
+ -4.18963797e-03  1.44844055e-05]
+Sigma solution norm: 24.22393096552955
+Update snapshots matrix
+
+##################################### 31 ######################################
+Parameter number  31 of 512
+High fidelity solve for mu = [-5.   0.2  0.8  0.8  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.44653590e-02
+ -8.11349272e-03  1.14082963e-05]
+Sigma solution norm: 69.97414787125426
+Update snapshots matrix
+
+##################################### 32 ######################################
+Parameter number  32 of 512
+High fidelity solve for mu = [-5.   0.2  0.8  0.8  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.44653590e-02
+ -8.11349272e-03  1.14082963e-05]
+Sigma solution norm: 69.97414787125427
+Update snapshots matrix
+
+##################################### 33 ######################################
+Parameter number  33 of 512
+High fidelity solve for mu = [-5.   0.4  0.2  0.2  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  5.80388293e-01
+ -2.08360926e-01  8.44194677e-03]
+Sigma solution norm: 13.075961802414898
+Update snapshots matrix
+
+##################################### 34 ######################################
+Parameter number  34 of 512
+High fidelity solve for mu = [-5.   0.4  0.2  0.2  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  5.80388293e-01
+ -2.08360926e-01  8.44194677e-03]
+Sigma solution norm: 13.075961802414898
+Update snapshots matrix
+
+##################################### 35 ######################################
+Parameter number  35 of 512
+High fidelity solve for mu = [-5.   0.4  0.2  0.4  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.57391506e-01
+ -5.77417251e-02  2.22922835e-03]
+Sigma solution norm: 5.468126162971745
+Update snapshots matrix
+
+##################################### 36 ######################################
+Parameter number  36 of 512
+High fidelity solve for mu = [-5.   0.4  0.2  0.4  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.57391506e-01
+ -5.77417251e-02  2.22922835e-03]
+Sigma solution norm: 5.468126162971745
+Update snapshots matrix
+
+##################################### 37 ######################################
+Parameter number  37 of 512
+High fidelity solve for mu = [-5.   0.4  0.2  0.6  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.55178231e-02
+ -2.48668342e-02  8.83144021e-04]
+Sigma solution norm: 6.701611278983317
+Update snapshots matrix
+
+##################################### 38 ######################################
+Parameter number  38 of 512
+High fidelity solve for mu = [-5.   0.4  0.2  0.6  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.55178231e-02
+ -2.48668342e-02  8.83144021e-04]
+Sigma solution norm: 6.701611278983316
+Update snapshots matrix
+
+##################################### 39 ######################################
+Parameter number  39 of 512
+High fidelity solve for mu = [-5.   0.4  0.2  0.8  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.43753890e-02
+ -1.80226738e-02  5.27144768e-04]
+Sigma solution norm: 19.471496733496284
+Update snapshots matrix
+
+##################################### 40 ######################################
+Parameter number  40 of 512
+High fidelity solve for mu = [-5.   0.4  0.2  0.8  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.43753890e-02
+ -1.80226738e-02  5.27144768e-04]
+Sigma solution norm: 19.471496733496284
+Update snapshots matrix
+
+##################################### 41 ######################################
+Parameter number  41 of 512
+High fidelity solve for mu = [-5.   0.4  0.4  0.2  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.58577595e-01
+ -5.93800786e-02  2.26783196e-03]
+Sigma solution norm: 5.467893677465436
+Update snapshots matrix
+
+##################################### 42 ######################################
+Parameter number  42 of 512
+High fidelity solve for mu = [-5.   0.4  0.4  0.2  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.58577595e-01
+ -5.93800786e-02  2.26783196e-03]
+Sigma solution norm: 5.467893677465436
+Update snapshots matrix
+
+##################################### 43 ######################################
+Parameter number  43 of 512
+High fidelity solve for mu = [-5.   0.4  0.4  0.4  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.35422426e-02
+ -1.67256692e-02  6.00162482e-04]
+Sigma solution norm: 2.5418735441483795
+Update snapshots matrix
+
+##################################### 44 ######################################
+Parameter number  44 of 512
+High fidelity solve for mu = [-5.   0.4  0.4  0.4  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.35422426e-02
+ -1.67256692e-02  6.00162482e-04]
+Sigma solution norm: 2.5418735441483795
+Update snapshots matrix
+
+##################################### 45 ######################################
+Parameter number  45 of 512
+High fidelity solve for mu = [-5.   0.4  0.4  0.6  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.87210076e-02
+ -7.51553499e-03  2.38636531e-04]
+Sigma solution norm: 3.278478426104184
+Update snapshots matrix
+
+##################################### 46 ######################################
+Parameter number  46 of 512
+High fidelity solve for mu = [-5.   0.4  0.4  0.6  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.87210076e-02
+ -7.51553499e-03  2.38636531e-04]
+Sigma solution norm: 3.2784784261041837
+Update snapshots matrix
+
+##################################### 47 ######################################
+Parameter number  47 of 512
+High fidelity solve for mu = [-5.   0.4  0.4  0.8  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.40153561e-02
+ -6.15902892e-03  1.43757522e-04]
+Sigma solution norm: 9.316698803465995
+Update snapshots matrix
+
+##################################### 48 ######################################
+Parameter number  48 of 512
+High fidelity solve for mu = [-5.   0.4  0.4  0.8  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.40153561e-02
+ -6.15902892e-03  1.43757522e-04]
+Sigma solution norm: 9.316698803465995
+Update snapshots matrix
+
+##################################### 49 ######################################
+Parameter number  49 of 512
+High fidelity solve for mu = [-5.   0.4  0.6  0.2  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.65141726e-02
+ -2.62512672e-02  9.15061963e-04]
+Sigma solution norm: 6.70050950897736
+Update snapshots matrix
+
+##################################### 50 ######################################
+Parameter number  50 of 512
+High fidelity solve for mu = [-5.   0.4  0.6  0.2  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.65141726e-02
+ -2.62512672e-02  9.15061963e-04]
+Sigma solution norm: 6.70050950897736
+Update snapshots matrix
+
+##################################### 51 ######################################
+Parameter number  51 of 512
+High fidelity solve for mu = [-5.   0.4  0.6  0.4  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.88612533e-02
+ -7.71162769e-03  2.43045982e-04]
+Sigma solution norm: 3.278179244203466
+Update snapshots matrix
+
+##################################### 52 ######################################
+Parameter number  52 of 512
+High fidelity solve for mu = [-5.   0.4  0.6  0.4  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.88612533e-02
+ -7.71162769e-03  2.43045982e-04]
+Sigma solution norm: 3.278179244203466
+Update snapshots matrix
+
+##################################### 53 ######################################
+Parameter number  53 of 512
+High fidelity solve for mu = [-5.   0.4  0.6  0.6  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  8.88317603e-03
+ -3.88431681e-03  9.74325238e-05]
+Sigma solution norm: 4.309862835370481
+Update snapshots matrix
+
+##################################### 54 ######################################
+Parameter number  54 of 512
+High fidelity solve for mu = [-5.   0.4  0.6  0.6  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  8.88317603e-03
+ -3.88431681e-03  9.74325238e-05]
+Sigma solution norm: 4.309862835370481
+Update snapshots matrix
+
+##################################### 55 ######################################
+Parameter number  55 of 512
+High fidelity solve for mu = [-5.   0.4  0.6  0.8  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  8.51578168e-03
+ -4.18516412e-03  6.03250379e-05]
+Sigma solution norm: 12.142196570785789
+Update snapshots matrix
+
+##################################### 56 ######################################
+Parameter number  56 of 512
+High fidelity solve for mu = [-5.   0.4  0.6  0.8  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  8.51578168e-03
+ -4.18516412e-03  6.03250379e-05]
+Sigma solution norm: 12.142196570785787
+Update snapshots matrix
+
+##################################### 57 ######################################
+Parameter number  57 of 512
+High fidelity solve for mu = [-5.   0.4  0.8  0.2  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.53294019e-02
+ -1.93592881e-02  5.56829267e-04]
+Sigma solution norm: 19.467020758359403
+Update snapshots matrix
+
+##################################### 58 ######################################
+Parameter number  58 of 512
+High fidelity solve for mu = [-5.   0.4  0.8  0.2  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.53294019e-02
+ -1.93592881e-02  5.56829267e-04]
+Sigma solution norm: 19.467020758359403
+Update snapshots matrix
+
+##################################### 59 ######################################
+Parameter number  59 of 512
+High fidelity solve for mu = [-5.   0.4  0.8  0.4  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.41971288e-02
+ -6.41580058e-03  1.49234067e-04]
+Sigma solution norm: 9.315397776425483
+Update snapshots matrix
+
+##################################### 60 ######################################
+Parameter number  60 of 512
+High fidelity solve for mu = [-5.   0.4  0.8  0.4  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.41971288e-02
+ -6.41580058e-03  1.49234067e-04]
+Sigma solution norm: 9.315397776425483
+Update snapshots matrix
+
+##################################### 61 ######################################
+Parameter number  61 of 512
+High fidelity solve for mu = [-5.   0.4  0.8  0.6  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  8.55597958e-03
+ -4.24265185e-03  6.14628299e-05]
+Sigma solution norm: 12.141765784755215
+Update snapshots matrix
+
+##################################### 62 ######################################
+Parameter number  62 of 512
+High fidelity solve for mu = [-5.   0.4  0.8  0.6  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  8.55597958e-03
+ -4.24265185e-03  6.14628299e-05]
+Sigma solution norm: 12.141765784755211
+Update snapshots matrix
+
+##################################### 63 ######################################
+Parameter number  63 of 512
+High fidelity solve for mu = [-5.   0.4  0.8  0.8  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.25708537e-02
+ -6.84758154e-03  4.21291080e-05]
+Sigma solution norm: 34.33086867456305
+Update snapshots matrix
+
+##################################### 64 ######################################
+Parameter number  64 of 512
+High fidelity solve for mu = [-5.   0.4  0.8  0.8  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.25708537e-02
+ -6.84758154e-03  4.21291080e-05]
+Sigma solution norm: 34.33086867456304
+Update snapshots matrix
+
+##################################### 65 ######################################
+Parameter number  65 of 512
+High fidelity solve for mu = [-5.   0.6  0.2  0.2  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.45852237e+00
+ -5.16065774e-01  3.25996811e-02]
+Sigma solution norm: 15.287412190529325
+Update snapshots matrix
+
+##################################### 66 ######################################
+Parameter number  66 of 512
+High fidelity solve for mu = [-5.   0.6  0.2  0.2  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.45852237e+00
+ -5.16065774e-01  3.25996811e-02]
+Sigma solution norm: 15.287412190529325
+Update snapshots matrix
+
+##################################### 67 ######################################
+Parameter number  67 of 512
+High fidelity solve for mu = [-5.   0.6  0.2  0.4  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.93513152e-01
+ -1.41989401e-01  8.60719336e-03]
+Sigma solution norm: 6.701542052393959
+Update snapshots matrix
+
+##################################### 68 ######################################
+Parameter number  68 of 512
+High fidelity solve for mu = [-5.   0.6  0.2  0.4  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.93513152e-01
+ -1.41989401e-01  8.60719336e-03]
+Sigma solution norm: 6.70154205239396
+Update snapshots matrix
+
+##################################### 69 ######################################
+Parameter number  69 of 512
+High fidelity solve for mu = [-5.   0.6  0.2  0.6  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.61839634e-01
+ -6.01176581e-02  3.40910108e-03]
+Sigma solution norm: 8.417057625394257
+Update snapshots matrix
+
+##################################### 70 ######################################
+Parameter number  70 of 512
+High fidelity solve for mu = [-5.   0.6  0.2  0.6  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.61839634e-01
+ -6.01176581e-02  3.40910108e-03]
+Sigma solution norm: 8.417057625394257
+Update snapshots matrix
+
+##################################### 71 ######################################
+Parameter number  71 of 512
+High fidelity solve for mu = [-5.   0.6  0.2  0.8  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.05599288e-01
+ -4.14490268e-02  2.03298928e-03]
+Sigma solution norm: 24.224078786077957
+Update snapshots matrix
+
+##################################### 72 ######################################
+Parameter number  72 of 512
+High fidelity solve for mu = [-5.   0.6  0.2  0.8  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.05599288e-01
+ -4.14490268e-02  2.03298928e-03]
+Sigma solution norm: 24.224078786077957
+Update snapshots matrix
+
+##################################### 73 ######################################
+Parameter number  73 of 512
+High fidelity solve for mu = [-5.   0.6  0.4  0.2  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.96512865e-01
+ -1.46126317e-01  8.75635749e-03]
+Sigma solution norm: 6.700510994587679
+Update snapshots matrix
+
+##################################### 74 ######################################
+Parameter number  74 of 512
+High fidelity solve for mu = [-5.   0.6  0.4  0.2  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.96512865e-01
+ -1.46126317e-01  8.75635749e-03]
+Sigma solution norm: 6.700510994587679
+Update snapshots matrix
+
+##################################### 75 ######################################
+Parameter number  75 of 512
+High fidelity solve for mu = [-5.   0.6  0.4  0.4  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.07976839e-01
+ -4.06937089e-02  2.31684131e-03]
+Sigma solution norm: 3.278180092713316
+Update snapshots matrix
+
+##################################### 76 ######################################
+Parameter number  76 of 512
+High fidelity solve for mu = [-5.   0.6  0.4  0.4  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.07976839e-01
+ -4.06937089e-02  2.31684131e-03]
+Sigma solution norm: 3.278180092713316
+Update snapshots matrix
+
+##################################### 77 ######################################
+Parameter number  77 of 512
+High fidelity solve for mu = [-5.   0.6  0.4  0.6  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.54236831e-02
+ -1.77561778e-02  9.20680131e-04]
+Sigma solution norm: 4.309863999897019
+Update snapshots matrix
+
+##################################### 78 ######################################
+Parameter number  78 of 512
+High fidelity solve for mu = [-5.   0.6  0.4  0.6  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.54236831e-02
+ -1.77561778e-02  9.20680131e-04]
+Sigma solution norm: 4.309863999897019
+Update snapshots matrix
+
+##################################### 79 ######################################
+Parameter number  79 of 512
+High fidelity solve for mu = [-5.   0.6  0.4  0.8  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.18086409e-02
+ -1.33986641e-02  5.52938866e-04]
+Sigma solution norm: 12.142199755585068
+Update snapshots matrix
+
+##################################### 80 ######################################
+Parameter number  80 of 512
+High fidelity solve for mu = [-5.   0.6  0.4  0.8  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.18086409e-02
+ -1.33986641e-02  5.52938866e-04]
+Sigma solution norm: 12.14219975558507
+Update snapshots matrix
+
+##################################### 81 ######################################
+Parameter number  81 of 512
+High fidelity solve for mu = [-5.   0.6  0.6  0.2  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.64353110e-01
+ -6.36029413e-02  3.53241704e-03]
+Sigma solution norm: 8.412747957113513
+Update snapshots matrix
+
+##################################### 82 ######################################
+Parameter number  82 of 512
+High fidelity solve for mu = [-5.   0.6  0.6  0.2  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.64353110e-01
+ -6.36029413e-02  3.53241704e-03]
+Sigma solution norm: 8.412747957113513
+Update snapshots matrix
+
+##################################### 83 ######################################
+Parameter number  83 of 512
+High fidelity solve for mu = [-5.   0.6  0.6  0.4  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.57762928e-02
+ -1.82479088e-02  9.37715071e-04]
+Sigma solution norm: 4.308820499268409
+Update snapshots matrix
+
+##################################### 84 ######################################
+Parameter number  84 of 512
+High fidelity solve for mu = [-5.   0.6  0.6  0.4  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.57762928e-02
+ -1.82479088e-02  9.37715071e-04]
+Sigma solution norm: 4.308820499268409
+Update snapshots matrix
+
+##################################### 85 ######################################
+Parameter number  85 of 512
+High fidelity solve for mu = [-5.   0.6  0.6  0.6  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.05120452e-02
+ -8.64046687e-03  3.74995997e-04]
+Sigma solution norm: 5.749150642812522
+Update snapshots matrix
+
+##################################### 86 ######################################
+Parameter number  86 of 512
+High fidelity solve for mu = [-5.   0.6  0.6  0.6  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.05120452e-02
+ -8.64046687e-03  3.74995997e-04]
+Sigma solution norm: 5.7491506428125225
+Update snapshots matrix
+
+##################################### 87 ######################################
+Parameter number  87 of 512
+High fidelity solve for mu = [-5.   0.6  0.6  0.8  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.73472856e-02
+ -8.13553963e-03  2.29291357e-04]
+Sigma solution norm: 16.07696541183972
+Update snapshots matrix
+
+##################################### 88 ######################################
+Parameter number  88 of 512
+High fidelity solve for mu = [-5.   0.6  0.6  0.8  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.73472856e-02
+ -8.13553963e-03  2.29291357e-04]
+Sigma solution norm: 16.07696541183972
+Update snapshots matrix
+
+##################################### 89 ######################################
+Parameter number  89 of 512
+High fidelity solve for mu = [-5.   0.6  0.8  0.2  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.07992185e-01
+ -4.47916305e-02  2.14768121e-03]
+Sigma solution norm: 24.207086722900897
+Update snapshots matrix
+
+##################################### 90 ######################################
+Parameter number  90 of 512
+High fidelity solve for mu = [-5.   0.6  0.8  0.2  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.07992185e-01
+ -4.47916305e-02  2.14768121e-03]
+Sigma solution norm: 24.207086722900897
+Update snapshots matrix
+
+##################################### 91 ######################################
+Parameter number  91 of 512
+High fidelity solve for mu = [-5.   0.6  0.8  0.4  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.22614360e-02
+ -1.40357692e-02  5.74101696e-04]
+Sigma solution norm: 12.137763333165108
+Update snapshots matrix
+
+##################################### 92 ######################################
+Parameter number  92 of 512
+High fidelity solve for mu = [-5.   0.6  0.8  0.4  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.22614360e-02
+ -1.40357692e-02  5.74101696e-04]
+Sigma solution norm: 12.137763333165108
+Update snapshots matrix
+
+##################################### 93 ######################################
+Parameter number  93 of 512
+High fidelity solve for mu = [-5.   0.6  0.8  0.6  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.74459472e-02
+ -8.27583619e-03  2.33690898e-04]
+Sigma solution norm: 16.07565814780555
+Update snapshots matrix
+
+##################################### 94 ######################################
+Parameter number  94 of 512
+High fidelity solve for mu = [-5.   0.6  0.8  0.6  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.74459472e-02
+ -8.27583619e-03  2.33690898e-04]
+Sigma solution norm: 16.07565814780555
+Update snapshots matrix
+
+##################################### 95 ######################################
+Parameter number  95 of 512
+High fidelity solve for mu = [-5.   0.6  0.8  0.8  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.19415012e-02
+ -1.16121781e-02  1.51949671e-04]
+Sigma solution norm: 45.09607416026313
+Update snapshots matrix
+
+##################################### 96 ######################################
+Parameter number  96 of 512
+High fidelity solve for mu = [-5.   0.6  0.8  0.8  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.19415012e-02
+ -1.16121781e-02  1.51949671e-04]
+Sigma solution norm: 45.09607416026313
+Update snapshots matrix
+
+##################################### 97 ######################################
+Parameter number  97 of 512
+High fidelity solve for mu = [-5.   0.8  0.2  0.2  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  5.50391308e+00
+ -1.92456978e+00  1.62325605e-01]
+Sigma solution norm: 45.227978329320486
+Update snapshots matrix
+
+##################################### 98 ######################################
+Parameter number  98 of 512
+High fidelity solve for mu = [-5.   0.8  0.2  0.2  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  5.50391308e+00
+ -1.92456978e+00  1.62325605e-01]
+Sigma solution norm: 45.227978329320486
+Update snapshots matrix
+
+##################################### 99 ######################################
+Parameter number  99 of 512
+High fidelity solve for mu = [-5.   0.8  0.2  0.4  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.48042054e+00
+ -5.27272219e-01  4.28215271e-02]
+Sigma solution norm: 19.471167344646094
+Update snapshots matrix
+
+##################################### 100 #####################################
+Parameter number  100 of 512
+High fidelity solve for mu = [-5.   0.8  0.2  0.4  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.48042054e+00
+ -5.27272219e-01  4.28215271e-02]
+Sigma solution norm: 19.471167344646094
+Update snapshots matrix
+
+##################################### 101 #####################################
+Parameter number  101 of 512
+High fidelity solve for mu = [-5.   0.8  0.2  0.6  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.04961358e-01
+ -2.21258622e-01  1.69394358e-02]
+Sigma solution norm: 24.223936012833924
+Update snapshots matrix
+
+##################################### 102 #####################################
+Parameter number  102 of 512
+High fidelity solve for mu = [-5.   0.8  0.2  0.6  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.04961358e-01
+ -2.21258622e-01  1.69394358e-02]
+Sigma solution norm: 24.223936012833928
+Update snapshots matrix
+
+##################################### 103 #####################################
+Parameter number  103 of 512
+High fidelity solve for mu = [-5.   0.8  0.2  0.8  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.87619503e-01
+ -1.48840992e-01  1.00779828e-02]
+Sigma solution norm: 69.97416102239849
+Update snapshots matrix
+
+##################################### 104 #####################################
+Parameter number  104 of 512
+High fidelity solve for mu = [-5.   0.8  0.2  0.8  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.87619503e-01
+ -1.48840992e-01  1.00779828e-02]
+Sigma solution norm: 69.97416102239849
+Update snapshots matrix
+
+##################################### 105 #####################################
+Parameter number  105 of 512
+High fidelity solve for mu = [-5.   0.8  0.4  0.2  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.49178211e+00
+ -5.42922025e-01  4.35661236e-02]
+Sigma solution norm: 19.467028005318888
+Update snapshots matrix
+
+##################################### 106 #####################################
+Parameter number  106 of 512
+High fidelity solve for mu = [-5.   0.8  0.4  0.2  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.49178211e+00
+ -5.42922025e-01  4.35661236e-02]
+Sigma solution norm: 19.467028005318888
+Update snapshots matrix
+
+##################################### 107 #####################################
+Parameter number  107 of 512
+High fidelity solve for mu = [-5.   0.8  0.4  0.4  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.04381481e-01
+ -1.50256142e-01  1.15152291e-02]
+Sigma solution norm: 9.315401802693106
+Update snapshots matrix
+
+##################################### 108 #####################################
+Parameter number  108 of 512
+High fidelity solve for mu = [-5.   0.8  0.4  0.4  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.04381481e-01
+ -1.50256142e-01  1.15152291e-02]
+Sigma solution norm: 9.315401802693106
+Update snapshots matrix
+
+##################################### 109 #####################################
+Parameter number  109 of 512
+High fidelity solve for mu = [-5.   0.8  0.4  0.6  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.68281449e-01
+ -6.46102904e-02  4.56838862e-03]
+Sigma solution norm: 12.141771195550952
+Update snapshots matrix
+
+##################################### 110 #####################################
+Parameter number  110 of 512
+High fidelity solve for mu = [-5.   0.8  0.4  0.6  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.68281449e-01
+ -6.46102904e-02  4.56838862e-03]
+Sigma solution norm: 12.141771195550952
+Update snapshots matrix
+
+##################################### 111 #####################################
+Parameter number  111 of 512
+High fidelity solve for mu = [-5.   0.8  0.4  0.8  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.14086286e-01
+ -4.67950481e-02  2.73332934e-03]
+Sigma solution norm: 34.33088347886804
+Update snapshots matrix
+
+##################################### 112 #####################################
+Parameter number  112 of 512
+High fidelity solve for mu = [-5.   0.8  0.4  0.8  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.14086286e-01
+ -4.67950481e-02  2.73332934e-03]
+Sigma solution norm: 34.33088347886804
+Update snapshots matrix
+
+##################################### 113 #####################################
+Parameter number  113 of 512
+High fidelity solve for mu = [-5.   0.8  0.6  0.2  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.14465392e-01
+ -2.34416977e-01  1.75546350e-02]
+Sigma solution norm: 24.20708773940215
+Update snapshots matrix
+
+##################################### 114 #####################################
+Parameter number  114 of 512
+High fidelity solve for mu = [-5.   0.8  0.6  0.2  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.14465392e-01
+ -2.34416977e-01  1.75546350e-02]
+Sigma solution norm: 24.20708773940215
+Update snapshots matrix
+
+##################################### 115 #####################################
+Parameter number  115 of 512
+High fidelity solve for mu = [-5.   0.8  0.6  0.4  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.69611939e-01
+ -6.64621721e-02  4.65331795e-03]
+Sigma solution norm: 12.137765244556283
+Update snapshots matrix
+
+##################################### 116 #####################################
+Parameter number  116 of 512
+High fidelity solve for mu = [-5.   0.8  0.6  0.4  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.69611939e-01
+ -6.64621721e-02  4.65331795e-03]
+Sigma solution norm: 12.137765244556281
+Update snapshots matrix
+
+##################################### 117 #####################################
+Parameter number  117 of 512
+High fidelity solve for mu = [-5.   0.8  0.6  0.6  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  7.42046367e-02
+ -3.05307604e-02  1.85551471e-03]
+Sigma solution norm: 16.075661209303554
+Update snapshots matrix
+
+##################################### 118 #####################################
+Parameter number  118 of 512
+High fidelity solve for mu = [-5.   0.8  0.6  0.6  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  7.42046367e-02
+ -3.05307604e-02  1.85551471e-03]
+Sigma solution norm: 16.075661209303554
+Update snapshots matrix
+
+##################################### 119 #####################################
+Parameter number  119 of 512
+High fidelity solve for mu = [-5.   0.8  0.6  0.8  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  5.88023822e-02
+ -2.67273671e-02  1.12485193e-03]
+Sigma solution norm: 45.09608221405146
+Update snapshots matrix
+
+##################################### 120 #####################################
+Parameter number  120 of 512
+High fidelity solve for mu = [-5.   0.8  0.6  0.8  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  5.88023822e-02
+ -2.67273671e-02  1.12485193e-03]
+Sigma solution norm: 45.09608221405146
+Update snapshots matrix
+
+##################################### 121 #####################################
+Parameter number  121 of 512
+High fidelity solve for mu = [-5.   0.8  0.8  0.2  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.96636690e-01
+ -1.61410397e-01  1.06496783e-02]
+Sigma solution norm: 69.90898833966065
+Update snapshots matrix
+
+##################################### 122 #####################################
+Parameter number  122 of 512
+High fidelity solve for mu = [-5.   0.8  0.8  0.2  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.96636690e-01
+ -1.61410397e-01  1.06496783e-02]
+Sigma solution norm: 69.90898833966065
+Update snapshots matrix
+
+##################################### 123 #####################################
+Parameter number  123 of 512
+High fidelity solve for mu = [-5.   0.8  0.8  0.4  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.15785784e-01
+ -4.91798795e-02  2.83872846e-03]
+Sigma solution norm: 34.31413376709831
+Update snapshots matrix
+
+##################################### 124 #####################################
+Parameter number  124 of 512
+High fidelity solve for mu = [-5.   0.8  0.8  0.4  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.15785784e-01
+ -4.91798795e-02  2.83872846e-03]
+Sigma solution norm: 34.31413376709831
+Update snapshots matrix
+
+##################################### 125 #####################################
+Parameter number  125 of 512
+High fidelity solve for mu = [-5.   0.8  0.8  0.6  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  5.91696975e-02
+ -2.72477475e-02  1.14673521e-03]
+Sigma solution norm: 45.09139134208026
+Update snapshots matrix
+
+##################################### 126 #####################################
+Parameter number  126 of 512
+High fidelity solve for mu = [-5.   0.8  0.8  0.6  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  5.91696975e-02
+ -2.72477475e-02  1.14673521e-03]
+Sigma solution norm: 45.091391342080264
+Update snapshots matrix
+
+##################################### 127 #####################################
+Parameter number  127 of 512
+High fidelity solve for mu = [-5.   0.8  0.8  0.8  1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.75532125e-02
+ -3.49423313e-02  7.25535570e-04]
+Sigma solution norm: 126.90815739785656
+Update snapshots matrix
+
+##################################### 128 #####################################
+Parameter number  128 of 512
+High fidelity solve for mu = [-5.   0.8  0.8  0.8  5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.75532125e-02
+ -3.49423313e-02  7.25535570e-04]
+Sigma solution norm: 126.90815739785658
+Update snapshots matrix
+
+##################################### 129 #####################################
+Parameter number  129 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.2         0.2         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  8.42753946e-03
+ -3.68625546e-03  1.36385108e-05]
+Sigma solution norm: 1.3504588192408626
+Update snapshots matrix
+
+##################################### 130 #####################################
+Parameter number  130 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.2         0.2         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  8.42753946e-03
+ -3.68625546e-03  1.36385108e-05]
+Sigma solution norm: 1.3504588192408626
+Update snapshots matrix
+
+##################################### 131 #####################################
+Parameter number  131 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.2         0.4         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  5.70928202e-03
+ -2.53974082e-03  8.81498638e-06]
+Sigma solution norm: 1.2020453328732785
+Update snapshots matrix
+
+##################################### 132 #####################################
+Parameter number  132 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.2         0.4         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  5.70928202e-03
+ -2.53974082e-03  8.81498638e-06]
+Sigma solution norm: 1.2020453328732787
+Update snapshots matrix
+
+##################################### 133 #####################################
+Parameter number  133 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.2         0.6         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.48886797e-03
+ -2.03677058e-03  6.53839150e-06]
+Sigma solution norm: 1.288503363041902
+Update snapshots matrix
+
+##################################### 134 #####################################
+Parameter number  134 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.2         0.6         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.48886797e-03
+ -2.03677058e-03  6.53839150e-06]
+Sigma solution norm: 1.288503363041902
+Update snapshots matrix
+
+##################################### 135 #####################################
+Parameter number  135 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.2         0.8         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.11990051e-03
+ -1.91318068e-03  5.58055699e-06]
+Sigma solution norm: 1.6525150076429578
+Update snapshots matrix
+
+##################################### 136 #####################################
+Parameter number  136 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.2         0.8         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.11990051e-03
+ -1.91318068e-03  5.58055699e-06]
+Sigma solution norm: 1.6525150076429578
+Update snapshots matrix
+
+##################################### 137 #####################################
+Parameter number  137 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.4         0.2         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  5.72302457e-03
+ -2.55927481e-03  8.87407997e-06]
+Sigma solution norm: 1.202030052639621
+Update snapshots matrix
+
+##################################### 138 #####################################
+Parameter number  138 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.4         0.2         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  5.72302457e-03
+ -2.55927481e-03  8.87407997e-06]
+Sigma solution norm: 1.202030052639621
+Update snapshots matrix
+
+##################################### 139 #####################################
+Parameter number  139 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.4         0.4         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.91635678e-03
+ -1.78325024e-03  5.75373393e-06]
+Sigma solution norm: 1.0740719489834087
+Update snapshots matrix
+
+##################################### 140 #####################################
+Parameter number  140 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.4         0.4         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.91635678e-03
+ -1.78325024e-03  5.75373393e-06]
+Sigma solution norm: 1.074071948983409
+Update snapshots matrix
+
+##################################### 141 #####################################
+Parameter number  141 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.4         0.6         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.12038983e-03
+ -1.45102471e-03  4.28898347e-06]
+Sigma solution norm: 1.1538472361191596
+Update snapshots matrix
+
+##################################### 142 #####################################
+Parameter number  142 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.4         0.6         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.12038983e-03
+ -1.45102471e-03  4.28898347e-06]
+Sigma solution norm: 1.1538472361191594
+Update snapshots matrix
+
+##################################### 143 #####################################
+Parameter number  143 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.4         0.8         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.91404019e-03
+ -1.38833648e-03  3.68948524e-06]
+Sigma solution norm: 1.4808360411425932
+Update snapshots matrix
+
+##################################### 144 #####################################
+Parameter number  144 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.4         0.8         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.91404019e-03
+ -1.38833648e-03  3.68948524e-06]
+Sigma solution norm: 1.480836041142593
+Update snapshots matrix
+
+##################################### 145 #####################################
+Parameter number  145 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.6         0.2         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.50972570e-03
+ -2.06652119e-03  6.62648294e-06]
+Sigma solution norm: 1.2884654267587383
+Update snapshots matrix
+
+##################################### 146 #####################################
+Parameter number  146 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.6         0.2         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.50972570e-03
+ -2.06652119e-03  6.62648294e-06]
+Sigma solution norm: 1.2884654267587383
+Update snapshots matrix
+
+##################################### 147 #####################################
+Parameter number  147 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.6         0.4         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.12732479e-03
+ -1.46095198e-03  4.31770219e-06]
+Sigma solution norm: 1.1538285979908858
+Update snapshots matrix
+
+##################################### 148 #####################################
+Parameter number  148 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.6         0.4         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.12732479e-03
+ -1.46095198e-03  4.31770219e-06]
+Sigma solution norm: 1.1538285979908858
+Update snapshots matrix
+
+##################################### 149 #####################################
+Parameter number  149 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.6         0.6         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.53507640e-03
+ -1.21081595e-03  3.24334284e-06]
+Sigma solution norm: 1.241040363502886
+Update snapshots matrix
+
+##################################### 150 #####################################
+Parameter number  150 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.6         0.6         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.53507640e-03
+ -1.21081595e-03  3.24334284e-06]
+Sigma solution norm: 1.241040363502886
+Update snapshots matrix
+
+##################################### 151 #####################################
+Parameter number  151 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.6         0.8         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.42006828e-03
+ -1.18509412e-03  2.82349396e-06]
+Sigma solution norm: 1.5933286360219008
+Update snapshots matrix
+
+##################################### 152 #####################################
+Parameter number  152 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.6         0.8         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.42006828e-03
+ -1.18509412e-03  2.82349396e-06]
+Sigma solution norm: 1.5933286360219008
+Update snapshots matrix
+
+##################################### 153 #####################################
+Parameter number  153 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.8         0.2         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.14714981e-03
+ -1.95220039e-03  5.69312511e-06]
+Sigma solution norm: 1.6524360798884874
+Update snapshots matrix
+
+##################################### 154 #####################################
+Parameter number  154 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.8         0.2         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.14714981e-03
+ -1.95220039e-03  5.69312511e-06]
+Sigma solution norm: 1.6524360798884874
+Update snapshots matrix
+
+##################################### 155 #####################################
+Parameter number  155 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.8         0.4         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.92616096e-03
+ -1.40576071e-03  3.73841065e-06]
+Sigma solution norm: 1.4807864918914986
+Update snapshots matrix
+
+##################################### 156 #####################################
+Parameter number  156 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.8         0.4         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.92616096e-03
+ -1.40576071e-03  3.73841065e-06]
+Sigma solution norm: 1.4807864918914988
+Update snapshots matrix
+
+##################################### 157 #####################################
+Parameter number  157 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.8         0.6         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.42471453e-03
+ -1.19180290e-03  2.84172081e-06]
+Sigma solution norm: 1.5933018091644668
+Update snapshots matrix
+
+##################################### 158 #####################################
+Parameter number  158 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.8         0.6         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.42471453e-03
+ -1.19180290e-03  2.84172081e-06]
+Sigma solution norm: 1.5933018091644668
+Update snapshots matrix
+
+##################################### 159 #####################################
+Parameter number  159 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.8         0.8         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.37822797e-03
+ -1.19842837e-03  2.51872044e-06]
+Sigma solution norm: 2.045784263153843
+Update snapshots matrix
+
+##################################### 160 #####################################
+Parameter number  160 of 512
+High fidelity solve for mu = [-1.66666667  0.2         0.8         0.8         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.37822797e-03
+ -1.19842837e-03  2.51872044e-06]
+Sigma solution norm: 2.0457842631538434
+Update snapshots matrix
+
+##################################### 161 #####################################
+Parameter number  161 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.2         0.2         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  9.76155627e-03
+ -4.22278517e-03  4.11625589e-05]
+Sigma solution norm: 1.2020301226591465
+Update snapshots matrix
+
+##################################### 162 #####################################
+Parameter number  162 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.2         0.2         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  9.76155627e-03
+ -4.22278517e-03  4.11625589e-05]
+Sigma solution norm: 1.2020301226591468
+Update snapshots matrix
+
+##################################### 163 #####################################
+Parameter number  163 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.2         0.4         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.57609331e-03
+ -2.89040005e-03  2.66894492e-05]
+Sigma solution norm: 1.0740720191317719
+Update snapshots matrix
+
+##################################### 164 #####################################
+Parameter number  164 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.2         0.4         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.57609331e-03
+ -2.89040005e-03  2.66894492e-05]
+Sigma solution norm: 1.0740720191317719
+Update snapshots matrix
+
+##################################### 165 #####################################
+Parameter number  165 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.2         0.6         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  5.13206973e-03
+ -2.29834129e-03  1.98338516e-05]
+Sigma solution norm: 1.1538473164528722
+Update snapshots matrix
+
+##################################### 166 #####################################
+Parameter number  166 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.2         0.6         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  5.13206973e-03
+ -2.29834129e-03  1.98338516e-05]
+Sigma solution norm: 1.1538473164528724
+Update snapshots matrix
+
+##################################### 167 #####################################
+Parameter number  167 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.2         0.8         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.66407538e-03
+ -2.13537310e-03  1.69149959e-05]
+Sigma solution norm: 1.4808361468323399
+Update snapshots matrix
+
+##################################### 168 #####################################
+Parameter number  168 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.2         0.8         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.66407538e-03
+ -2.13537310e-03  1.69149959e-05]
+Sigma solution norm: 1.4808361468323397
+Update snapshots matrix
+
+##################################### 169 #####################################
+Parameter number  169 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.4         0.2         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.59235130e-03
+ -2.91347278e-03  2.68609009e-05]
+Sigma solution norm: 1.074049307298277
+Update snapshots matrix
+
+##################################### 170 #####################################
+Parameter number  170 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.4         0.2         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.59235130e-03
+ -2.91347278e-03  2.68609009e-05]
+Sigma solution norm: 1.074049307298277
+Update snapshots matrix
+
+##################################### 171 #####################################
+Parameter number  171 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.4         0.4         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.48067773e-03
+ -2.01436393e-03  1.74503298e-05]
+Sigma solution norm: 0.9631764249716445
+Update snapshots matrix
+
+##################################### 172 #####################################
+Parameter number  172 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.4         0.4         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.48067773e-03
+ -2.01436393e-03  1.74503298e-05]
+Sigma solution norm: 0.9631764249716445
+Update snapshots matrix
+
+##################################### 173 #####################################
+Parameter number  173 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.4         0.6         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.53824958e-03
+ -1.62286804e-03  1.30035621e-05]
+Sigma solution norm: 1.03679944904753
+Update snapshots matrix
+
+##################################### 174 #####################################
+Parameter number  174 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.4         0.6         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.53824958e-03
+ -1.62286804e-03  1.30035621e-05]
+Sigma solution norm: 1.03679944904753
+Update snapshots matrix
+
+##################################### 175 #####################################
+Parameter number  175 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.4         0.8         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.26611212e-03
+ -1.53344146e-03  1.11340805e-05]
+Sigma solution norm: 1.331442239679783
+Update snapshots matrix
+
+##################################### 176 #####################################
+Parameter number  176 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.4         0.8         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.26611212e-03
+ -1.53344146e-03  1.11340805e-05]
+Sigma solution norm: 1.331442239679783
+Update snapshots matrix
+
+##################################### 177 #####################################
+Parameter number  177 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.6         0.2         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  5.15671244e-03
+ -2.33342912e-03  2.00903149e-05]
+Sigma solution norm: 1.1537929040138575
+Update snapshots matrix
+
+##################################### 178 #####################################
+Parameter number  178 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.6         0.2         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  5.15671244e-03
+ -2.33342912e-03  2.00903149e-05]
+Sigma solution norm: 1.1537929040138575
+Update snapshots matrix
+
+##################################### 179 #####################################
+Parameter number  179 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.6         0.4         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.54643065e-03
+ -1.63455659e-03  1.30874841e-05]
+Sigma solution norm: 1.0367735295811622
+Update snapshots matrix
+
+##################################### 180 #####################################
+Parameter number  180 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.6         0.4         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.54643065e-03
+ -1.63455659e-03  1.30874841e-05]
+Sigma solution norm: 1.0367735295811624
+Update snapshots matrix
+
+##################################### 181 #####################################
+Parameter number  181 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.6         0.6         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.84416631e-03
+ -1.33915588e-03  9.79062950e-06]
+Sigma solution norm: 1.1172586779491904
+Update snapshots matrix
+
+##################################### 182 #####################################
+Parameter number  182 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.6         0.6         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.84416631e-03
+ -1.33915588e-03  9.79062950e-06]
+Sigma solution norm: 1.1172586779491904
+Update snapshots matrix
+
+##################################### 183 #####################################
+Parameter number  183 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.6         0.8         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.67858378e-03
+ -1.29234879e-03  8.43109605e-06]
+Sigma solution norm: 1.435236105142627
+Update snapshots matrix
+
+##################################### 184 #####################################
+Parameter number  184 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.6         0.8         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.67858378e-03
+ -1.29234879e-03  8.43109605e-06]
+Sigma solution norm: 1.4352361051426268
+Update snapshots matrix
+
+##################################### 185 #####################################
+Parameter number  185 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.8         0.2         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.69621380e-03
+ -2.18130426e-03  1.72440791e-05]
+Sigma solution norm: 1.480725610927615
+Update snapshots matrix
+
+##################################### 186 #####################################
+Parameter number  186 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.8         0.2         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.69621380e-03
+ -2.18130426e-03  1.72440791e-05]
+Sigma solution norm: 1.4807256109276152
+Update snapshots matrix
+
+##################################### 187 #####################################
+Parameter number  187 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.8         0.4         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.28038108e-03
+ -1.55390991e-03  1.12777292e-05]
+Sigma solution norm: 1.331374665052711
+Update snapshots matrix
+
+##################################### 188 #####################################
+Parameter number  188 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.8         0.4         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.28038108e-03
+ -1.55390991e-03  1.12777292e-05]
+Sigma solution norm: 1.331374665052711
+Update snapshots matrix
+
+##################################### 189 #####################################
+Parameter number  189 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.8         0.6         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.68404044e-03
+ -1.30020904e-03  8.48489232e-06]
+Sigma solution norm: 1.4352002777177222
+Update snapshots matrix
+
+##################################### 190 #####################################
+Parameter number  190 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.8         0.6         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.68404044e-03
+ -1.30020904e-03  8.48489232e-06]
+Sigma solution norm: 1.4352002777177222
+Update snapshots matrix
+
+##################################### 191 #####################################
+Parameter number  191 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.8         0.8         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.59228787e-03
+ -1.28738598e-03  7.36790091e-06]
+Sigma solution norm: 1.843814186938182
+Update snapshots matrix
+
+##################################### 192 #####################################
+Parameter number  192 of 512
+High fidelity solve for mu = [-1.66666667  0.4         0.8         0.8         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.59228787e-03
+ -1.28738598e-03  7.36790091e-06]
+Sigma solution norm: 1.8438141869381819
+Update snapshots matrix
+
+##################################### 193 #####################################
+Parameter number  193 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.2         0.2         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.29929969e-02
+ -5.56666948e-03  8.83569737e-05]
+Sigma solution norm: 1.2884656360836904
+Update snapshots matrix
+
+##################################### 194 #####################################
+Parameter number  194 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.2         0.2         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.29929969e-02
+ -5.56666948e-03  8.83569737e-05]
+Sigma solution norm: 1.2884656360836901
+Update snapshots matrix
+
+##################################### 195 #####################################
+Parameter number  195 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.2         0.4         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  8.71460141e-03
+ -3.79051007e-03  5.72842531e-05]
+Sigma solution norm: 1.1538287976311081
+Update snapshots matrix
+
+##################################### 196 #####################################
+Parameter number  196 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.2         0.4         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  8.71460141e-03
+ -3.79051007e-03  5.72842531e-05]
+Sigma solution norm: 1.1538287976311081
+Update snapshots matrix
+
+##################################### 197 #####################################
+Parameter number  197 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.2         0.6         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.76127576e-03
+ -2.99371301e-03  4.25452224e-05]
+Sigma solution norm: 1.2410405861948852
+Update snapshots matrix
+
+##################################### 198 #####################################
+Parameter number  198 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.2         0.6         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.76127576e-03
+ -2.99371301e-03  4.25452224e-05]
+Sigma solution norm: 1.2410405861948852
+Update snapshots matrix
+
+##################################### 199 #####################################
+Parameter number  199 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.2         0.8         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.09694274e-03
+ -2.75707238e-03  3.62320374e-05]
+Sigma solution norm: 1.5933289260368666
+Update snapshots matrix
+
+##################################### 200 #####################################
+Parameter number  200 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.2         0.8         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.09694274e-03
+ -2.75707238e-03  3.62320374e-05]
+Sigma solution norm: 1.5933289260368666
+Update snapshots matrix
+
+##################################### 201 #####################################
+Parameter number  201 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.4         0.2         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  8.73660929e-03
+ -3.82169847e-03  5.76506747e-05]
+Sigma solution norm: 1.1537930356620487
+Update snapshots matrix
+
+##################################### 202 #####################################
+Parameter number  202 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.4         0.2         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  8.73660929e-03
+ -3.82169847e-03  5.76506747e-05]
+Sigma solution norm: 1.1537930356620492
+Update snapshots matrix
+
+##################################### 203 #####################################
+Parameter number  203 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.4         0.4         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  5.90636347e-03
+ -2.62603336e-03  3.74348467e-05]
+Sigma solution norm: 1.0367736509045045
+Update snapshots matrix
+
+##################################### 204 #####################################
+Parameter number  204 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.4         0.4         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  5.90636347e-03
+ -2.62603336e-03  3.74348467e-05]
+Sigma solution norm: 1.0367736509045045
+Update snapshots matrix
+
+##################################### 205 #####################################
+Parameter number  205 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.4         0.6         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.63117565e-03
+ -2.09884874e-03  2.78614071e-05]
+Sigma solution norm: 1.1172588106833985
+Update snapshots matrix
+
+##################################### 206 #####################################
+Parameter number  206 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.4         0.6         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.63117565e-03
+ -2.09884874e-03  2.78614071e-05]
+Sigma solution norm: 1.1172588106833985
+Update snapshots matrix
+
+##################################### 207 #####################################
+Parameter number  207 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.4         0.8         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.23543399e-03
+ -1.96312613e-03  2.37964786e-05]
+Sigma solution norm: 1.43523627670407
+Update snapshots matrix
+
+##################################### 208 #####################################
+Parameter number  208 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.4         0.8         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.23543399e-03
+ -1.96312613e-03  2.37964786e-05]
+Sigma solution norm: 1.43523627670407
+Update snapshots matrix
+
+##################################### 209 #####################################
+Parameter number  209 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.6         0.2         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.79459739e-03
+ -3.04108472e-03  4.30935877e-05]
+Sigma solution norm: 1.2409567758612083
+Update snapshots matrix
+
+##################################### 210 #####################################
+Parameter number  210 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.6         0.2         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.79459739e-03
+ -3.04108472e-03  4.30935877e-05]
+Sigma solution norm: 1.2409567758612081
+Update snapshots matrix
+
+##################################### 211 #####################################
+Parameter number  211 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.6         0.4         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.64222440e-03
+ -2.11460768e-03  2.80409390e-05]
+Sigma solution norm: 1.1172196908700982
+Update snapshots matrix
+
+##################################### 212 #####################################
+Parameter number  212 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.6         0.4         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.64222440e-03
+ -2.11460768e-03  2.80409390e-05]
+Sigma solution norm: 1.117219690870098
+Update snapshots matrix
+
+##################################### 213 #####################################
+Parameter number  213 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.6         0.6         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.69119764e-03
+ -1.71630042e-03  2.09298278e-05]
+Sigma solution norm: 1.2051998357827616
+Update snapshots matrix
+
+##################################### 214 #####################################
+Parameter number  214 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.6         0.6         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.69119764e-03
+ -1.71630042e-03  2.09298278e-05]
+Sigma solution norm: 1.2051998357827618
+Update snapshots matrix
+
+##################################### 215 #####################################
+Parameter number  215 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.6         0.8         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.43827232e-03
+ -1.63714689e-03  1.79488314e-05]
+Sigma solution norm: 1.5486711589109985
+Update snapshots matrix
+
+##################################### 216 #####################################
+Parameter number  216 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.6         0.8         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.43827232e-03
+ -1.63714689e-03  1.79488314e-05]
+Sigma solution norm: 1.5486711589109985
+Update snapshots matrix
+
+##################################### 217 #####################################
+Parameter number  217 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.8         0.2         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.14033885e-03
+ -2.81898626e-03  3.69360740e-05]
+Sigma solution norm: 1.5931612745637371
+Update snapshots matrix
+
+##################################### 218 #####################################
+Parameter number  218 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.8         0.2         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.14033885e-03
+ -2.81898626e-03  3.69360740e-05]
+Sigma solution norm: 1.593161274563737
+Update snapshots matrix
+
+##################################### 219 #####################################
+Parameter number  219 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.8         0.4         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.25467220e-03
+ -1.99067099e-03  2.41039772e-05]
+Sigma solution norm: 1.43513562538418
+Update snapshots matrix
+
+##################################### 220 #####################################
+Parameter number  220 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.8         0.4         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.25467220e-03
+ -1.99067099e-03  2.41039772e-05]
+Sigma solution norm: 1.4351356253841803
+Update snapshots matrix
+
+##################################### 221 #####################################
+Parameter number  221 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.8         0.6         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.44561513e-03
+ -1.64770219e-03  1.80640686e-05]
+Sigma solution norm: 1.5486185772724228
+Update snapshots matrix
+
+##################################### 222 #####################################
+Parameter number  222 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.8         0.6         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.44561513e-03
+ -1.64770219e-03  1.80640686e-05]
+Sigma solution norm: 1.5486185772724228
+Update snapshots matrix
+
+##################################### 223 #####################################
+Parameter number  223 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.8         0.8         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.28561565e-03
+ -1.61036799e-03  1.55808886e-05]
+Sigma solution norm: 1.990101318696929
+Update snapshots matrix
+
+##################################### 224 #####################################
+Parameter number  224 of 512
+High fidelity solve for mu = [-1.66666667  0.6         0.8         0.8         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.28561565e-03
+ -1.61036799e-03  1.55808886e-05]
+Sigma solution norm: 1.9901013186969287
+Update snapshots matrix
+
+##################################### 225 #####################################
+Parameter number  225 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.2         0.2         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.98468748e-02
+ -8.43087097e-03  1.85584995e-04]
+Sigma solution norm: 1.6524365732748845
+Update snapshots matrix
+
+##################################### 226 #####################################
+Parameter number  226 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.2         0.2         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.98468748e-02
+ -8.43087097e-03  1.85584995e-04]
+Sigma solution norm: 1.6524365732748845
+Update snapshots matrix
+
+##################################### 227 #####################################
+Parameter number  227 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.2         0.4         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.32649946e-02
+ -5.71693511e-03  1.20257436e-04]
+Sigma solution norm: 1.4807869488682441
+Update snapshots matrix
+
+##################################### 228 #####################################
+Parameter number  228 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.2         0.4         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.32649946e-02
+ -5.71693511e-03  1.20257436e-04]
+Sigma solution norm: 1.4807869488682444
+Update snapshots matrix
+
+##################################### 229 #####################################
+Parameter number  229 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.2         0.6         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.02438157e-02
+ -4.49065541e-03  8.92422072e-05]
+Sigma solution norm: 1.5933023105360549
+Update snapshots matrix
+
+##################################### 230 #####################################
+Parameter number  230 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.2         0.6         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.02438157e-02
+ -4.49065541e-03  8.92422072e-05]
+Sigma solution norm: 1.593302310536055
+Update snapshots matrix
+
+##################################### 231 #####################################
+Parameter number  231 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.2         0.8         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  9.17985483e-03
+ -4.10639134e-03  7.58996104e-05]
+Sigma solution norm: 2.04578491178474
+Update snapshots matrix
+
+##################################### 232 #####################################
+Parameter number  232 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.2         0.8         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  9.17985483e-03
+ -4.10639134e-03  7.58996104e-05]
+Sigma solution norm: 2.04578491178474
+Update snapshots matrix
+
+##################################### 233 #####################################
+Parameter number  233 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.4         0.2         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.32990747e-02
+ -5.76516993e-03  1.21027929e-04]
+Sigma solution norm: 1.4807260077470838
+Update snapshots matrix
+
+##################################### 234 #####################################
+Parameter number  234 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.4         0.2         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.32990747e-02
+ -5.76516993e-03  1.21027929e-04]
+Sigma solution norm: 1.4807260077470838
+Update snapshots matrix
+
+##################################### 235 #####################################
+Parameter number  235 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.4         0.4         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  8.95249589e-03
+ -3.94183839e-03  7.85297967e-05]
+Sigma solution norm: 1.331375023674751
+Update snapshots matrix
+
+##################################### 236 #####################################
+Parameter number  236 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.4         0.4         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  8.95249589e-03
+ -3.94183839e-03  7.85297967e-05]
+Sigma solution norm: 1.331375023674751
+Update snapshots matrix
+
+##################################### 237 #####################################
+Parameter number  237 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.4         0.6         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.98006180e-03
+ -3.13028064e-03  5.83784538e-05]
+Sigma solution norm: 1.435200665584992
+Update snapshots matrix
+
+##################################### 238 #####################################
+Parameter number  238 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.4         0.6         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.98006180e-03
+ -3.13028064e-03  5.83784538e-05]
+Sigma solution norm: 1.4352006655849918
+Update snapshots matrix
+
+##################################### 239 #####################################
+Parameter number  239 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.4         0.8         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.33606819e-03
+ -2.90372003e-03  4.97681411e-05]
+Sigma solution norm: 1.8438146859284794
+Update snapshots matrix
+
+##################################### 240 #####################################
+Parameter number  240 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.4         0.8         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.33606819e-03
+ -2.90372003e-03  4.97681411e-05]
+Sigma solution norm: 1.843814685928479
+Update snapshots matrix
+
+##################################### 241 #####################################
+Parameter number  241 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.6         0.2         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.02953688e-02
+ -4.56384387e-03  9.03952702e-05]
+Sigma solution norm: 1.5931615329212916
+Update snapshots matrix
+
+##################################### 242 #####################################
+Parameter number  242 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.6         0.2         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.02953688e-02
+ -4.56384387e-03  9.03952702e-05]
+Sigma solution norm: 1.5931615329212916
+Update snapshots matrix
+
+##################################### 243 #####################################
+Parameter number  243 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.6         0.4         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.99713825e-03
+ -3.15460015e-03  5.87559554e-05]
+Sigma solution norm: 1.4351358552590416
+Update snapshots matrix
+
+##################################### 244 #####################################
+Parameter number  244 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.6         0.4         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.99713825e-03
+ -3.15460015e-03  5.87559554e-05]
+Sigma solution norm: 1.4351358552590416
+Update snapshots matrix
+
+##################################### 245 #####################################
+Parameter number  245 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.6         0.6         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  5.52546193e-03
+ -2.54096529e-03  4.37807235e-05]
+Sigma solution norm: 1.548618823579087
+Update snapshots matrix
+
+##################################### 246 #####################################
+Parameter number  246 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.6         0.6         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  5.52546193e-03
+ -2.54096529e-03  4.37807235e-05]
+Sigma solution norm: 1.548618823579087
+Update snapshots matrix
+
+##################################### 247 #####################################
+Parameter number  247 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.6         0.8         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  5.10105946e-03
+ -2.40066903e-03  3.74438204e-05]
+Sigma solution norm: 1.9901016343925477
+Update snapshots matrix
+
+##################################### 248 #####################################
+Parameter number  248 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.6         0.8         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  5.10105946e-03
+ -2.40066903e-03  3.74438204e-05]
+Sigma solution norm: 1.990101634392548
+Update snapshots matrix
+
+##################################### 249 #####################################
+Parameter number  249 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.8         0.2         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  9.24691630e-03
+ -4.20192267e-03  7.73799858e-05]
+Sigma solution norm: 2.0455062425604975
+Update snapshots matrix
+
+##################################### 250 #####################################
+Parameter number  250 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.8         0.2         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  9.24691630e-03
+ -4.20192267e-03  7.73799858e-05]
+Sigma solution norm: 2.045506242560498
+Update snapshots matrix
+
+##################################### 251 #####################################
+Parameter number  251 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.8         0.4         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.36576072e-03
+ -2.94616234e-03  5.04147057e-05]
+Sigma solution norm: 1.843649481021715
+Update snapshots matrix
+
+##################################### 252 #####################################
+Parameter number  252 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.8         0.4         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.36576072e-03
+ -2.94616234e-03  5.04147057e-05]
+Sigma solution norm: 1.8436494810217148
+Update snapshots matrix
+
+##################################### 253 #####################################
+Parameter number  253 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.8         0.6         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  5.11237455e-03
+ -2.41690472e-03  3.76861181e-05]
+Sigma solution norm: 1.9900162441207314
+Update snapshots matrix
+
+##################################### 254 #####################################
+Parameter number  254 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.8         0.6         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  5.11237455e-03
+ -2.41690472e-03  3.76861181e-05]
+Sigma solution norm: 1.9900162441207316
+Update snapshots matrix
+
+##################################### 255 #####################################
+Parameter number  255 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.8         0.8         1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.82393376e-03
+ -2.33659358e-03  3.23766207e-05]
+Sigma solution norm: 2.557502854421646
+Update snapshots matrix
+
+##################################### 256 #####################################
+Parameter number  256 of 512
+High fidelity solve for mu = [-1.66666667  0.8         0.8         0.8         5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.82393376e-03
+ -2.33659358e-03  3.23766207e-05]
+Sigma solution norm: 2.5575028544216445
+Update snapshots matrix
+
+##################################### 257 #####################################
+Parameter number  257 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.2        0.2        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  5.10419563e-04
+ -2.75676223e-04 -8.56261636e-08]
+Sigma solution norm: 0.43506126074458107
+Update snapshots matrix
+
+##################################### 258 #####################################
+Parameter number  258 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.2        0.2        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  5.10419563e-04
+ -2.75676223e-04 -8.56261636e-08]
+Sigma solution norm: 0.4350612607445811
+Update snapshots matrix
+
+##################################### 259 #####################################
+Parameter number  259 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.2        0.4        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.51298862e-04
+ -3.46617854e-04 -2.22111341e-07]
+Sigma solution norm: 0.45485933773194526
+Update snapshots matrix
+
+##################################### 260 #####################################
+Parameter number  260 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.2        0.4        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.51298862e-04
+ -3.46617854e-04 -2.22111341e-07]
+Sigma solution norm: 0.45485933773194526
+Update snapshots matrix
+
+##################################### 261 #####################################
+Parameter number  261 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.2        0.6        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  7.51722467e-04
+ -3.94106659e-04 -3.81704648e-07]
+Sigma solution norm: 0.43036081104879
+Update snapshots matrix
+
+##################################### 262 #####################################
+Parameter number  262 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.2        0.6        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  7.51722467e-04
+ -3.94106659e-04 -3.81704648e-07]
+Sigma solution norm: 0.43036081104879
+Update snapshots matrix
+
+##################################### 263 #####################################
+Parameter number  263 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.2        0.8        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  7.80984032e-04
+ -4.03444729e-04 -5.17909219e-07]
+Sigma solution norm: 0.36933910358503586
+Update snapshots matrix
+
+##################################### 264 #####################################
+Parameter number  264 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.2        0.8        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  7.80984032e-04
+ -4.03444729e-04 -5.17909219e-07]
+Sigma solution norm: 0.36933910358503586
+Update snapshots matrix
+
+##################################### 265 #####################################
+Parameter number  265 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.4        0.2        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.50302403e-04
+ -3.45139185e-04 -2.18836958e-07]
+Sigma solution norm: 0.4548711944815215
+Update snapshots matrix
+
+##################################### 266 #####################################
+Parameter number  266 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.4        0.2        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.50302403e-04
+ -3.45139185e-04 -2.18836958e-07]
+Sigma solution norm: 0.4548711944815216
+Update snapshots matrix
+
+##################################### 267 #####################################
+Parameter number  267 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.4        0.4        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  8.49035532e-04
+ -4.43292542e-04 -4.36024549e-07]
+Sigma solution norm: 0.47568205560167603
+Update snapshots matrix
+
+##################################### 268 #####################################
+Parameter number  268 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.4        0.4        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  8.49035532e-04
+ -4.43292542e-04 -4.36024549e-07]
+Sigma solution norm: 0.475682055601676
+Update snapshots matrix
+
+##################################### 269 #####################################
+Parameter number  269 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.4        0.6        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.00039474e-03
+ -5.13944676e-04 -6.78934862e-07]
+Sigma solution norm: 0.4502665480672986
+Update snapshots matrix
+
+##################################### 270 #####################################
+Parameter number  270 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.4        0.6        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.00039474e-03
+ -5.13944676e-04 -6.78934862e-07]
+Sigma solution norm: 0.4502665480672986
+Update snapshots matrix
+
+##################################### 271 #####################################
+Parameter number  271 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.4        0.8        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.05826701e-03
+ -5.35308157e-04 -8.76851541e-07]
+Sigma solution norm: 0.38668761103812505
+Update snapshots matrix
+
+##################################### 272 #####################################
+Parameter number  272 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.4        0.8        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.05826701e-03
+ -5.35308157e-04 -8.76851541e-07]
+Sigma solution norm: 0.386687611038125
+Update snapshots matrix
+
+##################################### 273 #####################################
+Parameter number  273 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.6        0.2        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  7.49178774e-04
+ -3.90352121e-04 -3.72886171e-07]
+Sigma solution norm: 0.43038196059762346
+Update snapshots matrix
+
+##################################### 274 #####################################
+Parameter number  274 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.6        0.2        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  7.49178774e-04
+ -3.90352121e-04 -3.72886171e-07]
+Sigma solution norm: 0.4303819605976234
+Update snapshots matrix
+
+##################################### 275 #####################################
+Parameter number  275 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.6        0.4        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  9.98532416e-04
+ -5.11210225e-04 -6.72163610e-07]
+Sigma solution norm: 0.4502766961391612
+Update snapshots matrix
+
+##################################### 276 #####################################
+Parameter number  276 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.6        0.4        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  9.98532416e-04
+ -5.11210225e-04 -6.72163610e-07]
+Sigma solution norm: 0.45027669613916127
+Update snapshots matrix
+
+##################################### 277 #####################################
+Parameter number  277 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.6        0.6        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.19796315e-03
+ -6.03034735e-04 -9.97292473e-07]
+Sigma solution norm: 0.4265885274412277
+Update snapshots matrix
+
+##################################### 278 #####################################
+Parameter number  278 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.6        0.6        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.19796315e-03
+ -6.03034735e-04 -9.97292473e-07]
+Sigma solution norm: 0.42658852744122766
+Update snapshots matrix
+
+##################################### 279 #####################################
+Parameter number  279 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.6        0.8        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.28691150e-03
+ -6.37600906e-04 -1.25367231e-06]
+Sigma solution norm: 0.3668295033370785
+Update snapshots matrix
+
+##################################### 280 #####################################
+Parameter number  280 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.6        0.8        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.28691150e-03
+ -6.37600906e-04 -1.25367231e-06]
+Sigma solution norm: 0.3668295033370785
+Update snapshots matrix
+
+##################################### 281 #####################################
+Parameter number  281 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.8        0.2        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  7.76685429e-04
+ -3.97130630e-04 -5.02344810e-07]
+Sigma solution norm: 0.36936401803845104
+Update snapshots matrix
+
+##################################### 282 #####################################
+Parameter number  282 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.8        0.2        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  7.76685429e-04
+ -3.97130630e-04 -5.02344810e-07]
+Sigma solution norm: 0.36936401803845104
+Update snapshots matrix
+
+##################################### 283 #####################################
+Parameter number  283 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.8        0.4        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.05404799e-03
+ -5.29141536e-04 -8.60936986e-07]
+Sigma solution norm: 0.38670298218044324
+Update snapshots matrix
+
+##################################### 284 #####################################
+Parameter number  284 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.8        0.4        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.05404799e-03
+ -5.29141536e-04 -8.60936986e-07]
+Sigma solution norm: 0.3867029821804432
+Update snapshots matrix
+
+##################################### 285 #####################################
+Parameter number  285 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.8        0.6        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.28417450e-03
+ -6.33618253e-04 -1.24299933e-06]
+Sigma solution norm: 0.36683561333555725
+Update snapshots matrix
+
+##################################### 286 #####################################
+Parameter number  286 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.8        0.6        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.28417450e-03
+ -6.33618253e-04 -1.24299933e-06]
+Sigma solution norm: 0.3668356133355573
+Update snapshots matrix
+
+##################################### 287 #####################################
+Parameter number  287 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.8        0.8        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.39739197e-03
+ -6.78540665e-04 -1.53741214e-06]
+Sigma solution norm: 0.3160578845378203
+Update snapshots matrix
+
+##################################### 288 #####################################
+Parameter number  288 of 512
+High fidelity solve for mu = [1.66666667 0.2        0.8        0.8        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.39739197e-03
+ -6.78540665e-04 -1.53741214e-06]
+Sigma solution norm: 0.3160578845378203
+Update snapshots matrix
+
+##################################### 289 #####################################
+Parameter number  289 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.2        0.2        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.78935445e-04
+ -2.60643366e-04 -5.74342536e-07]
+Sigma solution norm: 0.4548711281673648
+Update snapshots matrix
+
+##################################### 290 #####################################
+Parameter number  290 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.2        0.2        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.78935445e-04
+ -2.60643366e-04 -5.74342536e-07]
+Sigma solution norm: 0.45487112816736475
+Update snapshots matrix
+
+##################################### 291 #####################################
+Parameter number  291 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.2        0.4        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.03912740e-04
+ -3.24135922e-04 -9.37893229e-07]
+Sigma solution norm: 0.4756819868085363
+Update snapshots matrix
+
+##################################### 292 #####################################
+Parameter number  292 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.2        0.4        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.03912740e-04
+ -3.24135922e-04 -9.37893229e-07]
+Sigma solution norm: 0.47568198680853613
+Update snapshots matrix
+
+##################################### 293 #####################################
+Parameter number  293 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.2        0.6        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.89392706e-04
+ -3.64747545e-04 -1.30838428e-06]
+Sigma solution norm: 0.4502664837960588
+Update snapshots matrix
+
+##################################### 294 #####################################
+Parameter number  294 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.2        0.6        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.89392706e-04
+ -3.64747545e-04 -1.30838428e-06]
+Sigma solution norm: 0.4502664837960588
+Update snapshots matrix
+
+##################################### 295 #####################################
+Parameter number  295 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.2        0.8        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  7.09181669e-04
+ -3.69879873e-04 -1.57625838e-06]
+Sigma solution norm: 0.38668755684618417
+Update snapshots matrix
+
+##################################### 296 #####################################
+Parameter number  296 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.2        0.8        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  7.09181669e-04
+ -3.69879873e-04 -1.57625838e-06]
+Sigma solution norm: 0.3866875568461842
+Update snapshots matrix
+
+##################################### 297 #####################################
+Parameter number  297 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.4        0.2        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.03053297e-04
+ -3.22856662e-04 -9.30472399e-07]
+Sigma solution norm: 0.4756914483833408
+Update snapshots matrix
+
+##################################### 298 #####################################
+Parameter number  298 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.4        0.2        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.03053297e-04
+ -3.22856662e-04 -9.30472399e-07]
+Sigma solution norm: 0.4756914483833409
+Update snapshots matrix
+
+##################################### 299 #####################################
+Parameter number  299 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.4        0.4        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  7.78146940e-04
+ -4.10115736e-04 -1.48566114e-06]
+Sigma solution norm: 0.4975745116933333
+Update snapshots matrix
+
+##################################### 300 #####################################
+Parameter number  300 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.4        0.4        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  7.78146940e-04
+ -4.10115736e-04 -1.48566114e-06]
+Sigma solution norm: 0.4975745116933333
+Update snapshots matrix
+
+##################################### 301 #####################################
+Parameter number  301 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.4        0.6        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  9.07244064e-04
+ -4.70698839e-04 -2.04572997e-06]
+Sigma solution norm: 0.47120855982424836
+Update snapshots matrix
+
+##################################### 302 #####################################
+Parameter number  302 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.4        0.6        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  9.07244064e-04
+ -4.70698839e-04 -2.04572997e-06]
+Sigma solution norm: 0.4712085598242483
+Update snapshots matrix
+
+##################################### 303 #####################################
+Parameter number  303 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.4        0.8        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  9.50933634e-04
+ -4.85883386e-04 -2.44536557e-06]
+Sigma solution norm: 0.4049564054785127
+Update snapshots matrix
+
+##################################### 304 #####################################
+Parameter number  304 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.4        0.8        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  9.50933634e-04
+ -4.85883386e-04 -2.44536557e-06]
+Sigma solution norm: 0.40495640547851275
+Update snapshots matrix
+
+##################################### 305 #####################################
+Parameter number  305 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.6        0.2        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.87207050e-04
+ -3.61512194e-04 -1.28867098e-06]
+Sigma solution norm: 0.4502830540321382
+Update snapshots matrix
+
+##################################### 306 #####################################
+Parameter number  306 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.6        0.2        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.87207050e-04
+ -3.61512194e-04 -1.28867098e-06]
+Sigma solution norm: 0.4502830540321382
+Update snapshots matrix
+
+##################################### 307 #####################################
+Parameter number  307 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.6        0.4        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  9.05649316e-04
+ -4.68351003e-04 -2.03077243e-06]
+Sigma solution norm: 0.4712163470834913
+Update snapshots matrix
+
+##################################### 308 #####################################
+Parameter number  308 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.6        0.4        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  9.05649316e-04
+ -4.68351003e-04 -2.03077243e-06]
+Sigma solution norm: 0.4712163470834914
+Update snapshots matrix
+
+##################################### 309 #####################################
+Parameter number  309 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.6        0.6        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.07587823e-03
+ -5.47185792e-04 -2.77488103e-06]
+Sigma solution norm: 0.44664302670186556
+Update snapshots matrix
+
+##################################### 310 #####################################
+Parameter number  310 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.6        0.6        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.07587823e-03
+ -5.47185792e-04 -2.77488103e-06]
+Sigma solution norm: 0.4466430267018655
+Update snapshots matrix
+
+##################################### 311 #####################################
+Parameter number  311 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.6        0.8        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.14610167e-03
+ -5.73735242e-04 -3.30170431e-06]
+Sigma solution norm: 0.3843540144998497
+Update snapshots matrix
+
+##################################### 312 #####################################
+Parameter number  312 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.6        0.8        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.14610167e-03
+ -5.73735242e-04 -3.30170431e-06]
+Sigma solution norm: 0.3843540144998497
+Update snapshots matrix
+
+##################################### 313 #####################################
+Parameter number  313 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.8        0.2        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  7.05499475e-04
+ -3.64456608e-04 -1.54184338e-06]
+Sigma solution norm: 0.3867066140105099
+Update snapshots matrix
+
+##################################### 314 #####################################
+Parameter number  314 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.8        0.2        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  7.05499475e-04
+ -3.64456608e-04 -1.54184338e-06]
+Sigma solution norm: 0.38670661401051004
+Update snapshots matrix
+
+##################################### 315 #####################################
+Parameter number  315 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.8        0.4        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  9.47330187e-04
+ -4.80603324e-04 -2.41052966e-06]
+Sigma solution norm: 0.40496784001079855
+Update snapshots matrix
+
+##################################### 316 #####################################
+Parameter number  316 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.8        0.4        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  9.47330187e-04
+ -4.80603324e-04 -2.41052966e-06]
+Sigma solution norm: 0.4049678400107986
+Update snapshots matrix
+
+##################################### 317 #####################################
+Parameter number  317 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.8        0.6        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.14376948e-03
+ -5.70333751e-04 -3.27853103e-06]
+Sigma solution norm: 0.3843583703475952
+Update snapshots matrix
+
+##################################### 318 #####################################
+Parameter number  318 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.8        0.6        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.14376948e-03
+ -5.70333751e-04 -3.27853103e-06]
+Sigma solution norm: 0.38435837034759524
+Update snapshots matrix
+
+##################################### 319 #####################################
+Parameter number  319 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.8        0.8        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.23523409e-03
+ -6.06093944e-04 -3.89039011e-06]
+Sigma solution norm: 0.3314074062887194
+Update snapshots matrix
+
+##################################### 320 #####################################
+Parameter number  320 of 512
+High fidelity solve for mu = [1.66666667 0.4        0.8        0.8        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.23523409e-03
+ -6.06093944e-04 -3.89039011e-06]
+Sigma solution norm: 0.33140740628871945
+Update snapshots matrix
+
+##################################### 321 #####################################
+Parameter number  321 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.2        0.2        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.00770320e-04
+ -2.19791463e-04 -8.36495448e-07]
+Sigma solution norm: 0.4303818597364588
+Update snapshots matrix
+
+##################################### 322 #####################################
+Parameter number  322 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.2        0.2        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.00770320e-04
+ -2.19791463e-04 -8.36495448e-07]
+Sigma solution norm: 0.43038185973645876
+Update snapshots matrix
+
+##################################### 323 #####################################
+Parameter number  323 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.2        0.4        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.98774934e-04
+ -2.70057068e-04 -1.30322372e-06]
+Sigma solution norm: 0.45027659240231693
+Update snapshots matrix
+
+##################################### 324 #####################################
+Parameter number  324 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.2        0.4        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.98774934e-04
+ -2.70057068e-04 -1.30322372e-06]
+Sigma solution norm: 0.450276592402317
+Update snapshots matrix
+
+##################################### 325 #####################################
+Parameter number  325 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.2        0.6        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  5.62375194e-04
+ -3.00405089e-04 -1.76238086e-06]
+Sigma solution norm: 0.42658843201720714
+Update snapshots matrix
+
+##################################### 326 #####################################
+Parameter number  326 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.2        0.6        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  5.62375194e-04
+ -3.00405089e-04 -1.76238086e-06]
+Sigma solution norm: 0.42658843201720714
+Update snapshots matrix
+
+##################################### 327 #####################################
+Parameter number  327 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.2        0.8        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  5.72034893e-04
+ -3.01396483e-04 -2.07749600e-06]
+Sigma solution norm: 0.3668294247580034
+Update snapshots matrix
+
+##################################### 328 #####################################
+Parameter number  328 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.2        0.8        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  5.72034893e-04
+ -3.01396483e-04 -2.07749600e-06]
+Sigma solution norm: 0.3668294247580034
+Update snapshots matrix
+
+##################################### 329 #####################################
+Parameter number  329 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.4        0.2        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.98122874e-04
+ -2.69083171e-04 -1.29413651e-06]
+Sigma solution norm: 0.45028301091927236
+Update snapshots matrix
+
+##################################### 330 #####################################
+Parameter number  330 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.4        0.2        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.98122874e-04
+ -2.69083171e-04 -1.29413651e-06]
+Sigma solution norm: 0.45028301091927236
+Update snapshots matrix
+
+##################################### 331 #####################################
+Parameter number  331 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.4        0.4        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.34321067e-04
+ -3.37622920e-04 -1.99922722e-06]
+Sigma solution norm: 0.47121630323073554
+Update snapshots matrix
+
+##################################### 332 #####################################
+Parameter number  332 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.4        0.4        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.34321067e-04
+ -3.37622920e-04 -1.99922722e-06]
+Sigma solution norm: 0.4712163032307355
+Update snapshots matrix
+
+##################################### 333 #####################################
+Parameter number  333 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.4        0.6        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  7.30697177e-04
+ -3.83088026e-04 -2.69103257e-06]
+Sigma solution norm: 0.4466429871832973
+Update snapshots matrix
+
+##################################### 334 #####################################
+Parameter number  334 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.4        0.6        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  7.30697177e-04
+ -3.83088026e-04 -2.69103257e-06]
+Sigma solution norm: 0.4466429871832973
+Update snapshots matrix
+
+##################################### 335 #####################################
+Parameter number  335 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.4        0.8        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  7.57762373e-04
+ -3.91393969e-04 -3.16438717e-06]
+Sigma solution norm: 0.38435398300338286
+Update snapshots matrix
+
+##################################### 336 #####################################
+Parameter number  336 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.4        0.8        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  7.57762373e-04
+ -3.91393969e-04 -3.16438717e-06]
+Sigma solution norm: 0.3843539830033829
+Update snapshots matrix
+
+##################################### 337 #####################################
+Parameter number  337 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.6        0.2        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  5.60724421e-04
+ -2.97953657e-04 -1.73835130e-06]
+Sigma solution norm: 0.4265993825566696
+Update snapshots matrix
+
+##################################### 338 #####################################
+Parameter number  338 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.6        0.2        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  5.60724421e-04
+ -2.97953657e-04 -1.73835130e-06]
+Sigma solution norm: 0.4265993825566696
+Update snapshots matrix
+
+##################################### 339 #####################################
+Parameter number  339 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.6        0.4        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  7.29497616e-04
+ -3.81316723e-04 -2.67287405e-06]
+Sigma solution norm: 0.4466479749233885
+Update snapshots matrix
+
+##################################### 340 #####################################
+Parameter number  340 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.6        0.4        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  7.29497616e-04
+ -3.81316723e-04 -2.67287405e-06]
+Sigma solution norm: 0.4466479749233885
+Update snapshots matrix
+
+##################################### 341 #####################################
+Parameter number  341 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.6        0.6        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  8.56776684e-04
+ -4.40606729e-04 -3.58909116e-06]
+Sigma solution norm: 0.42374559571436105
+Update snapshots matrix
+
+##################################### 342 #####################################
+Parameter number  342 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.6        0.6        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  8.56776684e-04
+ -4.40606729e-04 -3.58909116e-06]
+Sigma solution norm: 0.423745595714361
+Update snapshots matrix
+
+##################################### 343 #####################################
+Parameter number  343 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.6        0.8        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  9.03753536e-04
+ -4.57520620e-04 -4.21580121e-06]
+Sigma solution norm: 0.36514977163466966
+Update snapshots matrix
+
+##################################### 344 #####################################
+Parameter number  344 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.6        0.8        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  9.03753536e-04
+ -4.57520620e-04 -4.21580121e-06]
+Sigma solution norm: 0.36514977163466966
+Update snapshots matrix
+
+##################################### 345 #####################################
+Parameter number  345 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.8        0.2        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  5.69264063e-04
+ -2.97303219e-04 -2.03570205e-06]
+Sigma solution norm: 0.3668415758269651
+Update snapshots matrix
+
+##################################### 346 #####################################
+Parameter number  346 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.8        0.2        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  5.69264063e-04
+ -2.97303219e-04 -2.03570205e-06]
+Sigma solution norm: 0.366841575826965
+Update snapshots matrix
+
+##################################### 347 #####################################
+Parameter number  347 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.8        0.4        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  7.55060314e-04
+ -3.87423660e-04 -3.12222999e-06]
+Sigma solution norm: 0.384360953744294
+Update snapshots matrix
+
+##################################### 348 #####################################
+Parameter number  348 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.8        0.4        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  7.55060314e-04
+ -3.87423660e-04 -3.12222999e-06]
+Sigma solution norm: 0.384360953744294
+Update snapshots matrix
+
+##################################### 349 #####################################
+Parameter number  349 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.8        0.6        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  9.02009643e-04
+ -4.54970574e-04 -4.18783798e-06]
+Sigma solution norm: 0.3651522348046272
+Update snapshots matrix
+
+##################################### 350 #####################################
+Parameter number  350 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.8        0.6        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  9.02009643e-04
+ -4.54970574e-04 -4.18783798e-06]
+Sigma solution norm: 0.3651522348046272
+Update snapshots matrix
+
+##################################### 351 #####################################
+Parameter number  351 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.8        0.8        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  9.65448667e-04
+ -4.79157162e-04 -4.91762890e-06]
+Sigma solution norm: 0.3152970442594403
+Update snapshots matrix
+
+##################################### 352 #####################################
+Parameter number  352 of 512
+High fidelity solve for mu = [1.66666667 0.6        0.8        0.8        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  9.65448667e-04
+ -4.79157162e-04 -4.91762890e-06]
+Sigma solution norm: 0.3152970442594403
+Update snapshots matrix
+
+##################################### 353 #####################################
+Parameter number  353 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.2        0.2        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.99979800e-04
+ -1.65780961e-04 -8.43044429e-07]
+Sigma solution norm: 0.369363920639361
+Update snapshots matrix
+
+##################################### 354 #####################################
+Parameter number  354 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.2        0.2        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.99979800e-04
+ -1.65780961e-04 -8.43044429e-07]
+Sigma solution norm: 0.3693639206393611
+Update snapshots matrix
+
+##################################### 355 #####################################
+Parameter number  355 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.2        0.4        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.68068792e-04
+ -2.01061608e-04 -1.28502202e-06]
+Sigma solution norm: 0.3867028832340797
+Update snapshots matrix
+
+##################################### 356 #####################################
+Parameter number  356 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.2        0.4        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.68068792e-04
+ -2.01061608e-04 -1.28502202e-06]
+Sigma solution norm: 0.3867028832340797
+Update snapshots matrix
+
+##################################### 357 #####################################
+Parameter number  357 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.2        0.6        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.09361324e-04
+ -2.20838075e-04 -1.71077367e-06]
+Sigma solution norm: 0.36683552437842304
+Update snapshots matrix
+
+##################################### 358 #####################################
+Parameter number  358 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.2        0.6        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.09361324e-04
+ -2.20838075e-04 -1.71077367e-06]
+Sigma solution norm: 0.36683552437842304
+Update snapshots matrix
+
+##################################### 359 #####################################
+Parameter number  359 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.2        0.8        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.11138858e-04
+ -2.18940782e-04 -1.99328146e-06]
+Sigma solution norm: 0.316057813900932
+Update snapshots matrix
+
+##################################### 360 #####################################
+Parameter number  360 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.2        0.8        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.11138858e-04
+ -2.18940782e-04 -1.99328146e-06]
+Sigma solution norm: 0.31605781390093207
+Update snapshots matrix
+
+##################################### 361 #####################################
+Parameter number  361 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.4        0.2        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.67633059e-04
+ -2.00408313e-04 -1.27668660e-06]
+Sigma solution norm: 0.38670656031427747
+Update snapshots matrix
+
+##################################### 362 #####################################
+Parameter number  362 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.4        0.2        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.67633059e-04
+ -2.00408313e-04 -1.27668660e-06]
+Sigma solution norm: 0.38670656031427747
+Update snapshots matrix
+
+##################################### 363 #####################################
+Parameter number  363 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.4        0.4        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.61358638e-04
+ -2.48074181e-04 -1.93974453e-06]
+Sigma solution norm: 0.4049677863421721
+Update snapshots matrix
+
+##################################### 364 #####################################
+Parameter number  364 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.4        0.4        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.61358638e-04
+ -2.48074181e-04 -1.93974453e-06]
+Sigma solution norm: 0.4049677863421721
+Update snapshots matrix
+
+##################################### 365 #####################################
+Parameter number  365 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.4        0.6        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  5.24271757e-04
+ -2.77900158e-04 -2.57925913e-06]
+Sigma solution norm: 0.38435832358465033
+Update snapshots matrix
+
+##################################### 366 #####################################
+Parameter number  366 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.4        0.6        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  5.24271757e-04
+ -2.77900158e-04 -2.57925913e-06]
+Sigma solution norm: 0.38435832358465033
+Update snapshots matrix
+
+##################################### 367 #####################################
+Parameter number  367 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.4        0.8        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  5.37073352e-04
+ -2.80621093e-04 -3.00491519e-06]
+Sigma solution norm: 0.331407371088591
+Update snapshots matrix
+
+##################################### 368 #####################################
+Parameter number  368 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.4        0.8        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  5.37073352e-04
+ -2.80621093e-04 -3.00491519e-06]
+Sigma solution norm: 0.331407371088591
+Update snapshots matrix
+
+##################################### 369 #####################################
+Parameter number  369 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.6        0.2        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.08264220e-04
+ -2.19202974e-04 -1.68880478e-06]
+Sigma solution norm: 0.3668415575150114
+Update snapshots matrix
+
+##################################### 370 #####################################
+Parameter number  370 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.6        0.2        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.08264220e-04
+ -2.19202974e-04 -1.68880478e-06]
+Sigma solution norm: 0.3668415575150114
+Update snapshots matrix
+
+##################################### 371 #####################################
+Parameter number  371 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.6        0.4        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  5.23478467e-04
+ -2.76724840e-04 -2.56270671e-06]
+Sigma solution norm: 0.384360935924583
+Update snapshots matrix
+
+##################################### 372 #####################################
+Parameter number  372 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.6        0.4        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  5.23478467e-04
+ -2.76724840e-04 -2.56270671e-06]
+Sigma solution norm: 0.3843609359245829
+Update snapshots matrix
+
+##################################### 373 #####################################
+Parameter number  373 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.6        0.6        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.06794254e-04
+ -3.15760267e-04 -3.40735504e-06]
+Sigma solution norm: 0.3651522201038175
+Update snapshots matrix
+
+##################################### 374 #####################################
+Parameter number  374 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.6        0.6        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.06794254e-04
+ -3.15760267e-04 -3.40735504e-06]
+Sigma solution norm: 0.36515222010381754
+Update snapshots matrix
+
+##################################### 375 #####################################
+Parameter number  375 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.6        0.8        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.32746880e-04
+ -3.24227885e-04 -3.97193135e-06]
+Sigma solution norm: 0.3152970342957041
+Update snapshots matrix
+
+##################################### 376 #####################################
+Parameter number  376 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.6        0.8        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.32746880e-04
+ -3.24227885e-04 -3.97193135e-06]
+Sigma solution norm: 0.3152970342957041
+Update snapshots matrix
+
+##################################### 377 #####################################
+Parameter number  377 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.8        0.2        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.09305566e-04
+ -2.16223356e-04 -1.95517481e-06]
+Sigma solution norm: 0.3160641353518278
+Update snapshots matrix
+
+##################################### 378 #####################################
+Parameter number  378 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.8        0.2        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.09305566e-04
+ -2.16223356e-04 -1.95517481e-06]
+Sigma solution norm: 0.31606413535182787
+Update snapshots matrix
+
+##################################### 379 #####################################
+Parameter number  379 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.8        0.4        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  5.35293170e-04
+ -2.77997177e-04 -2.96657538e-06]
+Sigma solution norm: 0.3314107145178564
+Update snapshots matrix
+
+##################################### 380 #####################################
+Parameter number  380 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.8        0.4        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  5.35293170e-04
+ -2.77997177e-04 -2.96657538e-06]
+Sigma solution norm: 0.3314107145178564
+Update snapshots matrix
+
+##################################### 381 #####################################
+Parameter number  381 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.8        0.6        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.31601864e-04
+ -3.22548711e-04 -3.94655350e-06]
+Sigma solution norm: 0.31529803877582346
+Update snapshots matrix
+
+##################################### 382 #####################################
+Parameter number  382 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.8        0.6        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.31601864e-04
+ -3.22548711e-04 -3.94655350e-06]
+Sigma solution norm: 0.3152980387758234
+Update snapshots matrix
+
+##################################### 383 #####################################
+Parameter number  383 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.8        0.8        1.        ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.68892830e-04
+ -3.36134392e-04 -4.60465499e-06]
+Sigma solution norm: 0.2728219011837327
+Update snapshots matrix
+
+##################################### 384 #####################################
+Parameter number  384 of 512
+High fidelity solve for mu = [1.66666667 0.8        0.8        0.8        5.        ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.68892830e-04
+ -3.36134392e-04 -4.60465499e-06]
+Sigma solution norm: 0.2728219011837327
+Update snapshots matrix
+
+##################################### 385 #####################################
+Parameter number  385 of 512
+High fidelity solve for mu = [5.  0.2 0.2 0.2 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.47585812e-04
+ -8.48968283e-05  1.06351882e-07]
+Sigma solution norm: 0.2526642128203543
+Update snapshots matrix
+
+##################################### 386 #####################################
+Parameter number  386 of 512
+High fidelity solve for mu = [5.  0.2 0.2 0.2 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.47585812e-04
+ -8.48968283e-05  1.06351882e-07]
+Sigma solution norm: 0.2526642128203544
+Update snapshots matrix
+
+##################################### 387 #####################################
+Parameter number  387 of 512
+High fidelity solve for mu = [5.  0.2 0.2 0.4 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.02537960e-04
+ -1.15925134e-04  8.43943227e-08]
+Sigma solution norm: 0.26765781540077915
+Update snapshots matrix
+
+##################################### 388 #####################################
+Parameter number  388 of 512
+High fidelity solve for mu = [5.  0.2 0.2 0.4 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.02537960e-04
+ -1.15925134e-04  8.43943227e-08]
+Sigma solution norm: 0.26765781540077915
+Update snapshots matrix
+
+##################################### 389 #####################################
+Parameter number  389 of 512
+High fidelity solve for mu = [5.  0.2 0.2 0.6 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.37114672e-04
+ -1.34415739e-04 -2.03584756e-08]
+Sigma solution norm: 0.23776515657119507
+Update snapshots matrix
+
+##################################### 390 #####################################
+Parameter number  390 of 512
+High fidelity solve for mu = [5.  0.2 0.2 0.6 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.37114672e-04
+ -1.34415739e-04 -2.03584756e-08]
+Sigma solution norm: 0.23776515657119507
+Update snapshots matrix
+
+##################################### 391 #####################################
+Parameter number  391 of 512
+High fidelity solve for mu = [5.  0.2 0.2 0.8 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.30118836e-04
+ -1.28631956e-04 -1.68081738e-07]
+Sigma solution norm: 0.1804469488528073
+Update snapshots matrix
+
+##################################### 392 #####################################
+Parameter number  392 of 512
+High fidelity solve for mu = [5.  0.2 0.2 0.8 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.30118836e-04
+ -1.28631956e-04 -1.68081738e-07]
+Sigma solution norm: 0.18044694885280727
+Update snapshots matrix
+
+##################################### 393 #####################################
+Parameter number  393 of 512
+High fidelity solve for mu = [5.  0.2 0.4 0.2 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.02161786e-04
+ -1.15336575e-04  8.60090009e-08]
+Sigma solution norm: 0.2676822063556156
+Update snapshots matrix
+
+##################################### 394 #####################################
+Parameter number  394 of 512
+High fidelity solve for mu = [5.  0.2 0.4 0.2 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.02161786e-04
+ -1.15336575e-04  8.60090009e-08]
+Sigma solution norm: 0.2676822063556155
+Update snapshots matrix
+
+##################################### 395 #####################################
+Parameter number  395 of 512
+High fidelity solve for mu = [5.  0.2 0.4 0.4 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.13806374e-04
+ -1.76556936e-04 -5.68752902e-08]
+Sigma solution norm: 0.2836029328757178
+Update snapshots matrix
+
+##################################### 396 #####################################
+Parameter number  396 of 512
+High fidelity solve for mu = [5.  0.2 0.4 0.4 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.13806374e-04
+ -1.76556936e-04 -5.68752902e-08]
+Sigma solution norm: 0.28360293287571786
+Update snapshots matrix
+
+##################################### 397 #####################################
+Parameter number  397 of 512
+High fidelity solve for mu = [5.  0.2 0.4 0.6 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.22836880e-04
+ -2.32942089e-04 -4.25457720e-07]
+Sigma solution norm: 0.25218280595629644
+Update snapshots matrix
+
+##################################### 398 #####################################
+Parameter number  398 of 512
+High fidelity solve for mu = [5.  0.2 0.4 0.6 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.22836880e-04
+ -2.32942089e-04 -4.25457720e-07]
+Sigma solution norm: 0.2521828059562964
+Update snapshots matrix
+
+##################################### 399 #####################################
+Parameter number  399 of 512
+High fidelity solve for mu = [5.  0.2 0.4 0.8 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.67772340e-04
+ -2.51384270e-04 -8.78162945e-07]
+Sigma solution norm: 0.1917404885525863
+Update snapshots matrix
+
+##################################### 400 #####################################
+Parameter number  400 of 512
+High fidelity solve for mu = [5.  0.2 0.4 0.8 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.67772340e-04
+ -2.51384270e-04 -8.78162945e-07]
+Sigma solution norm: 0.1917404885525863
+Update snapshots matrix
+
+##################################### 401 #####################################
+Parameter number  401 of 512
+High fidelity solve for mu = [5.  0.2 0.6 0.2 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.35843671e-04
+ -1.32457693e-04 -1.21411679e-08]
+Sigma solution norm: 0.2378033415566753
+Update snapshots matrix
+
+##################################### 402 #####################################
+Parameter number  402 of 512
+High fidelity solve for mu = [5.  0.2 0.6 0.2 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.35843671e-04
+ -1.32457693e-04 -1.21411679e-08]
+Sigma solution norm: 0.23780334155667526
+Update snapshots matrix
+
+##################################### 403 #####################################
+Parameter number  403 of 512
+High fidelity solve for mu = [5.  0.2 0.6 0.4 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.21129614e-04
+ -2.30359821e-04 -4.10544192e-07]
+Sigma solution norm: 0.2521982587514307
+Update snapshots matrix
+
+##################################### 404 #####################################
+Parameter number  404 of 512
+High fidelity solve for mu = [5.  0.2 0.6 0.4 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.21129614e-04
+ -2.30359821e-04 -4.10544192e-07]
+Sigma solution norm: 0.2521982587514307
+Update snapshots matrix
+
+##################################### 405 #####################################
+Parameter number  405 of 512
+High fidelity solve for mu = [5.  0.2 0.6 0.6 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.49887834e-04
+ -3.44108839e-04 -1.30045093e-06]
+Sigma solution norm: 0.22566620978985447
+Update snapshots matrix
+
+##################################### 406 #####################################
+Parameter number  406 of 512
+High fidelity solve for mu = [5.  0.2 0.6 0.6 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.49887834e-04
+ -3.44108839e-04 -1.30045093e-06]
+Sigma solution norm: 0.2256662097898544
+Update snapshots matrix
+
+##################################### 407 #####################################
+Parameter number  407 of 512
+High fidelity solve for mu = [5.  0.2 0.6 0.8 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  8.00892023e-04
+ -4.10492427e-04 -2.33883472e-06]
+Sigma solution norm: 0.1734619292543823
+Update snapshots matrix
+
+##################################### 408 #####################################
+Parameter number  408 of 512
+High fidelity solve for mu = [5.  0.2 0.6 0.8 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  8.00892023e-04
+ -4.10492427e-04 -2.33883472e-06]
+Sigma solution norm: 0.1734619292543823
+Update snapshots matrix
+
+##################################### 409 #####################################
+Parameter number  409 of 512
+High fidelity solve for mu = [5.  0.2 0.8 0.2 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.27671481e-04
+ -1.24916714e-04 -1.47915100e-07]
+Sigma solution norm: 0.18048108346476097
+Update snapshots matrix
+
+##################################### 410 #####################################
+Parameter number  410 of 512
+High fidelity solve for mu = [5.  0.2 0.8 0.2 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.27671481e-04
+ -1.24916714e-04 -1.47915100e-07]
+Sigma solution norm: 0.1804810834647609
+Update snapshots matrix
+
+##################################### 411 #####################################
+Parameter number  411 of 512
+High fidelity solve for mu = [5.  0.2 0.8 0.4 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.63049914e-04
+ -2.44340846e-04 -8.30160067e-07]
+Sigma solution norm: 0.1917547786737726
+Update snapshots matrix
+
+##################################### 412 #####################################
+Parameter number  412 of 512
+High fidelity solve for mu = [5.  0.2 0.8 0.4 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.63049914e-04
+ -2.44340846e-04 -8.30160067e-07]
+Sigma solution norm: 0.19175477867377264
+Update snapshots matrix
+
+##################################### 413 #####################################
+Parameter number  413 of 512
+High fidelity solve for mu = [5.  0.2 0.8 0.6 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  7.95896520e-04
+ -4.03146218e-04 -2.28165794e-06]
+Sigma solution norm: 0.17346336220543154
+Update snapshots matrix
+
+##################################### 414 #####################################
+Parameter number  414 of 512
+High fidelity solve for mu = [5.  0.2 0.8 0.6 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  7.95896520e-04
+ -4.03146218e-04 -2.28165794e-06]
+Sigma solution norm: 0.17346336220543154
+Update snapshots matrix
+
+##################################### 415 #####################################
+Parameter number  415 of 512
+High fidelity solve for mu = [5.  0.2 0.8 0.8 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.05846964e-03
+ -5.16865667e-04 -3.94394256e-06]
+Sigma solution norm: 0.13580736638279606
+Update snapshots matrix
+
+##################################### 416 #####################################
+Parameter number  416 of 512
+High fidelity solve for mu = [5.  0.2 0.8 0.8 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.05846964e-03
+ -5.16865667e-04 -3.94394256e-06]
+Sigma solution norm: 0.13580736638279609
+Update snapshots matrix
+
+##################################### 417 #####################################
+Parameter number  417 of 512
+High fidelity solve for mu = [5.  0.4 0.2 0.2 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.41557023e-04
+ -8.15478007e-05  9.49892069e-09]
+Sigma solution norm: 0.2676820553888243
+Update snapshots matrix
+
+##################################### 418 #####################################
+Parameter number  418 of 512
+High fidelity solve for mu = [5.  0.4 0.2 0.2 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.41557023e-04
+ -8.15478007e-05  9.49892069e-09]
+Sigma solution norm: 0.26768205538882434
+Update snapshots matrix
+
+##################################### 419 #####################################
+Parameter number  419 of 512
+High fidelity solve for mu = [5.  0.4 0.2 0.4 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.86834897e-04
+ -1.07315655e-04 -1.13111601e-07]
+Sigma solution norm: 0.28360277341245427
+Update snapshots matrix
+
+##################################### 420 #####################################
+Parameter number  420 of 512
+High fidelity solve for mu = [5.  0.4 0.2 0.4 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.86834897e-04
+ -1.07315655e-04 -1.13111601e-07]
+Sigma solution norm: 0.28360277341245416
+Update snapshots matrix
+
+##################################### 421 #####################################
+Parameter number  421 of 512
+High fidelity solve for mu = [5.  0.4 0.2 0.6 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.08144124e-04
+ -1.18810038e-04 -3.44277785e-07]
+Sigma solution norm: 0.2521826643701236
+Update snapshots matrix
+
+##################################### 422 #####################################
+Parameter number  422 of 512
+High fidelity solve for mu = [5.  0.4 0.2 0.6 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.08144124e-04
+ -1.18810038e-04 -3.44277785e-07]
+Sigma solution norm: 0.2521826643701236
+Update snapshots matrix
+
+##################################### 423 #####################################
+Parameter number  423 of 512
+High fidelity solve for mu = [5.  0.4 0.2 0.8 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.91706065e-04
+ -1.08338323e-04 -5.72923093e-07]
+Sigma solution norm: 0.19174038072917676
+Update snapshots matrix
+
+##################################### 424 #####################################
+Parameter number  424 of 512
+High fidelity solve for mu = [5.  0.4 0.2 0.8 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.91706065e-04
+ -1.08338323e-04 -5.72923093e-07]
+Sigma solution norm: 0.19174038072917676
+Update snapshots matrix
+
+##################################### 425 #####################################
+Parameter number  425 of 512
+High fidelity solve for mu = [5.  0.4 0.4 0.2 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.86556550e-04
+ -1.06876571e-04 -1.09575398e-07]
+Sigma solution norm: 0.2836177160827195
+Update snapshots matrix
+
+##################################### 426 #####################################
+Parameter number  426 of 512
+High fidelity solve for mu = [5.  0.4 0.4 0.2 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.86556550e-04
+ -1.06876571e-04 -1.09575398e-07]
+Sigma solution norm: 0.2836177160827196
+Update snapshots matrix
+
+##################################### 427 #####################################
+Parameter number  427 of 512
+High fidelity solve for mu = [5.  0.4 0.4 0.4 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.72785668e-04
+ -1.54810974e-04 -5.06441403e-07]
+Sigma solution norm: 0.3005260557852412
+Update snapshots matrix
+
+##################################### 428 #####################################
+Parameter number  428 of 512
+High fidelity solve for mu = [5.  0.4 0.4 0.4 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.72785668e-04
+ -1.54810974e-04 -5.06441403e-07]
+Sigma solution norm: 0.3005260557852412
+Update snapshots matrix
+
+##################################### 429 #####################################
+Parameter number  429 of 512
+High fidelity solve for mu = [5.  0.4 0.4 0.6 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.43824853e-04
+ -1.92077128e-04 -1.23792069e-06]
+Sigma solution norm: 0.2675049711032081
+Update snapshots matrix
+
+##################################### 430 #####################################
+Parameter number  430 of 512
+High fidelity solve for mu = [5.  0.4 0.4 0.6 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.43824853e-04
+ -1.92077128e-04 -1.23792069e-06]
+Sigma solution norm: 0.26750497110320814
+Update snapshots matrix
+
+##################################### 431 #####################################
+Parameter number  431 of 512
+High fidelity solve for mu = [5.  0.4 0.4 0.8 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.58045160e-04
+ -1.95992194e-04 -1.97084905e-06]
+Sigma solution norm: 0.20376893984198208
+Update snapshots matrix
+
+##################################### 432 #####################################
+Parameter number  432 of 512
+High fidelity solve for mu = [5.  0.4 0.4 0.8 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.58045160e-04
+ -1.95992194e-04 -1.97084905e-06]
+Sigma solution norm: 0.20376893984198205
+Update snapshots matrix
+
+##################################### 433 #####################################
+Parameter number  433 of 512
+High fidelity solve for mu = [5.  0.4 0.6 0.2 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.07256142e-04
+ -1.17429134e-04 -3.28668049e-07]
+Sigma solution norm: 0.25220374115102306
+Update snapshots matrix
+
+##################################### 434 #####################################
+Parameter number  434 of 512
+High fidelity solve for mu = [5.  0.4 0.6 0.2 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.07256142e-04
+ -1.17429134e-04 -3.28668049e-07]
+Sigma solution norm: 0.25220374115102306
+Update snapshots matrix
+
+##################################### 435 #####################################
+Parameter number  435 of 512
+High fidelity solve for mu = [5.  0.4 0.6 0.4 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.42695959e-04
+ -1.90353644e-04 -1.21200460e-06]
+Sigma solution norm: 0.26751218591881065
+Update snapshots matrix
+
+##################################### 436 #####################################
+Parameter number  436 of 512
+High fidelity solve for mu = [5.  0.4 0.6 0.4 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.42695959e-04
+ -1.90353644e-04 -1.21200460e-06]
+Sigma solution norm: 0.2675121859188107
+Update snapshots matrix
+
+##################################### 437 #####################################
+Parameter number  437 of 512
+High fidelity solve for mu = [5.  0.4 0.6 0.6 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  4.91720114e-04
+ -2.65791784e-04 -2.85638139e-06]
+Sigma solution norm: 0.23963527209165528
+Update snapshots matrix
+
+##################################### 438 #####################################
+Parameter number  438 of 512
+High fidelity solve for mu = [5.  0.4 0.6 0.6 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  4.91720114e-04
+ -2.65791784e-04 -2.85638139e-06]
+Sigma solution norm: 0.23963527209165525
+Update snapshots matrix
+
+##################################### 439 #####################################
+Parameter number  439 of 512
+High fidelity solve for mu = [5.  0.4 0.6 0.8 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  5.72554800e-04
+ -3.00450792e-04 -4.54094631e-06]
+Sigma solution norm: 0.1845606525984112
+Update snapshots matrix
+
+##################################### 440 #####################################
+Parameter number  440 of 512
+High fidelity solve for mu = [5.  0.4 0.6 0.8 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  5.72554800e-04
+ -3.00450792e-04 -4.54094631e-06]
+Sigma solution norm: 0.1845606525984112
+Update snapshots matrix
+
+##################################### 441 #####################################
+Parameter number  441 of 512
+High fidelity solve for mu = [5.  0.4 0.8 0.2 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.90067576e-04
+ -1.05827087e-04 -5.37334619e-07]
+Sigma solution norm: 0.19175600307499158
+Update snapshots matrix
+
+##################################### 442 #####################################
+Parameter number  442 of 512
+High fidelity solve for mu = [5.  0.4 0.8 0.2 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.90067576e-04
+ -1.05827087e-04 -5.37334619e-07]
+Sigma solution norm: 0.19175600307499163
+Update snapshots matrix
+
+##################################### 443 #####################################
+Parameter number  443 of 512
+High fidelity solve for mu = [5.  0.4 0.8 0.4 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.55016359e-04
+ -1.91435503e-04 -1.89092325e-06]
+Sigma solution norm: 0.20377263157414605
+Update snapshots matrix
+
+##################################### 444 #####################################
+Parameter number  444 of 512
+High fidelity solve for mu = [5.  0.4 0.8 0.4 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.55016359e-04
+ -1.91435503e-04 -1.89092325e-06]
+Sigma solution norm: 0.20377263157414605
+Update snapshots matrix
+
+##################################### 445 #####################################
+Parameter number  445 of 512
+High fidelity solve for mu = [5.  0.4 0.8 0.6 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  5.69429740e-04
+ -2.95820438e-04 -4.44879841e-06]
+Sigma solution norm: 0.18455892701630794
+Update snapshots matrix
+
+##################################### 446 #####################################
+Parameter number  446 of 512
+High fidelity solve for mu = [5.  0.4 0.8 0.6 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  5.69429740e-04
+ -2.95820438e-04 -4.44879841e-06]
+Sigma solution norm: 0.18455892701630794
+Update snapshots matrix
+
+##################################### 447 #####################################
+Parameter number  447 of 512
+High fidelity solve for mu = [5.  0.4 0.8 0.8 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  7.21691122e-04
+ -3.61756005e-04 -7.12135714e-06]
+Sigma solution norm: 0.14478998033876123
+Update snapshots matrix
+
+##################################### 448 #####################################
+Parameter number  448 of 512
+High fidelity solve for mu = [5.  0.4 0.8 0.8 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  7.21691122e-04
+ -3.61756005e-04 -7.12135714e-06]
+Sigma solution norm: 0.14478998033876123
+Update snapshots matrix
+
+##################################### 449 #####################################
+Parameter number  449 of 512
+High fidelity solve for mu = [5.  0.6 0.2 0.2 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.06807340e-04
+ -6.15964249e-05 -4.90598640e-08]
+Sigma solution norm: 0.23780319807950412
+Update snapshots matrix
+
+##################################### 450 #####################################
+Parameter number  450 of 512
+High fidelity solve for mu = [5.  0.6 0.2 0.2 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.06807340e-04
+ -6.15964249e-05 -4.90598640e-08]
+Sigma solution norm: 0.23780319807950412
+Update snapshots matrix
+
+##################################### 451 #####################################
+Parameter number  451 of 512
+High fidelity solve for mu = [5.  0.6 0.2 0.4 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.35338046e-04
+ -7.79480228e-05 -1.75889249e-07]
+Sigma solution norm: 0.25219811037908196
+Update snapshots matrix
+
+##################################### 452 #####################################
+Parameter number  452 of 512
+High fidelity solve for mu = [5.  0.6 0.2 0.4 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.35338046e-04
+ -7.79480228e-05 -1.75889249e-07]
+Sigma solution norm: 0.2521981103790819
+Update snapshots matrix
+
+##################################### 453 #####################################
+Parameter number  453 of 512
+High fidelity solve for mu = [5.  0.6 0.2 0.6 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.42960078e-04
+ -8.20665663e-05 -3.70663101e-07]
+Sigma solution norm: 0.22566609157522663
+Update snapshots matrix
+
+##################################### 454 #####################################
+Parameter number  454 of 512
+High fidelity solve for mu = [5.  0.6 0.2 0.6 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.42960078e-04
+ -8.20665663e-05 -3.70663101e-07]
+Sigma solution norm: 0.22566609157522663
+Update snapshots matrix
+
+##################################### 455 #####################################
+Parameter number  455 of 512
+High fidelity solve for mu = [5.  0.6 0.2 0.8 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.24170707e-04
+ -7.08560133e-05 -5.30849793e-07]
+Sigma solution norm: 0.17346185738380773
+Update snapshots matrix
+
+##################################### 456 #####################################
+Parameter number  456 of 512
+High fidelity solve for mu = [5.  0.6 0.2 0.8 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.24170707e-04
+ -7.08560133e-05 -5.30849793e-07]
+Sigma solution norm: 0.17346185738380773
+Update snapshots matrix
+
+##################################### 457 #####################################
+Parameter number  457 of 512
+High fidelity solve for mu = [5.  0.6 0.4 0.2 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.35184476e-04
+ -7.77036402e-05 -1.72982294e-07]
+Sigma solution norm: 0.252203698354522
+Update snapshots matrix
+
+##################################### 458 #####################################
+Parameter number  458 of 512
+High fidelity solve for mu = [5.  0.6 0.4 0.2 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.35184476e-04
+ -7.77036402e-05 -1.72982294e-07]
+Sigma solution norm: 0.2522036983545221
+Update snapshots matrix
+
+##################################### 459 #####################################
+Parameter number  459 of 512
+High fidelity solve for mu = [5.  0.6 0.4 0.4 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.85356011e-04
+ -1.05973889e-04 -5.28378197e-07]
+Sigma solution norm: 0.26751214373198534
+Update snapshots matrix
+
+##################################### 460 #####################################
+Parameter number  460 of 512
+High fidelity solve for mu = [5.  0.6 0.4 0.4 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.85356011e-04
+ -1.05973889e-04 -5.28378197e-07]
+Sigma solution norm: 0.26751214373198534
+Update snapshots matrix
+
+##################################### 461 #####################################
+Parameter number  461 of 512
+High fidelity solve for mu = [5.  0.6 0.4 0.6 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.16347077e-04
+ -1.22451145e-04 -1.10579216e-06]
+Sigma solution norm: 0.23963524720853138
+Update snapshots matrix
+
+##################################### 462 #####################################
+Parameter number  462 of 512
+High fidelity solve for mu = [5.  0.6 0.4 0.6 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.16347077e-04
+ -1.22451145e-04 -1.10579216e-06]
+Sigma solution norm: 0.23963524720853135
+Update snapshots matrix
+
+##################################### 463 #####################################
+Parameter number  463 of 512
+High fidelity solve for mu = [5.  0.6 0.4 0.8 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.08983378e-04
+ -1.16564714e-04 -1.62114311e-06]
+Sigma solution norm: 0.18456065048782916
+Update snapshots matrix
+
+##################################### 464 #####################################
+Parameter number  464 of 512
+High fidelity solve for mu = [5.  0.6 0.4 0.8 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.08983378e-04
+ -1.16564714e-04 -1.62114311e-06]
+Sigma solution norm: 0.18456065048782916
+Update snapshots matrix
+
+##################################### 465 #####################################
+Parameter number  465 of 512
+High fidelity solve for mu = [5.  0.6 0.6 0.2 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.42506769e-04
+ -8.13538844e-05 -3.58692909e-07]
+Sigma solution norm: 0.22567223807673625
+Update snapshots matrix
+
+##################################### 466 #####################################
+Parameter number  466 of 512
+High fidelity solve for mu = [5.  0.6 0.6 0.2 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.42506769e-04
+ -8.13538844e-05 -3.58692909e-07]
+Sigma solution norm: 0.22567223807673623
+Update snapshots matrix
+
+##################################### 467 #####################################
+Parameter number  467 of 512
+High fidelity solve for mu = [5.  0.6 0.6 0.4 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.15815665e-04
+ -1.21630341e-04 -1.08690989e-06]
+Sigma solution norm: 0.23963622512310176
+Update snapshots matrix
+
+##################################### 468 #####################################
+Parameter number  468 of 512
+High fidelity solve for mu = [5.  0.6 0.6 0.4 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.15815665e-04
+ -1.21630341e-04 -1.08690989e-06]
+Sigma solution norm: 0.23963622512310173
+Update snapshots matrix
+
+##################################### 469 #####################################
+Parameter number  469 of 512
+High fidelity solve for mu = [5.  0.6 0.6 0.6 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.82534821e-04
+ -1.56054514e-04 -2.33027374e-06]
+Sigma solution norm: 0.21610129993582441
+Update snapshots matrix
+
+##################################### 470 #####################################
+Parameter number  470 of 512
+High fidelity solve for mu = [5.  0.6 0.6 0.6 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.82534821e-04
+ -1.56054514e-04 -2.33027374e-06]
+Sigma solution norm: 0.21610129993582441
+Update snapshots matrix
+
+##################################### 471 #####################################
+Parameter number  471 of 512
+High fidelity solve for mu = [5.  0.6 0.6 0.8 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.04338996e-04
+ -1.64008378e-04 -3.50749083e-06]
+Sigma solution norm: 0.1683215211915227
+Update snapshots matrix
+
+##################################### 472 #####################################
+Parameter number  472 of 512
+High fidelity solve for mu = [5.  0.6 0.6 0.8 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.04338996e-04
+ -1.64008378e-04 -3.50749083e-06]
+Sigma solution norm: 0.1683215211915227
+Update snapshots matrix
+
+##################################### 473 #####################################
+Parameter number  473 of 512
+High fidelity solve for mu = [5.  0.6 0.8 0.2 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.23384348e-04
+ -6.96365059e-05 -5.04673138e-07]
+Sigma solution norm: 0.17346386282720536
+Update snapshots matrix
+
+##################################### 474 #####################################
+Parameter number  474 of 512
+High fidelity solve for mu = [5.  0.6 0.8 0.2 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.23384348e-04
+ -6.96365059e-05 -5.04673138e-07]
+Sigma solution norm: 0.17346386282720536
+Update snapshots matrix
+
+##################################### 475 #####################################
+Parameter number  475 of 512
+High fidelity solve for mu = [5.  0.6 0.8 0.4 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  2.07623031e-04
+ -1.14495226e-04 -1.56443153e-06]
+Sigma solution norm: 0.18455828030968802
+Update snapshots matrix
+
+##################################### 476 #####################################
+Parameter number  476 of 512
+High fidelity solve for mu = [5.  0.6 0.8 0.4 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  2.07623031e-04
+ -1.14495226e-04 -1.56443153e-06]
+Sigma solution norm: 0.18455828030968802
+Update snapshots matrix
+
+##################################### 477 #####################################
+Parameter number  477 of 512
+High fidelity solve for mu = [5.  0.6 0.8 0.6 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.02989638e-04
+ -1.61989380e-04 -3.44346528e-06]
+Sigma solution norm: 0.16831893387138447
+Update snapshots matrix
+
+##################################### 478 #####################################
+Parameter number  478 of 512
+High fidelity solve for mu = [5.  0.6 0.8 0.6 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.02989638e-04
+ -1.61989380e-04 -3.44346528e-06]
+Sigma solution norm: 0.16831893387138447
+Update snapshots matrix
+
+##################################### 479 #####################################
+Parameter number  479 of 512
+High fidelity solve for mu = [5.  0.6 0.8 0.8 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  3.57692314e-04
+ -1.85034551e-04 -5.29663068e-06]
+Sigma solution norm: 0.13353933231158924
+Update snapshots matrix
+
+##################################### 480 #####################################
+Parameter number  480 of 512
+High fidelity solve for mu = [5.  0.6 0.8 0.8 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  3.57692314e-04
+ -1.85034551e-04 -5.29663068e-06]
+Sigma solution norm: 0.13353933231158924
+Update snapshots matrix
+
+##################################### 481 #####################################
+Parameter number  481 of 512
+High fidelity solve for mu = [5.  0.8 0.2 0.2 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.50006103e-05
+ -3.75114131e-05 -5.45937365e-08]
+Sigma solution norm: 0.1804810246331843
+Update snapshots matrix
+
+##################################### 482 #####################################
+Parameter number  482 of 512
+High fidelity solve for mu = [5.  0.8 0.2 0.2 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.50006103e-05
+ -3.75114131e-05 -5.45937365e-08]
+Sigma solution norm: 0.1804810246331843
+Update snapshots matrix
+
+##################################### 483 #####################################
+Parameter number  483 of 512
+High fidelity solve for mu = [5.  0.8 0.2 0.4 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  7.93534861e-05
+ -4.57813616e-05 -1.33573319e-07]
+Sigma solution norm: 0.19175472097134222
+Update snapshots matrix
+
+##################################### 484 #####################################
+Parameter number  484 of 512
+High fidelity solve for mu = [5.  0.8 0.2 0.4 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  7.93534861e-05
+ -4.57813616e-05 -1.33573319e-07]
+Sigma solution norm: 0.19175472097134225
+Update snapshots matrix
+
+##################################### 485 #####################################
+Parameter number  485 of 512
+High fidelity solve for mu = [5.  0.8 0.2 0.6 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  7.97660211e-05
+ -4.59638497e-05 -2.34649846e-07]
+Sigma solution norm: 0.1734633292312313
+Update snapshots matrix
+
+##################################### 486 #####################################
+Parameter number  486 of 512
+High fidelity solve for mu = [5.  0.8 0.2 0.6 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  7.97660211e-05
+ -4.59638497e-05 -2.34649846e-07]
+Sigma solution norm: 0.17346332923123134
+Update snapshots matrix
+
+##################################### 487 #####################################
+Parameter number  487 of 512
+High fidelity solve for mu = [5.  0.8 0.2 0.8 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.54501871e-05
+ -3.76129783e-05 -2.99904542e-07]
+Sigma solution norm: 0.13580736505316138
+Update snapshots matrix
+
+##################################### 488 #####################################
+Parameter number  488 of 512
+High fidelity solve for mu = [5.  0.8 0.2 0.8 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.54501871e-05
+ -3.76129783e-05 -2.99904542e-07]
+Sigma solution norm: 0.13580736505316138
+Update snapshots matrix
+
+##################################### 489 #####################################
+Parameter number  489 of 512
+High fidelity solve for mu = [5.  0.8 0.4 0.2 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  7.92869797e-05
+ -4.56746495e-05 -1.32104209e-07]
+Sigma solution norm: 0.19175598930808366
+Update snapshots matrix
+
+##################################### 490 #####################################
+Parameter number  490 of 512
+High fidelity solve for mu = [5.  0.8 0.4 0.2 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  7.92869797e-05
+ -4.56746495e-05 -1.32104209e-07]
+Sigma solution norm: 0.19175598930808363
+Update snapshots matrix
+
+##################################### 491 #####################################
+Parameter number  491 of 512
+High fidelity solve for mu = [5.  0.8 0.4 0.4 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.02377582e-04
+ -5.88392024e-05 -3.27013481e-07]
+Sigma solution norm: 0.20377262125365847
+Update snapshots matrix
+
+##################################### 492 #####################################
+Parameter number  492 of 512
+High fidelity solve for mu = [5.  0.8 0.4 0.4 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.02377582e-04
+ -5.88392024e-05 -3.27013481e-07]
+Sigma solution norm: 0.20377262125365847
+Update snapshots matrix
+
+##################################### 493 #####################################
+Parameter number  493 of 512
+High fidelity solve for mu = [5.  0.8 0.4 0.6 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.10681764e-04
+ -6.32882123e-05 -6.03521751e-07]
+Sigma solution norm: 0.18455893487474054
+Update snapshots matrix
+
+##################################### 494 #####################################
+Parameter number  494 of 512
+High fidelity solve for mu = [5.  0.8 0.4 0.6 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.10681764e-04
+ -6.32882123e-05 -6.03521751e-07]
+Sigma solution norm: 0.18455893487474054
+Update snapshots matrix
+
+##################################### 495 #####################################
+Parameter number  495 of 512
+High fidelity solve for mu = [5.  0.8 0.4 0.8 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  9.85320161e-05
+ -5.58644439e-05 -8.14525600e-07]
+Sigma solution norm: 0.14479000841948658
+Update snapshots matrix
+
+##################################### 496 #####################################
+Parameter number  496 of 512
+High fidelity solve for mu = [5.  0.8 0.4 0.8 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  9.85320161e-05
+ -5.58644439e-05 -8.14525600e-07]
+Sigma solution norm: 0.14479000841948658
+Update snapshots matrix
+
+##################################### 497 #####################################
+Parameter number  497 of 512
+High fidelity solve for mu = [5.  0.8 0.6 0.2 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  7.95879384e-05
+ -4.56806025e-05 -2.29082645e-07]
+Sigma solution norm: 0.17346386757157362
+Update snapshots matrix
+
+##################################### 498 #####################################
+Parameter number  498 of 512
+High fidelity solve for mu = [5.  0.8 0.6 0.2 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  7.95879384e-05
+ -4.56806025e-05 -2.29082645e-07]
+Sigma solution norm: 0.17346386757157362
+Update snapshots matrix
+
+##################################### 499 #####################################
+Parameter number  499 of 512
+High fidelity solve for mu = [5.  0.8 0.6 0.4 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.10495801e-04
+ -6.29969310e-05 -5.95303071e-07]
+Sigma solution norm: 0.18455828719627473
+Update snapshots matrix
+
+##################################### 500 #####################################
+Parameter number  500 of 512
+High fidelity solve for mu = [5.  0.8 0.6 0.4 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.10495801e-04
+ -6.29969310e-05 -5.95303071e-07]
+Sigma solution norm: 0.1845582871962747
+Update snapshots matrix
+
+##################################### 501 #####################################
+Parameter number  501 of 512
+High fidelity solve for mu = [5.  0.8 0.6 0.6 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.30726388e-04
+ -7.36277264e-05 -1.15955742e-06]
+Sigma solution norm: 0.16831894736634417
+Update snapshots matrix
+
+##################################### 502 #####################################
+Parameter number  502 of 512
+High fidelity solve for mu = [5.  0.8 0.6 0.6 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.30726388e-04
+ -7.36277264e-05 -1.15955742e-06]
+Sigma solution norm: 0.1683189473663442
+Update snapshots matrix
+
+##################################### 503 #####################################
+Parameter number  503 of 512
+High fidelity solve for mu = [5.  0.8 0.6 0.8 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.27880225e-04
+ -7.07958244e-05 -1.63927725e-06]
+Sigma solution norm: 0.13353935198523462
+Update snapshots matrix
+
+##################################### 504 #####################################
+Parameter number  504 of 512
+High fidelity solve for mu = [5.  0.8 0.6 0.8 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.27880225e-04
+ -7.07958244e-05 -1.63927725e-06]
+Sigma solution norm: 0.13353935198523464
+Update snapshots matrix
+
+##################################### 505 #####################################
+Parameter number  505 of 512
+High fidelity solve for mu = [5.  0.8 0.8 0.2 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  6.51667020e-05
+ -3.71672232e-05 -2.88360210e-07]
+Sigma solution norm: 0.13580598597893637
+Update snapshots matrix
+
+##################################### 506 #####################################
+Parameter number  506 of 512
+High fidelity solve for mu = [5.  0.8 0.8 0.2 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  6.51667020e-05
+ -3.71672232e-05 -2.88360210e-07]
+Sigma solution norm: 0.13580598597893634
+Update snapshots matrix
+
+##################################### 507 #####################################
+Parameter number  507 of 512
+High fidelity solve for mu = [5.  0.8 0.8 0.4 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  9.80896211e-05
+ -5.51817461e-05 -7.90684683e-07]
+Sigma solution norm: 0.1447876290026467
+Update snapshots matrix
+
+##################################### 508 #####################################
+Parameter number  508 of 512
+High fidelity solve for mu = [5.  0.8 0.8 0.4 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  9.80896211e-05
+ -5.51817461e-05 -7.90684683e-07]
+Sigma solution norm: 0.1447876290026467
+Update snapshots matrix
+
+##################################### 509 #####################################
+Parameter number  509 of 512
+High fidelity solve for mu = [5.  0.8 0.8 0.6 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.27469169e-04
+ -7.01727089e-05 -1.61309671e-06]
+Sigma solution norm: 0.1335378036588852
+Update snapshots matrix
+
+##################################### 510 #####################################
+Parameter number  510 of 512
+High fidelity solve for mu = [5.  0.8 0.8 0.6 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.27469169e-04
+ -7.01727089e-05 -1.61309671e-06]
+Sigma solution norm: 0.1335378036588852
+Update snapshots matrix
+
+##################################### 511 #####################################
+Parameter number  511 of 512
+High fidelity solve for mu = [5.  0.8 0.8 0.8 1. ]
+Sigma solution array: [-8.67361738e-22 -4.33680874e-21 -4.33680864e-21 ...  1.36412500e-04
+ -7.31204187e-05 -2.36288342e-06]
+Sigma solution norm: 0.10782872707722405
+Update snapshots matrix
+
+##################################### 512 #####################################
+Parameter number  512 of 512
+High fidelity solve for mu = [5.  0.8 0.8 0.8 5. ]
+Sigma solution array: [-4.33680869e-21 -2.16840437e-20 -2.16840432e-20 ...  1.36412500e-04
+ -7.31204187e-05 -2.36288342e-06]
+Sigma solution norm: 0.10782872707722405
+Update snapshots matrix
+
+################################# Perform POD #################################
