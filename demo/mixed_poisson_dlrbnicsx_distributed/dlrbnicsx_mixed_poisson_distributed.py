@@ -459,7 +459,7 @@ if world_comm.rank == 0:
     nbytes_projection_error_array_sigma = num_projection_error_samples_sigma * itemsize
 else:
     nbytes_para_projection_error_sigma = 0
-    nbytes_dofs_projection_error_sigma = 0
+    nbytes_projection_error_array_sigma = 0
 
 world_comm.barrier()
 
@@ -470,7 +470,7 @@ projection_error_samples_sigma = \
     np.ndarray(buffer=buf02, dtype="d",
                shape=(num_projection_error_samples_sigma, para_dim_sigma))
 
-win03 = MPI.Win.Allocate_shared(nbytes_dofs_ann_training_sigma, itemsize,
+win03 = MPI.Win.Allocate_shared(nbytes_projection_error_array_sigma, itemsize,
                                comm=MPI.COMM_WORLD)
 buf03, itemsize = win03.Shared_query(0)
 projection_error_array_sigma = \
