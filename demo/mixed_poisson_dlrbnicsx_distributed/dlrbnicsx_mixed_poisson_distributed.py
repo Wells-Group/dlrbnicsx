@@ -474,7 +474,7 @@ win03 = MPI.Win.Allocate_shared(nbytes_projection_error_array_sigma, itemsize,
                                comm=MPI.COMM_WORLD)
 buf03, itemsize = win03.Shared_query(0)
 projection_error_array_sigma = \
-    np.ndarray(buffer=buf4, dtype="d",
+    np.ndarray(buffer=buf03, dtype="d",
                shape=(num_projection_error_samples_sigma))
 
 if world_comm.rank == 0:
