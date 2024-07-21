@@ -492,13 +492,13 @@ for j in range(len(fem_comm_list)):
 print(f"Rank: {world_comm.rank}, Indices (projection error): {projection_error_indices_sigma}")
 
 for k in projection_error_indices_sigma:
-    fem_sol = problem_parametric.solve(projection_error_samples_sigma[k, :])
+    fem_sol_sigma, _ = problem_parametric.solve(projection_error_samples_sigma[k, :])
     reconstructed_sol = \
         reduced_problem.reconstruct_solution_sigma(
-            reduced_problem.project_snapshot_sigma(fem_sol,
+            reduced_problem.project_snapshot_sigma(fem_sol_sigma,
                                                    reduced_size_sigma))
     projection_error_array_sigma[k] = \
-        reduced_problem.norm_error_sigma(fem_sol, reconstructed_sol)
+        reduced_problem.norm_error_sigma(fem_sol_sigma, reconstructed_sol)
 
 print(f"Rank: {world_comm.rank}, Projection error: {projection_error_indices_sigma[indices]}")
 
