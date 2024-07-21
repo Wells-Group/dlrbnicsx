@@ -467,7 +467,7 @@ win02 = MPI.Win.Allocate_shared(nbytes_para_projection_error_sigma, itemsize,
                                 comm=MPI.COMM_WORLD)
 buf02, itemsize = win02.Shared_query(0)
 projection_error_samples_sigma = \
-    np.ndarray(buffer=buf2, dtype="d",
+    np.ndarray(buffer=buf02, dtype="d",
                shape=(num_projection_error_samples_sigma, para_dim_sigma))
 
 win03 = MPI.Win.Allocate_shared(nbytes_dofs_ann_training_sigma, itemsize,
