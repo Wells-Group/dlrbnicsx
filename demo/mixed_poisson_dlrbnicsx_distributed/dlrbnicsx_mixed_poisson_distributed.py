@@ -318,7 +318,8 @@ num_dofs_sigma = mesh_comm.allreduce(rend_sigma, op=MPI.MAX) - mesh_comm.allredu
 rstart_u, rend_u = u_sol.vector.getOwnershipRange()
 num_dofs_u = mesh_comm.allreduce(rend_u, op=MPI.MAX) - mesh_comm.allreduce(rstart_u, op=MPI.MIN)
 
-num_pod_samples_sigma = [4, 3, 4, 3, 2]
+num_pod_samples_sigma = [3, 2, 4, 3, 2] # [4, 3, 4, 3, 2]
+num_projection_error_samples_sigma = 200
 num_ann_samples_sigma = 300
 num_error_analysis_samples_sigma = 100
 num_snapshots_sigma = np.product(num_pod_samples_sigma)
@@ -329,11 +330,11 @@ nbytes_dofs_sigma = itemsize * num_snapshots_sigma * num_dofs_sigma
 
 def generate_training_set(samples=num_pod_samples_sigma):
     # Select input samples for POD
-    training_set_0 = np.linspace(-5., 5., samples[0])
-    training_set_1 = np.linspace(0.2, 0.8, samples[1])
-    training_set_2 = np.linspace(0.2, 0.8, samples[2])
-    training_set_3 = np.linspace(0.2, 0.8, samples[3])
-    training_set_4 = np.linspace(1., 5., samples[4])
+    training_set_0 = np.linspace(-1., 1., samples[0])
+    training_set_1 = np.linspace(0.4, 0.6, samples[1])
+    training_set_2 = np.linspace(0.4, 0.6, samples[2])
+    training_set_3 = np.linspace(0.4, 0.6, samples[3])
+    training_set_4 = np.linspace(2.5, 3.5, samples[4])
     training_set = np.array(list(itertools.product(training_set_0,
                                                    training_set_1,
                                                    training_set_2,
@@ -443,11 +444,73 @@ sigma_norm = reduced_problem.compute_norm_sigma(sigma_sol_reconstructed)
 sigma_error = reduced_problem.norm_error_sigma(sigma_sol, sigma_sol_reconstructed)
 print(f"Norm reconstructed: {sigma_norm}, Error: {sigma_error}")
 
+# ### Projection error samples ###
+# Creating dataset
+def generate_projection_error_set(num_projection_samples=10):
+    xlimits = np.array([[-1., 1.], [0.4, 0.6],
+                        [0.4, 0.6], [0.4, 0.6],
+                        [2.5, 3.5]])
+    sampling = LHS(xlimits=xlimits)
+    training_set = sampling(num_ann_samples)
+    return training_set
+
+if world_comm.rank == 0:
+    nbytes_para_projection_error_sigma = num_projection_error_samples_sigma * itemsize * para_dim_sigma
+    nbytes_projection_error_array_sigma = num_projection_error_samples_sigma * itemsize
+else:
+    nbytes_para_projection_error_sigma = 0
+    nbytes_dofs_projection_error_sigma = 0
+
+world_comm.barrier()
+
+win02 = MPI.Win.Allocate_shared(nbytes_para_projection_error_sigma, itemsize,
+                                comm=MPI.COMM_WORLD)
+buf02, itemsize = win02.Shared_query(0)
+projection_error_samples_sigma = \
+    np.ndarray(buffer=buf2, dtype="d",
+               shape=(num_projection_error_samples_sigma, para_dim_sigma))
+
+win03 = MPI.Win.Allocate_shared(nbytes_dofs_ann_training_sigma, itemsize,
+                               comm=MPI.COMM_WORLD)
+buf03, itemsize = win03.Shared_query(0)
+projection_error_array_sigma = \
+    np.ndarray(buffer=buf4, dtype="d",
+               shape=(num_projection_error_samples_sigma)))
+
+if world_comm.rank == 0:
+    projection_error_samples_sigma[:, :] = \
+        generate_projection_error_set(num_projection_samples=num_projection_error_samples_sigma)
+
+world_comm.Barrier()
+
+for j in range(len(fem_comm_list)):
+    if fem_comm_list[j] != MPI.COMM_NULL:
+        projection_error_indices_sigma = \
+            np.arange(j, projection_error_samples_sigma.shape[0],
+                      len(fem_comm_list))
+
+print(f"Rank: {world_comm.rank}, Indices (projection error): {projection_error_indices_sigma}")
+
+for k in projection_error_indices_sigma:
+    fem_sol = problem_parametric.solve(projection_error_samples_sigma[k, :])
+    reconstructed_sol = \
+        reduced_problem.reconstruct_solution_sigma(
+            reduced_problem.project_snapshot_sigma(fem_sol,
+                                                   reduced_size_sigma))
+    projection_error_array_sigma[k] = \
+        reduced_problem.norm_error_sigma(fem_sol, reconstructed_sol)
+
+print(f"Rank: {world_comm.rank}, Projection error: {projection_error_indices_sigma[indices]}")
+
+# ### Projection error ends ###
+exit()
+
+
 # Creating dataset
 def generate_ann_input_set(num_ann_samples=10):
-    xlimits = np.array([[-5., 5.], [0.2, 0.8],
-                        [0.2, 0.8], [0.2, 0.8],
-                        [1., 5.]])
+    xlimits = np.array([[-1., 1.], [0.4, 0.6],
+                        [0.4, 0.6], [0.4, 0.6],
+                        [2.5, 3.5]])
     sampling = LHS(xlimits=xlimits)
     training_set = sampling(num_ann_samples)
     return training_set
