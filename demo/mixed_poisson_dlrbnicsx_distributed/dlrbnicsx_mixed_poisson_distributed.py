@@ -318,10 +318,10 @@ num_dofs_sigma = mesh_comm.allreduce(rend_sigma, op=MPI.MAX) - mesh_comm.allredu
 rstart_u, rend_u = u_sol.vector.getOwnershipRange()
 num_dofs_u = mesh_comm.allreduce(rend_u, op=MPI.MAX) - mesh_comm.allreduce(rstart_u, op=MPI.MIN)
 
-num_pod_samples_sigma = [3, 2, 4, 3, 2] # [4, 3, 4, 3, 2]
-num_projection_error_samples_sigma = 100 # 200
-num_ann_samples_sigma = 300
-num_error_analysis_samples_sigma = 100
+num_pod_samples_sigma = [3, 2, 4, 3, 2]
+num_projection_error_samples_sigma = 100
+num_ann_samples_sigma = 150
+num_error_analysis_samples_sigma = 70
 num_snapshots_sigma = np.product(num_pod_samples_sigma)
 nbytes_para_sigma = itemsize * num_snapshots_sigma * para_dim_sigma
 nbytes_dofs_sigma = itemsize * num_snapshots_sigma * num_dofs_sigma
@@ -492,6 +492,7 @@ for j in range(len(fem_comm_list)):
 print(f"Rank: {world_comm.rank}, Indices (projection error): {projection_error_indices_sigma}")
 
 for k in projection_error_indices_sigma:
+    print(f"Index: {k}")
     fem_sol_sigma, _ = problem_parametric.solve(projection_error_samples_sigma[k, :])
     reconstructed_sol = \
         reduced_problem.reconstruct_solution_sigma(
@@ -500,7 +501,33 @@ for k in projection_error_indices_sigma:
     projection_error_array_sigma[k] = \
         reduced_problem.norm_error_sigma(fem_sol_sigma, reconstructed_sol)
 
-print(f"Rank: {world_comm.rank}, Projection error: {projection_error_array_sigma[projection_error_indices_sigma]}")
+print(f"Rank: {world_comm.rank}, Projection errors: {projection_error_array_sigma[projection_error_indices_sigma]}")
+
+fem_error_file \
+    = "projection_error/fem_solution.xdmf"
+with dolfinx.io.XDMFFile(mesh.comm, fem_error_file,
+                        "w") as solution_file:
+    solution_file.write_mesh(mesh)
+    solution_file.write_function(fem_sol_sigma)
+
+rb_error_file \
+    = "projection_error/rb_solution.xdmf"
+with dolfinx.io.XDMFFile(mesh.comm, rb_error_file,
+                        "w") as solution_file:
+    # NOTE scatter_forward not considered for online solution
+    solution_file.write_mesh(mesh)
+    solution_file.write_function(reconstructed_sol)
+
+error_function_sigma = dolfinx.fem.Function(problem_parametric._Q)
+error_function_sigma.vector[rstart_sigma:rend_sigma] = \
+    abs(fem_sol_sigma.vector[rstart_sigma:rend_sigma] -
+        reconstructed_sol.vector[rstart_sigma:rend_sigma])
+fem_rb_error_file \
+    = "projection_error/rb_fem_error.xdmf"
+with dolfinx.io.XDMFFile(mesh.comm, fem_rb_error_file,
+                        "w") as solution_file:
+    solution_file.write_mesh(mesh)
+    solution_file.write_function(error_function_sigma)
 
 # ### Projection error ends ###
 exit()
