@@ -500,7 +500,7 @@ for k in projection_error_indices_sigma:
     projection_error_array_sigma[k] = \
         reduced_problem.norm_error_sigma(fem_sol_sigma, reconstructed_sol)
 
-print(f"Rank: {world_comm.rank}, Projection error: {projection_error_indices_sigma[indices]}")
+print(f"Rank: {world_comm.rank}, Projection error: {projection_error_indices_sigma[projection_error_indices_sigma]}")
 
 # ### Projection error ends ###
 exit()
