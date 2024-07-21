@@ -318,8 +318,8 @@ num_dofs_sigma = mesh_comm.allreduce(rend_sigma, op=MPI.MAX) - mesh_comm.allredu
 rstart_u, rend_u = u_sol.vector.getOwnershipRange()
 num_dofs_u = mesh_comm.allreduce(rend_u, op=MPI.MAX) - mesh_comm.allreduce(rstart_u, op=MPI.MIN)
 
-num_pod_samples_sigma = [3, 2, 4, 3, 2] # [4, 3, 4, 3, 2]
-num_projection_error_samples_sigma = 200
+num_pod_samples_sigma = [2, 1, 2, 1, 2] # [3, 2, 4, 3, 2] # [4, 3, 4, 3, 2]
+num_projection_error_samples_sigma = 10 # 200
 num_ann_samples_sigma = 300
 num_error_analysis_samples_sigma = 100
 num_snapshots_sigma = np.product(num_pod_samples_sigma)
