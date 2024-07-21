@@ -451,7 +451,7 @@ def generate_projection_error_set(num_projection_samples=10):
                         [0.4, 0.6], [0.4, 0.6],
                         [2.5, 3.5]])
     sampling = LHS(xlimits=xlimits)
-    training_set = sampling(num_ann_samples)
+    training_set = sampling(num_projection_samples)
     return training_set
 
 if world_comm.rank == 0:
