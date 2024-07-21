@@ -318,7 +318,7 @@ num_dofs_sigma = mesh_comm.allreduce(rend_sigma, op=MPI.MAX) - mesh_comm.allredu
 rstart_u, rend_u = u_sol.vector.getOwnershipRange()
 num_dofs_u = mesh_comm.allreduce(rend_u, op=MPI.MAX) - mesh_comm.allreduce(rstart_u, op=MPI.MIN)
 
-num_pod_samples_sigma = [2, 1, 2, 1, 2] # [3, 2, 4, 3, 2] # [4, 3, 4, 3, 2]
+num_pod_samples_sigma = [2, 2, 2, 2, 2] # [3, 2, 4, 3, 2] # [4, 3, 4, 3, 2]
 num_projection_error_samples_sigma = 10 # 200
 num_ann_samples_sigma = 300
 num_error_analysis_samples_sigma = 100
@@ -475,7 +475,7 @@ win03 = MPI.Win.Allocate_shared(nbytes_dofs_ann_training_sigma, itemsize,
 buf03, itemsize = win03.Shared_query(0)
 projection_error_array_sigma = \
     np.ndarray(buffer=buf4, dtype="d",
-               shape=(num_projection_error_samples_sigma)))
+               shape=(num_projection_error_samples_sigma))
 
 if world_comm.rank == 0:
     projection_error_samples_sigma[:, :] = \
