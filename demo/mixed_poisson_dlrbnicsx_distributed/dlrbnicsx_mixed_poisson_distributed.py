@@ -375,7 +375,7 @@ buf1, itemsize = win1.Shared_query(0)
 snapshot_arrays_sigma = np.ndarray(buffer=buf1, dtype="d",
                              shape=(num_snapshots_sigma, num_dofs_sigma))
 snapshots_matrix_sigma = rbnicsx.backends.FunctionsList(problem_parametric._Q)
-Nmax_sigma = 9
+Nmax_sigma = 18
 
 # NOTE  Redundant check of if fem_comm_list[i] != MPI.COMM_NULL is removed
 
