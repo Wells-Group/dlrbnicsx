@@ -6,12 +6,12 @@ gmsh.initialize()
 gmsh.model.add("3d_mesh")
 
 gdim = 3
-lc = 5.e-2
+lc = 5.e-1
 
-gmsh.model.geo.addPoint(0., 0., 0., lc, 1)
-gmsh.model.geo.addPoint(1., 0., 0., lc, 2)
-gmsh.model.geo.addPoint(1., 1., 0., lc, 3)
-gmsh.model.geo.addPoint(0., 1., 0., lc, 4)
+gmsh.model.geo.addPoint(0., 0., 0., 0.2, 1)
+gmsh.model.geo.addPoint(1., 0., 0., 0.3, 2)
+gmsh.model.geo.addPoint(1., 1., 0., 0.4, 3)
+gmsh.model.geo.addPoint(0., 1., 0., 0.5, 4)
 
 gmsh.model.geo.addLine(1, 2, 1)
 gmsh.model.geo.addLine(2, 3, 2)
@@ -25,15 +25,15 @@ gmsh.model.geo.synchronize()
 
 # Create mesh
 # 8 = Frontal-Delaunay for Quads
-gmsh.option.setNumber("Mesh.Algorithm", 8)
+# gmsh.option.setNumber("Mesh.Algorithm", 8)
 # 2 = simple full-quad
-gmsh.option.setNumber("Mesh.RecombinationAlgorithm", 2)
+# gmsh.option.setNumber("Mesh.RecombinationAlgorithm", 2)
 # Apply recombination algorithm
-gmsh.option.setNumber("Mesh.RecombineAll", 1)
+# gmsh.option.setNumber("Mesh.RecombineAll", 1)
 # Mesh subdivision algorithm (1: all quadrangles)
-gmsh.option.setNumber("Mesh.SubdivisionAlgorithm", 1)
+# gmsh.option.setNumber("Mesh.SubdivisionAlgorithm", 1)
 # Minimum characteristic element size
-gmsh.option.setNumber("Mesh.MeshSizeMin", lc)
+gmsh.option.setNumber("Mesh.MeshSizeMin", 0.2)
 # Maximum characteristic element size
 gmsh.option.setNumber("Mesh.MeshSizeMax", lc)
 # Mesh generation

@@ -7,6 +7,12 @@ import dolfinx
 from dolfinx.fem.petsc import \
     assemble_matrix, assemble_vector, create_vector, set_bc, apply_lifting
 
+import rbnicsx
+import rbnicsx.online
+import rbnicsx.backends
+
+import abc
+
 # Read mesh
 mesh_comm = MPI.COMM_WORLD
 gdim = 3
@@ -50,6 +56,9 @@ xdmf = dolfinx.io.XDMFFile(mesh.comm, "diffusion.xdmf", "w")
 xdmf.write_mesh(mesh)
 xdmf.write_function(uD_prev, 0)
 
+print("Set up snapshots matrix")
+snapshots_matrix = rbnicsx.backends.FunctionsList(VD)
+
 for i in range(num_steps):
     t += dt
     print(f"Time: {t}s")
@@ -61,6 +70,8 @@ for i in range(num_steps):
     set_bc(b, bc)
     solver.solve(b, uD_sol.vector)
     uD_sol.x.scatter_forward()
+    
+    snapshots_matrix.append(uD_sol) # TODO see if uD_sol is overwritten every time
 
     uD_prev.x.array[:] = uD_sol.x.array
 
@@ -69,3 +80,72 @@ for i in range(num_steps):
 
 xdmf.close()
 
+snapshots_matrix = rbnicsx.backends.FunctionsList(VD)
+
+class PODANNReducedProblem(abc.ABC):
+    def __init__(self, fem_space):
+        self._basis_functions = rbnicsx.backends.FunctionsList(fem_space)
+        u, v = ufl.TrialFunction(fem_space), ufl.TestFunction(fem_space)
+        self._inner_product = ufl.inner(u, v) * ufl.dx +\
+            ufl.inner(ufl.grad(u), ufl.grad(v)) * ufl.dx
+        self._inner_product_action = \
+            rbnicsx.backends.bilinear_form_action(self._inner_product,
+                                                  part="real")
+
+# Maximum RB size
+Nmax = 30
+
+print(rbnicsx.io.TextBox("POD offline phase begins", fill="="))
+print("")
+
+print("Set up reduced problem")
+reduced_problem = PODANNReducedProblem(VD)
+
+print("")
+
+#for (mu_index, mu) in enumerate(training_set):
+    #print(rbnicsx.io.TextLine(str(mu_index+1), fill="#"))
+
+    #print("Parameter number ", (mu_index+1), "of", training_set.shape[0])
+    #print("High fidelity solve for mu =", mu)
+    #snapshot = problem_parametric.solve(mu)
+    #print(f"Solution array: {snapshot.x.array}")
+
+    #print("Update snapshots matrix")
+    #snapshots_matrix.append(snapshot)
+
+    #print("")
+
+print(rbnicsx.io.TextLine("Perform POD", fill="#"))
+eigenvalues, modes, _ = \
+    rbnicsx.backends.\
+    proper_orthogonal_decomposition(snapshots_matrix,
+                                    reduced_problem._inner_product_action,
+                                    N=Nmax, tol=1e-10)
+reduced_problem._basis_functions.extend(modes)
+reduced_size = len(reduced_problem._basis_functions)
+print("")
+
+print(rbnicsx.io.TextBox("POD-Galerkin offline phase ends", fill="="))
+
+positive_eigenvalues = np.where(eigenvalues > 0., eigenvalues, np.nan)
+singular_values = np.sqrt(positive_eigenvalues)
+
+print(f"Eigenvalues: {positive_eigenvalues}")
+
+plt.figure(figsize=[8, 10])
+xint = list()
+yval = list()
+
+for x, y in enumerate(eigenvalues[:len(reduced_problem._basis_functions)]):
+    yval.append(y)
+    xint.append(x+1)
+
+plt.plot(xint, yval, "*-", color="orange")
+plt.xlabel("Eigenvalue number", fontsize=18)
+plt.ylabel("Eigenvalue", fontsize=18)
+plt.xticks(xint)
+plt.yscale("log")
+plt.title("Eigenvalue decay", fontsize=24)
+plt.tight_layout()
+plt.savefig("eigenvalue_decay")
