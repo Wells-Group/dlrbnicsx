@@ -58,6 +58,7 @@ xdmf.write_function(uD_prev, 0)
 
 print("Set up snapshots matrix")
 snapshots_matrix = rbnicsx.backends.FunctionsList(VD)
+snapshot = dolfinx.fem.Function(VD)
 snapshot.x.array[:] = uD_prev.x.array.copy()
 snapshots_matrix.append(snapshot)
 
