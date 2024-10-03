@@ -12,6 +12,7 @@ import rbnicsx.online
 import rbnicsx.backends
 
 import abc
+import matplotlib.pyplot as plt
 
 # Read mesh
 mesh_comm = MPI.COMM_WORLD
