@@ -21,7 +21,7 @@ uD, vD = ufl.TrialFunction(VD), ufl.TestFunction(VD)
 uD_sol = dolfinx.fem.Function(VD)
 uD_prev = dolfinx.fem.Function(VD)
 # uD_prev.x.array[:] = 0.2 # Initial value
-uD_prev.interpolate(lambda x: 5 * np.sin(x[0] * 2 * np.pi) * np.cos(x[1] * 2 * np.pi))
+uD_prev.interpolate(lambda x: 5. * np.sin(x[0] * 2 * np.pi) * np.cos(x[1] * 2 * np.pi))
 D = ufl.as_tensor([[1., 0., 0.],[0., 1.2, 0.],[0., 0., 3.]])
 f_source = dolfinx.fem.Constant(mesh, PETSc.ScalarType(0.))
 flux = dolfinx.fem.Constant(mesh, PETSc.ScalarType(0.))
@@ -65,7 +65,7 @@ for i in range(num_steps):
     uD_prev.x.array[:] = uD_sol.x.array
 
     xdmf.write_function(uD_sol, t)
-    print(mesh.comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(uD_sol.dx(2), uD_sol.dx(2)) * ufl.dx)), op=MPI.MAX))
+    print(mesh.comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(uD_sol.dx(2), uD_sol.dx(2)) * ufl.dx)), op=MPI.SUM))
 
 xdmf.close()
 

@@ -5,13 +5,13 @@ import dolfinx
 gmsh.initialize(" ", False)
 gdim = 3
 
-center_x, center_y, center_z, radius = 0., 0., 0., 2.
+center_x, center_y, center_z, radius = 0., 0., -1., 2.
 circle = gmsh.model.occ.addCircle(center_x, center_y, center_z, radius)
 circle_loop = gmsh.model.occ.addCurveLoop([circle])
 surface = gmsh.model.occ.addPlaneSurface([circle_loop])
 gmsh.model.occ.synchronize()
 
-h = 1
+h = 2
 extrusion = gmsh.model.occ.extrude([(2, surface)], 0, 0, h)
 gmsh.model.occ.synchronize()
 
