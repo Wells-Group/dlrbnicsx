@@ -58,6 +58,8 @@ xdmf.write_function(uD_prev, 0)
 
 print("Set up snapshots matrix")
 snapshots_matrix = rbnicsx.backends.FunctionsList(VD)
+snapshot.x.array[:] = uD_prev.x.array.copy()
+snapshots_matrix.append(snapshot)
 
 for i in range(num_steps):
     t += dt
@@ -70,8 +72,10 @@ for i in range(num_steps):
     set_bc(b, bc)
     solver.solve(b, uD_sol.vector)
     uD_sol.x.scatter_forward()
+    snapshot = dolfinx.fem.Function(VD)
+    snapshot.x.array[:] = uD_sol.x.array.copy()
     
-    snapshots_matrix.append(uD_sol) # TODO see if uD_sol is overwritten every time
+    snapshots_matrix.append(snapshot) # TODO see if uD_sol is overwritten every time
 
     uD_prev.x.array[:] = uD_sol.x.array
 
@@ -79,8 +83,6 @@ for i in range(num_steps):
     print(mesh.comm.allreduce(dolfinx.fem.assemble_scalar(dolfinx.fem.form(ufl.inner(uD_sol.dx(2), uD_sol.dx(2)) * ufl.dx)), op=MPI.SUM))
 
 xdmf.close()
-
-snapshots_matrix = rbnicsx.backends.FunctionsList(VD)
 
 class PODANNReducedProblem(abc.ABC):
     def __init__(self, fem_space):
@@ -116,6 +118,7 @@ print("")
 
     #print("")
 
+print(len(snapshots_matrix))
 print(rbnicsx.io.TextLine("Perform POD", fill="#"))
 eigenvalues, modes, _ = \
     rbnicsx.backends.\
