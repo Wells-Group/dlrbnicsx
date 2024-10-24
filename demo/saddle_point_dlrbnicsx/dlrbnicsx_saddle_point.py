@@ -391,8 +391,8 @@ problem_parametric = ParametricProblem(mesh)
 mu = np.array([-1., 1.5, 0.7, 0.3, 3.4])
 
 para_dim = 5
-ann_input_samples_num = 640
-error_analysis_samples_num = 7
+ann_input_samples_num = 23 # 640
+error_analysis_samples_num = 17
 num_snapshots = 13
 
 sigma_h, u_h = problem_parametric.solve(mu)
