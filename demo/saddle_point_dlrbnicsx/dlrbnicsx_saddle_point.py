@@ -538,3 +538,185 @@ for i in range(projection_error_analysis_samples.shape[0]):
 
 print(f"Projection error (sigma): {projection_error_array_sigma}")
 print(f"Projection error (u): {projection_error_array_u}")
+
+# ### Projection error ends ###
+
+# Creating dataset
+def generate_ann_input_set(num_ann_samples=10):
+    # ((-2.5, -1.5), (0., 1.), (0.2, 0.8), (0.2, 0.8), (2.5, 3.5))
+    xlimits = np.array([[-2.5, -1.5], [0., 1.],
+                        [0.2, 0.8], [0.2, 0.8],
+                        [2.5, 3.5]])
+    sampling = LHS(xlimits=xlimits)
+    training_set = sampling(num_ann_samples)
+    return training_set
+
+def generate_ann_output_set(problem, reduced_problem, input_set, mode=None):
+    output_set_sigma = np.zeros([input_set.shape[0], len(reduced_problem._basis_functions_sigma)])
+    output_set_u = np.zeros([input_set.shape[0], len(reduced_problem._basis_functions_u)])
+    for i in range(input_set.shape[0]):
+        if mode is None:
+            print(f"Parameter number {i+1} of {input_set.shape[0]}: {input_set[i,:]}")
+        else:
+            print(f"{mode} parameter number {i+1} of {input_set.shape[0]}: {input_set[i,:]}")
+        solution_sigma, solution_u = problem.solve(input_set[i, :])
+        output_set_sigma[i, :] = reduced_problem.project_snapshot_sigma(solution_sigma, len(reduced_problem._basis_functions_sigma)).array
+        output_set_u[i, :] = reduced_problem.project_snapshot_u(solution_u, len(reduced_problem._basis_functions_u)).array
+    return output_set_sigma, output_set_u
+
+ann_input_set = generate_ann_input_set(num_ann_samples=ann_input_samples_num)
+np.random.shuffle(ann_input_set)
+ann_output_set_sigma, ann_output_set_u = \
+    generate_ann_output_set(problem_parametric, reduced_problem,
+                            ann_input_set, mode="Training")
+
+num_training_samples = int(0.7 * ann_input_set.shape[0])
+num_validation_samples = ann_input_set.shape[0] - num_training_samples
+
+input_training_set = ann_input_set[:num_training_samples, :]
+output_training_set_sigma = ann_output_set_sigma[:num_training_samples, :]
+output_training_set_u = ann_output_set_u[:num_training_samples, :]
+
+input_validation_set = ann_input_set[num_training_samples:, :]
+output_validation_set_sigma = ann_output_set_sigma[num_training_samples:, :]
+output_validation_set_u = ann_output_set_u[num_training_samples:, :]
+
+reduced_problem.output_range_sigma[0] = np.min(ann_output_set_sigma)
+reduced_problem.output_range_sigma[1] = np.max(ann_output_set_sigma)
+reduced_problem.output_range_u[0] = np.min(ann_output_set_u)
+reduced_problem.output_range_u[1] = np.max(ann_output_set_u)
+
+customDataset = CustomDataset(reduced_problem, input_training_set,
+                              output_training_set_sigma,
+                              input_scaling_range=reduced_problem.input_scaling_range,
+                              output_scaling_range=reduced_problem.output_scaling_range_sigma,
+                              input_range=reduced_problem.input_range,
+                              output_range=reduced_problem.output_range_sigma, verbose=False)
+train_dataloader_sigma = DataLoader(customDataset, batch_size=6, shuffle=False) # shuffle=True)
+
+customDataset = CustomDataset(reduced_problem, input_validation_set,
+                              output_validation_set_sigma,
+                              input_scaling_range=reduced_problem.input_scaling_range,
+                              output_scaling_range=reduced_problem.output_scaling_range_sigma,
+                              input_range=reduced_problem.input_range,
+                              output_range=reduced_problem.output_range_sigma, verbose=False)
+valid_dataloader_sigma = DataLoader(customDataset, shuffle=False)
+
+customDataset = \
+    CustomDataset(reduced_problem, input_training_set,
+                  output_training_set_u,
+                  input_scaling_range=[-1., 1.],
+                  output_scaling_range=reduced_problem.output_scaling_range_u,
+                  input_range=reduced_problem.input_range,
+                  output_range=reduced_problem.output_range_u, verbose=False)
+train_dataloader_u = DataLoader(customDataset, batch_size=6, shuffle=False) # shuffle=True)
+
+customDataset = \
+    CustomDataset(reduced_problem, input_validation_set,
+                  output_validation_set_u,
+                  input_scaling_range=[-1., 1.],
+                  output_scaling_range=reduced_problem.output_scaling_range_u,
+                  input_range=reduced_problem.input_range,
+                  output_range=reduced_problem.output_range_u, verbose=False)
+valid_dataloader_u = DataLoader(customDataset, shuffle=False)
+
+# ANN model
+model_sigma = HiddenLayersNet(input_training_set.shape[1], [55, 55, 55],
+                              len(reduced_problem._basis_functions_sigma),
+                              Tanh())
+
+model_u = HiddenLayersNet(input_training_set.shape[1], [55, 55, 55],
+                          len(reduced_problem._basis_functions_u),
+                          Tanh())
+
+path = "model_sigma.pth"
+save_model(model_sigma, path)
+# load_model(model_sigma, path)
+
+training_loss_sigma = list()
+validation_loss_sigma = list()
+
+max_epochs_sigma = 50 # 20000
+min_validation_loss_sigma = None
+start_epoch_sigma = 0
+checkpoint_path_sigma = "checkpoint_sigma"
+checkpoint_epoch_sigma = 10
+
+learning_rate_sigma = 5.e-6
+optimiser_sigma = get_optimiser(model_sigma, "Adam", learning_rate_sigma)
+loss_fn_sigma = get_loss_func("MSE", reduction="sum")
+
+if os.path.exists(checkpoint_path_sigma):
+    start_epoch_sigma, min_validation_loss_sigma = \
+        load_checkpoint(checkpoint_path_sigma, model_sigma, optimiser_sigma)
+
+import time
+start_time = time.time()
+for epochs in range(start_epoch_sigma, max_epochs_sigma):
+    if epochs > 0 and epochs % checkpoint_epoch_sigma == 0:
+        save_checkpoint(checkpoint_path_sigma, epochs, model_sigma,
+                        optimiser_sigma, min_validation_loss_sigma)
+    print(f"Epoch: {epochs+1}/{max_epochs_sigma}")
+    current_training_loss = train_nn(reduced_problem, train_dataloader_sigma,
+                                     model_sigma, loss_fn_sigma,
+                                     optimiser_sigma)
+    training_loss_sigma.append(current_training_loss)
+    current_validation_loss = validate_nn(reduced_problem, valid_dataloader_sigma,
+                                          model_sigma, loss_fn_sigma)
+    validation_loss_sigma.append(current_validation_loss)
+    if epochs > 0 and current_validation_loss > 1.01 * min_validation_loss_sigma:
+        # 1% safety margin against min_validation_loss
+        # before invoking early stopping criteria
+        print(f"Early stopping criteria invoked at epoch: {epochs+1}")
+        break
+    min_validation_loss_sigma = min(validation_loss_sigma)
+end_time = time.time()
+elapsed_time = end_time - start_time
+os.system(f"rm {checkpoint_path_sigma}")
+print(f"Training time (sigma): {elapsed_time}")
+
+path = "model_u.pth"
+save_model(model_u, path)
+# load_model(model_u, path)
+
+training_loss_u = list()
+validation_loss_u = list()
+
+max_epochs_u = 50 # 20000
+min_validation_loss_u = None
+start_epoch_u = 0
+checkpoint_path_u = "checkpoint_u"
+checkpoint_epoch_u = 10
+
+learning_rate_u = 5.e-6
+optimiser_u = get_optimiser(model_u, "Adam", learning_rate_u)
+loss_fn_u = get_loss_func("MSE", reduction="sum")
+
+if os.path.exists(checkpoint_path_u):
+    start_epoch_u, min_validation_loss_u = \
+        load_checkpoint(checkpoint_path_u, model_u, optimiser_u)
+
+import time
+start_time = time.time()
+for epochs in range(start_epoch_u, max_epochs_u):
+    if epochs > 0 and epochs % checkpoint_epoch_u == 0:
+        save_checkpoint(checkpoint_path_u, epochs, model_u,
+                        optimiser_u, min_validation_loss_u)
+    print(f"Epoch: {epochs+1}/{max_epochs_u}")
+    current_training_loss = train_nn(reduced_problem, train_dataloader_u,
+                                     model_u, loss_fn_u,
+                                     optimiser_u)
+    training_loss_u.append(current_training_loss)
+    current_validation_loss = validate_nn(reduced_problem, valid_dataloader_u,
+                                          model_u, loss_fn_u)
+    validation_loss_u.append(current_validation_loss)
+    if epochs > 0 and current_validation_loss > 1.01 * min_validation_loss_u:
+        # 1% safety margin against min_validation_loss
+        # before invoking early stopping criteria
+        print(f"Early stopping criteria invoked at epoch: {epochs+1}")
+        break
+    min_validation_loss_u = min(validation_loss_u)
+end_time = time.time()
+elapsed_time = end_time - start_time
+os.system(f"rm {checkpoint_path_u}")
+print(f"Training time (u): {elapsed_time}")
