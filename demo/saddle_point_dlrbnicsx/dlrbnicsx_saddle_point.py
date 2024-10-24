@@ -729,3 +729,46 @@ elapsed_time = end_time - start_time
 os.system(f"rm {checkpoint_path_u}")
 print(f"Training time (u): {elapsed_time}")
 
+# Error analysis dataset
+print("\n")
+print("Generating error analysis (only input/parameters) dataset")
+print("\n")
+error_analysis_set = generate_ann_input_set(num_ann_samples=error_analysis_samples_num)
+error_numpy_sigma = np.zeros(error_analysis_set_sigma.shape[0])
+
+for i in range(error_analysis_set.shape[0]):
+    print(f"Error analysis parameter number {i+1} of ")
+    print(f"{error_analysis_set.shape[0]}: {error_analysis_set[i,:]}")
+    error_numpy_sigma[i] = error_analysis(reduced_problem, problem_parametric,
+                                      error_analysis_set[i, :], model_sigma,
+                                      len(reduced_problem._basis_functions_sigma), online_nn,
+                                      norm_error=reduced_problem.norm_error_sigma,
+                                      reconstruct_solution=reduced_problem.reconstruct_solution_sigma,
+                                      input_scaling_range=reduced_problem.input_scaling_range,
+                                      output_scaling_range=reduced_problem.output_scaling_range_sigma,
+                                      input_range=reduced_problem.input_range,
+                                      output_range=reduced_problem.output_range_sigma,
+                                      index=0, verbose=True)
+    print(f"Error: {error_numpy_sigma[i]}")
+
+# Error analysis dataset
+print("\n")
+print("Generating error analysis (only input/parameters) dataset")
+print("\n")
+error_analysis_set = generate_ann_input_set(num_ann_samples=error_analysis_samples_num)
+error_numpy_u = np.zeros(error_analysis_set_u.shape[0])
+
+for i in range(error_analysis_set.shape[0]):
+    print(f"Error analysis parameter number {i+1} of ")
+    print(f"{error_analysis_set.shape[0]}: {error_analysis_set[i,:]}")
+    error_numpy_sigma[i] = error_analysis(reduced_problem, problem_parametric,
+                                          error_analysis_set[i, :], model_u,
+                                          len(reduced_problem._basis_functions_u), online_nn,
+                                          norm_error=reduced_problem.norm_error_u,
+                                          reconstruct_solution=reduced_problem.reconstruct_solution_u,
+                                          input_scaling_range=reduced_problem.input_scaling_range,
+                                          output_scaling_range=reduced_problem.output_scaling_range_u,
+                                          input_range=reduced_problem.input_range,
+                                          output_range=reduced_problem.output_range_u,
+                                          index=1, verbose=True)
+    print(f"Error: {error_numpy_sigma[i]}")
