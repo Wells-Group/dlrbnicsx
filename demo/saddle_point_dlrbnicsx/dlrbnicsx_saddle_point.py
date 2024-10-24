@@ -772,3 +772,57 @@ for i in range(error_analysis_set.shape[0]):
                                           output_range=reduced_problem.output_range_u,
                                           index=1, verbose=True)
     print(f"Error (U): {error_numpy_sigma[i]}")
+
+# Online phase
+# Define a parameter
+online_mu = np.array([-2.3, 0.47, 0.57, 0.67, 3.4])
+
+# Compute FEM solution
+solution_sigma, solution_u = problem_parametric.solve(online_mu)
+
+# Compute RB solution
+rb_solution_sigma = \
+    reduced_problem.reconstruct_solution_sigma(online_nn(reduced_problem,
+                                                         problem_parametric,
+                                                         online_mu, model_sigma,
+                                                         len(reduced_problem._basis_functions_sigma),
+                                                         input_scaling_range=reduced_problem.input_scaling_range,
+                                                         output_scaling_range=reduced_problem.output_scaling_range_sigma,
+                                                         input_range=reduced_problem.input_range,
+                                                         output_range=reduced_problem.output_range_sigma))
+
+rb_solution_u = \
+    reduced_problem.reconstruct_solution_u(online_nn(reduced_problem,
+                                                     problem_parametric,
+                                                     online_mu, model_u,
+                                                     len(reduced_problem._basis_functions_u),
+                                                     input_scaling_range=reduced_problem.input_scaling_range,
+                                                     output_scaling_range=reduced_problem.output_scaling_range_u,
+                                                     input_range=reduced_problem.input_range,
+                                                     output_range=reduced_problem.output_range_u))
+
+solution_sigma_error = dolfinx.fem.Function(problem_parametric._Q)
+solution_sigma_error.x.array[:] = abs(solution_sigma.x.array - rb_solution_sigma.x.array)
+
+solution_u_error = dolfinx.fem.Function(problem_parametric._W)
+solution_u_error.x.array[:] = abs(solution_u.x.array - rb_solution_u.x.array)
+
+with dolfinx.io.XDMFFile(mesh.comm, "dlrbnicsx_solution/fem_sigma_online_mu.xdmf",
+                            "w") as solution_file:
+    solution_file.write_mesh(mesh)
+    solution_file.write_function(solution_sigma)
+
+with dolfinx.io.XDMFFile(mesh.comm, "dlrbnicsx_solution/rb_sigma_online_mu.xdmf",
+                            "w") as solution_file:
+    solution_file.write_mesh(mesh)
+    solution_file.write_function(rb_solution_sigma)
+
+with dolfinx.io.XDMFFile(mesh.comm, "dlrbnicsx_solution/fem_u_online_mu.xdmf",
+                            "w") as solution_file:
+    solution_file.write_mesh(mesh)
+    solution_file.write_function(solution_u)
+
+with dolfinx.io.XDMFFile(mesh.comm, "dlrbnicsx_solution/rb_u_online_mu.xdmf",
+                            "w") as solution_file:
+    solution_file.write_mesh(mesh)
+    solution_file.write_function(rb_solution_u)
