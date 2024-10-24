@@ -734,7 +734,7 @@ print("\n")
 print("Generating error analysis (only input/parameters) dataset")
 print("\n")
 error_analysis_set = generate_ann_input_set(num_ann_samples=error_analysis_samples_num)
-error_numpy_sigma = np.zeros(error_analysis_set_sigma.shape[0])
+error_numpy_sigma = np.zeros(error_analysis_set.shape[0])
 
 for i in range(error_analysis_set.shape[0]):
     print(f"Error analysis parameter number {i+1} of ")
@@ -749,14 +749,14 @@ for i in range(error_analysis_set.shape[0]):
                                       input_range=reduced_problem.input_range,
                                       output_range=reduced_problem.output_range_sigma,
                                       index=0, verbose=True)
-    print(f"Error: {error_numpy_sigma[i]}")
+    print(f"Error (sigma): {error_numpy_sigma[i]}")
 
 # Error analysis dataset
 print("\n")
 print("Generating error analysis (only input/parameters) dataset")
 print("\n")
 error_analysis_set = generate_ann_input_set(num_ann_samples=error_analysis_samples_num)
-error_numpy_u = np.zeros(error_analysis_set_u.shape[0])
+error_numpy_u = np.zeros(error_analysis_set.shape[0])
 
 for i in range(error_analysis_set.shape[0]):
     print(f"Error analysis parameter number {i+1} of ")
@@ -771,4 +771,4 @@ for i in range(error_analysis_set.shape[0]):
                                           input_range=reduced_problem.input_range,
                                           output_range=reduced_problem.output_range_u,
                                           index=1, verbose=True)
-    print(f"Error: {error_numpy_sigma[i]}")
+    print(f"Error (U): {error_numpy_sigma[i]}")
