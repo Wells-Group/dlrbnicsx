@@ -373,11 +373,11 @@ class PODANNReducedProblem(abc.ABC):
         return projected_snapshot_u
 
     def norm_error_sigma(self, sigma, tau):
-        # Relative error norm for VELOCITY
+        # Relative error norm for SIGMA
         return self.compute_norm_sigma(sigma-tau)/self.compute_norm_sigma(sigma)
 
     def norm_error_u(self, u, v):
-        # Relative error norm for PRESSURE
+        # Relative error norm for U
         return self.compute_norm_u(u-v)/self.compute_norm_u(u)
 
 
@@ -441,9 +441,9 @@ problem_parametric = ParametricProblem(mesh)
 mu = np.array([-1., 1.5, 0.7, 0.3, 3.4])
 
 para_dim = 5
-ann_input_samples_num = 19
-error_analysis_samples_num = 11
-num_snapshots = 15 # 100
+ann_input_samples_num = 23
+error_analysis_samples_num = 11#0
+num_snapshots = 10#0
 itemsize = MPI.DOUBLE.Get_size()
 
 sigma_h, u_h = problem_parametric.solve(mu)
@@ -485,7 +485,13 @@ tol_sigma = 1.e-4
 tol_u = 1.e-4
 
 def generate_training_set(num_samples, para_dim):
-    training_set = np.random.uniform(size=(num_samples, para_dim))
+    # training_set = np.random.uniform(size=(num_samples, para_dim))
+    training_set = np.zeros((num_samples, para_dim))
+    training_set[:, 0] = np.linspace(0., 1., num=num_samples)
+    training_set[:, 1] = np.linspace(0., 1., num=num_samples)
+    training_set[:, 2] = np.linspace(0., 1., num=num_samples)
+    training_set[:, 3] = np.linspace(0., 1., num=num_samples)
+    training_set[:, 4] = np.linspace(0., 1., num=num_samples)
     training_set[:, 0] = (-1.5 + 2.5) * training_set[:, 0] - 2.5
     training_set[:, 1] = (1. - 0.) * training_set[:, 1] + 0.
     training_set[:, 2] = (0.8 - 0.2) * training_set[:, 2] + 0.2
@@ -657,11 +663,24 @@ print(f"Norm reconstructed: {sigma_norm}, projection error: {sigma_error}")
 # ### Projection error samples ###
 # Creating dataset
 def generate_projection_error_set(num_projection_samples=10):
+    '''
     xlimits = np.array([[-1., 1.], [0.4, 0.6],
                         [0.4, 0.6], [0.4, 0.6],
                         [2.5, 3.5]])
     sampling = LHS(xlimits=xlimits)
     training_set = sampling(num_projection_samples)
+    '''
+    training_set = np.zeros((num_projection_samples, para_dim))
+    training_set[:, 0] = np.linspace(0., 1., num=num_projection_samples)
+    training_set[:, 1] = np.linspace(0., 1., num=num_projection_samples)
+    training_set[:, 2] = np.linspace(0., 1., num=num_projection_samples)
+    training_set[:, 3] = np.linspace(0., 1., num=num_projection_samples)
+    training_set[:, 4] = np.linspace(0., 1., num=num_projection_samples)
+    training_set[:, 0] = (-1.5 + 2.5) * training_set[:, 0] - 2.5
+    training_set[:, 1] = (1. - 0.) * training_set[:, 1] + 0.
+    training_set[:, 2] = (0.8 - 0.2) * training_set[:, 2] + 0.2
+    training_set[:, 3] = (0.8 - 0.2) * training_set[:, 3] + 0.2
+    training_set[:, 4] = (3.5 - 2.5) * training_set[:, 3] + 2.5
     return training_set
 
 if world_comm.rank == 0:
@@ -726,7 +745,7 @@ for k in projection_error_indices:
     projection_error_array_u[k] = \
         reduced_problem.norm_error_u(fem_sol_u, reconstructed_sol_u)
 
-print(f"Rank: {world_comm.rank}, \n Projection errors (sigma): {projection_error_array_sigma[projection_error_indices]} \n, Projection errors (u): {projection_error_array_u[projection_error_indices]} ")
+print(f"Rank: {world_comm.rank}, \nProjection errors (sigma): {projection_error_array_sigma}, \nProjection errors (u): {projection_error_array_u} ")
 
 if fem_comm_list[0] != MPI.COMM_NULL:
     fem_error_file \
@@ -785,12 +804,25 @@ if fem_comm_list[0] != MPI.COMM_NULL:
 
 # Creating dataset
 def generate_ann_input_set(num_ann_samples=10):
+    '''
     # ((-2.5, -1.5), (0., 1.), (0.2, 0.8), (0.2, 0.8), (2.5, 3.5))
     xlimits = np.array([[-2.5, -1.5], [0., 1.],
                         [0.2, 0.8], [0.2, 0.8],
                         [2.5, 3.5]])
     sampling = LHS(xlimits=xlimits)
     training_set = sampling(num_ann_samples)
+    '''
+    training_set = np.zeros((num_ann_samples, para_dim))
+    training_set[:, 0] = np.linspace(0., 1., num=num_ann_samples)
+    training_set[:, 1] = np.linspace(0., 1., num=num_ann_samples)
+    training_set[:, 2] = np.linspace(0., 1., num=num_ann_samples)
+    training_set[:, 3] = np.linspace(0., 1., num=num_ann_samples)
+    training_set[:, 4] = np.linspace(0., 1., num=num_ann_samples)
+    training_set[:, 0] = (-1.5 + 2.5) * training_set[:, 0] - 2.5
+    training_set[:, 1] = (1. - 0.) * training_set[:, 1] + 0.
+    training_set[:, 2] = (0.8 - 0.2) * training_set[:, 2] + 0.2
+    training_set[:, 3] = (0.8 - 0.2) * training_set[:, 3] + 0.2
+    training_set[:, 4] = (3.5 - 2.5) * training_set[:, 3] + 2.5
     return training_set
 
 def generate_ann_output_set(problem, reduced_problem, input_set,
@@ -820,7 +852,7 @@ itemsize = MPI.DOUBLE.Get_size()
 
 if world_comm.rank == 0:
     ann_input_set = generate_ann_input_set(num_ann_samples=ann_input_samples_num)
-    np.random.shuffle(ann_input_set)
+    # np.random.shuffle(ann_input_set)
     nbytes_para_ann_training = num_training_samples * itemsize * para_dim
     nbytes_para_ann_validation = num_validation_samples * itemsize * para_dim
     nbytes_dofs_ann_training_sigma = num_training_samples * itemsize * \
@@ -1069,8 +1101,8 @@ for j in range(len(ann_comm_list_sigma)):
         valid_dataloader_sigma = \
             DataLoader(customDataset_sigma, batch_size=input_validation_set.shape[0], shuffle=False)
 
-        save_model(ann_model_list_sigma[j], path_list_sigma[j])
-        # load_model(ann_model_list_sigma[j], path_list_sigma[j])
+        # save_model(ann_model_list_sigma[j], path_list_sigma[j])
+        load_model(ann_model_list_sigma[j], path_list_sigma[j])
 
         model_synchronise(ann_model_list_sigma[j], verbose=False)
 
@@ -1078,12 +1110,12 @@ for j in range(len(ann_comm_list_sigma)):
         training_loss = list()
         validation_loss = list()
 
-        max_epochs_sigma = 50000
+        max_epochs_sigma = 50 # 50000
         min_validation_loss_sigma = None
         start_epoch_sigma = 0
         checkpoint_epoch_sigma = 10
 
-        learning_rate_sigma = 1.e-4
+        learning_rate_sigma = 5.e-6 # 1.e-4
         optimiser_sigma = get_optimiser(ann_model_list_sigma[j], "Adam", learning_rate_sigma)
         loss_fn_sigma = get_loss_func("MSE", reduction="sum")
 
@@ -1127,7 +1159,7 @@ world_comm.Barrier()
 for j in range(len(model_root_process_list_sigma)):
     share_model(ann_model_list_sigma[j], world_comm,
                 model_root_process_list_sigma[j])
-    save_model(ann_model_list_sigma[j], trained_model_path_list_sigma[j])
+    # save_model(ann_model_list_sigma[j], trained_model_path_list_sigma[j])
 
 # Error analysis dataset
 print("\n")
@@ -1229,24 +1261,24 @@ if world_comm.size == 8:
          cpu_group2_comm_u, cpu_group3_comm_u]
 
 elif world_comm.size == 4:
-    cpu_group0_procs_u = world_comm.group.Incl([0])
-    cpu_group0_comm_u = \
-        world_comm.Create_group(cpu_group0_procs_u)
+    cpu_group0_procs_sigma = world_comm.group.Incl([0])
+    cpu_group0_comm_sigma = \
+        world_comm.Create_group(cpu_group0_procs_sigma)
 
-    cpu_group1_procs_u = world_comm.group.Incl([1])
-    cpu_group1_comm_u = \
-        world_comm.Create_group(cpu_group1_procs_u)
+    cpu_group1_procs_sigma = world_comm.group.Incl([1])
+    cpu_group1_comm_sigma = \
+        world_comm.Create_group(cpu_group1_procs_sigma)
 
-    cpu_group2_procs_u = world_comm.group.Incl([2])
-    cpu_group2_comm_u = \
-        world_comm.Create_group(cpu_group2_procs_u)
+    cpu_group2_procs_sigma = world_comm.group.Incl([2])
+    cpu_group2_comm_sigma = \
+        world_comm.Create_group(cpu_group2_procs_sigma)
 
-    cpu_group3_procs_u = world_comm.group.Incl([3])
-    cpu_group3_comm_u = world_comm.Create_group(cpu_group3_procs_u)
+    cpu_group3_procs_sigma = world_comm.group.Incl([3])
+    cpu_group3_comm_sigma = world_comm.Create_group(cpu_group3_procs_sigma)
 
-    ann_comm_list_u = \
-        [cpu_group0_comm_u, cpu_group1_comm_u,
-         cpu_group2_comm_u, cpu_group3_comm_u]
+    ann_comm_list_sigma = \
+        [cpu_group0_comm_sigma, cpu_group1_comm_sigma,
+         cpu_group2_comm_sigma, cpu_group3_comm_sigma]
 
 elif world_comm.size == 1:
     cpu_group0_procs_u = world_comm.group.Incl([0])
@@ -1347,8 +1379,8 @@ for j in range(len(ann_comm_list_u)):
         valid_dataloader_u = \
             DataLoader(customDataset_u, batch_size=input_validation_set.shape[0], shuffle=False)
 
-        save_model(ann_model_list_u[j], path_list_u[j])
-        # load_model(ann_model_list_u[j], path_list_u[j])
+        # save_model(ann_model_list_u[j], path_list_u[j])
+        load_model(ann_model_list_u[j], path_list_u[j])
 
         model_synchronise(ann_model_list_u[j], verbose=False)
 
@@ -1356,12 +1388,12 @@ for j in range(len(ann_comm_list_u)):
         training_loss = list()
         validation_loss = list()
 
-        max_epochs_u = 50000
+        max_epochs_u = 50 # 50000
         min_validation_loss_u = None
         start_epoch_u = 0
         checkpoint_epoch_u = 10
 
-        learning_rate_u = 1.e-4
+        learning_rate_u = 5.e-6 # 1.e-4
         optimiser_u = get_optimiser(ann_model_list_u[j], "Adam", learning_rate_u)
         loss_fn_u = get_loss_func("MSE", reduction="sum")
 
@@ -1405,7 +1437,7 @@ world_comm.Barrier()
 for j in range(len(model_root_process_list_u)):
     share_model(ann_model_list_u[j], world_comm,
                 model_root_process_list_u[j])
-    save_model(ann_model_list_u[j], trained_model_path_list_u[j])
+    # save_model(ann_model_list_u[j], trained_model_path_list_u[j])
 
 # Error analysis dataset
 print("\n")

@@ -392,8 +392,8 @@ mu = np.array([-1., 1.5, 0.7, 0.3, 3.4])
 
 para_dim = 5
 ann_input_samples_num = 23 # 640
-error_analysis_samples_num = 17
-num_snapshots = 13
+error_analysis_samples_num = 11#0
+num_snapshots = 10#0
 
 sigma_h, u_h = problem_parametric.solve(mu)
 
@@ -424,7 +424,13 @@ with dolfinx.io.XDMFFile(mesh.comm, computed_file_u,
 
 # POD Starts ###
 def generate_training_set(num_samples, para_dim):
-    training_set = np.random.uniform(size=(num_samples, para_dim))
+    # training_set = np.random.uniform(size=(num_samples, para_dim))
+    training_set = np.zeros((num_samples, para_dim))
+    training_set[:, 0] = np.linspace(0., 1., num=num_samples)
+    training_set[:, 1] = np.linspace(0., 1., num=num_samples)
+    training_set[:, 2] = np.linspace(0., 1., num=num_samples)
+    training_set[:, 3] = np.linspace(0., 1., num=num_samples)
+    training_set[:, 4] = np.linspace(0., 1., num=num_samples)
     training_set[:, 0] = (-1.5 + 2.5) * training_set[:, 0] - 2.5
     training_set[:, 1] = (1. - 0.) * training_set[:, 1] + 0.
     training_set[:, 2] = (0.8 - 0.2) * training_set[:, 2] + 0.2
@@ -527,8 +533,29 @@ print(f"Sigma eigenvalues: {positive_eigenvalues_sigma}")
 print(f"U eigenvalues: {positive_eigenvalues_u}")
 
 # Measure projection error
+def generate_projection_error_set(num_projection_samples=10):
+    '''
+    xlimits = np.array([[-1., 1.], [0.4, 0.6],
+                        [0.4, 0.6], [0.4, 0.6],
+                        [2.5, 3.5]])
+    sampling = LHS(xlimits=xlimits)
+    training_set = sampling(num_projection_samples)
+    '''
+    training_set = np.zeros((num_projection_samples, para_dim))
+    training_set[:, 0] = np.linspace(0., 1., num=num_projection_samples)
+    training_set[:, 1] = np.linspace(0., 1., num=num_projection_samples)
+    training_set[:, 2] = np.linspace(0., 1., num=num_projection_samples)
+    training_set[:, 3] = np.linspace(0., 1., num=num_projection_samples)
+    training_set[:, 4] = np.linspace(0., 1., num=num_projection_samples)
+    training_set[:, 0] = (-1.5 + 2.5) * training_set[:, 0] - 2.5
+    training_set[:, 1] = (1. - 0.) * training_set[:, 1] + 0.
+    training_set[:, 2] = (0.8 - 0.2) * training_set[:, 2] + 0.2
+    training_set[:, 3] = (0.8 - 0.2) * training_set[:, 3] + 0.2
+    training_set[:, 4] = (3.5 - 2.5) * training_set[:, 3] + 2.5
+    return training_set
+
 projection_error_analysis_samples = \
-    generate_training_set(error_analysis_samples_num, para_dim)
+    generate_projection_error_set(error_analysis_samples_num)
 projection_error_array_sigma = np.zeros(error_analysis_samples_num)
 projection_error_array_u = np.zeros(error_analysis_samples_num)
 
@@ -551,12 +578,25 @@ print(f"Projection error (u): {projection_error_array_u}")
 
 # Creating dataset
 def generate_ann_input_set(num_ann_samples=10):
+    '''
     # ((-2.5, -1.5), (0., 1.), (0.2, 0.8), (0.2, 0.8), (2.5, 3.5))
     xlimits = np.array([[-2.5, -1.5], [0., 1.],
                         [0.2, 0.8], [0.2, 0.8],
                         [2.5, 3.5]])
     sampling = LHS(xlimits=xlimits)
     training_set = sampling(num_ann_samples)
+    '''
+    training_set = np.zeros((num_ann_samples, para_dim))
+    training_set[:, 0] = np.linspace(0., 1., num=num_ann_samples)
+    training_set[:, 1] = np.linspace(0., 1., num=num_ann_samples)
+    training_set[:, 2] = np.linspace(0., 1., num=num_ann_samples)
+    training_set[:, 3] = np.linspace(0., 1., num=num_ann_samples)
+    training_set[:, 4] = np.linspace(0., 1., num=num_ann_samples)
+    training_set[:, 0] = (-1.5 + 2.5) * training_set[:, 0] - 2.5
+    training_set[:, 1] = (1. - 0.) * training_set[:, 1] + 0.
+    training_set[:, 2] = (0.8 - 0.2) * training_set[:, 2] + 0.2
+    training_set[:, 3] = (0.8 - 0.2) * training_set[:, 3] + 0.2
+    training_set[:, 4] = (3.5 - 2.5) * training_set[:, 3] + 2.5
     return training_set
 
 def generate_ann_output_set(problem, reduced_problem, input_set, mode=None):
@@ -573,7 +613,7 @@ def generate_ann_output_set(problem, reduced_problem, input_set, mode=None):
     return output_set_sigma, output_set_u
 
 ann_input_set = generate_ann_input_set(num_ann_samples=ann_input_samples_num)
-np.random.shuffle(ann_input_set)
+# np.random.shuffle(ann_input_set)
 ann_output_set_sigma, ann_output_set_u = \
     generate_ann_output_set(problem_parametric, reduced_problem,
                             ann_input_set, mode="Training")
@@ -600,7 +640,7 @@ customDataset = CustomDataset(reduced_problem, input_training_set,
                               output_scaling_range=reduced_problem.output_scaling_range_sigma,
                               input_range=reduced_problem.input_range,
                               output_range=reduced_problem.output_range_sigma, verbose=False)
-train_dataloader_sigma = DataLoader(customDataset, batch_size=6, shuffle=False) # shuffle=True)
+train_dataloader_sigma = DataLoader(customDataset, batch_size=input_training_set.shape[0], shuffle=False) # shuffle=True)
 
 customDataset = CustomDataset(reduced_problem, input_validation_set,
                               output_validation_set_sigma,
@@ -617,7 +657,7 @@ customDataset = \
                   output_scaling_range=reduced_problem.output_scaling_range_u,
                   input_range=reduced_problem.input_range,
                   output_range=reduced_problem.output_range_u, verbose=False)
-train_dataloader_u = DataLoader(customDataset, batch_size=6, shuffle=False) # shuffle=True)
+train_dataloader_u = DataLoader(customDataset, batch_size=input_training_set.shape[0], shuffle=False) # shuffle=True)
 
 customDataset = \
     CustomDataset(reduced_problem, input_validation_set,
@@ -633,13 +673,9 @@ model_sigma = HiddenLayersNet(input_training_set.shape[1], [55, 55, 55],
                               len(reduced_problem._basis_functions_sigma),
                               Tanh())
 
-model_u = HiddenLayersNet(input_training_set.shape[1], [55, 55, 55],
-                          len(reduced_problem._basis_functions_u),
-                          Tanh())
-
-path = "model_sigma.pth"
-save_model(model_sigma, path)
-# load_model(model_sigma, path)
+path = "model_sigma1.pth"
+# save_model(model_sigma, path)
+load_model(model_sigma, path)
 
 training_loss_sigma = list()
 validation_loss_sigma = list()
@@ -683,9 +719,35 @@ elapsed_time = end_time - start_time
 os.system(f"rm {checkpoint_path_sigma}")
 print(f"Training time (sigma): {elapsed_time}")
 
-path = "model_u.pth"
-save_model(model_u, path)
-# load_model(model_u, path)
+# Error analysis dataset
+print("\n")
+print("Generating error analysis (only input/parameters) dataset")
+print("\n")
+error_analysis_set = generate_ann_input_set(num_ann_samples=error_analysis_samples_num)
+error_numpy_sigma = np.zeros(error_analysis_set.shape[0])
+
+for i in range(error_analysis_set.shape[0]):
+    print(f"Error analysis parameter number {i+1} of ")
+    print(f"{error_analysis_set.shape[0]}: {error_analysis_set[i,:]}")
+    error_numpy_sigma[i] = error_analysis(reduced_problem, problem_parametric,
+                                      error_analysis_set[i, :], model_sigma,
+                                      len(reduced_problem._basis_functions_sigma), online_nn,
+                                      norm_error=reduced_problem.norm_error_sigma,
+                                      reconstruct_solution=reduced_problem.reconstruct_solution_sigma,
+                                      input_scaling_range=reduced_problem.input_scaling_range,
+                                      output_scaling_range=reduced_problem.output_scaling_range_sigma,
+                                      input_range=reduced_problem.input_range,
+                                      output_range=reduced_problem.output_range_sigma,
+                                      index=0, verbose=True)
+    print(f"Error (sigma): {error_numpy_sigma[i]}")
+
+model_u = HiddenLayersNet(input_training_set.shape[1], [55, 55, 55],
+                          len(reduced_problem._basis_functions_u),
+                          Tanh())
+
+path = "model_u1.pth"
+# save_model(model_u, path)
+load_model(model_u, path)
 
 training_loss_u = list()
 validation_loss_u = list()
@@ -734,34 +796,12 @@ print("\n")
 print("Generating error analysis (only input/parameters) dataset")
 print("\n")
 error_analysis_set = generate_ann_input_set(num_ann_samples=error_analysis_samples_num)
-error_numpy_sigma = np.zeros(error_analysis_set.shape[0])
-
-for i in range(error_analysis_set.shape[0]):
-    print(f"Error analysis parameter number {i+1} of ")
-    print(f"{error_analysis_set.shape[0]}: {error_analysis_set[i,:]}")
-    error_numpy_sigma[i] = error_analysis(reduced_problem, problem_parametric,
-                                      error_analysis_set[i, :], model_sigma,
-                                      len(reduced_problem._basis_functions_sigma), online_nn,
-                                      norm_error=reduced_problem.norm_error_sigma,
-                                      reconstruct_solution=reduced_problem.reconstruct_solution_sigma,
-                                      input_scaling_range=reduced_problem.input_scaling_range,
-                                      output_scaling_range=reduced_problem.output_scaling_range_sigma,
-                                      input_range=reduced_problem.input_range,
-                                      output_range=reduced_problem.output_range_sigma,
-                                      index=0, verbose=True)
-    print(f"Error (sigma): {error_numpy_sigma[i]}")
-
-# Error analysis dataset
-print("\n")
-print("Generating error analysis (only input/parameters) dataset")
-print("\n")
-error_analysis_set = generate_ann_input_set(num_ann_samples=error_analysis_samples_num)
 error_numpy_u = np.zeros(error_analysis_set.shape[0])
 
 for i in range(error_analysis_set.shape[0]):
     print(f"Error analysis parameter number {i+1} of ")
     print(f"{error_analysis_set.shape[0]}: {error_analysis_set[i,:]}")
-    error_numpy_sigma[i] = error_analysis(reduced_problem, problem_parametric,
+    error_numpy_u[i] = error_analysis(reduced_problem, problem_parametric,
                                           error_analysis_set[i, :], model_u,
                                           len(reduced_problem._basis_functions_u), online_nn,
                                           norm_error=reduced_problem.norm_error_u,
@@ -771,7 +811,7 @@ for i in range(error_analysis_set.shape[0]):
                                           input_range=reduced_problem.input_range,
                                           output_range=reduced_problem.output_range_u,
                                           index=1, verbose=True)
-    print(f"Error (U): {error_numpy_sigma[i]}")
+    print(f"Error (U): {error_numpy_u[i]}")
 
 # Online phase
 # Define a parameter
@@ -826,5 +866,3 @@ with dolfinx.io.XDMFFile(mesh.comm, "dlrbnicsx_solution/rb_u_online_mu.xdmf",
                             "w") as solution_file:
     solution_file.write_mesh(mesh)
     solution_file.write_function(rb_solution_u)
-
-# TODO code rearrange to separate u and sigma at ANN level, HR compliance

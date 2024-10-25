@@ -530,7 +530,6 @@ with dolfinx.io.XDMFFile(mesh.comm, fem_rb_error_file,
     solution_file.write_function(error_function_sigma)
 
 # ### Projection error ends ###
-exit()
 
 
 # Creating dataset
