@@ -826,3 +826,5 @@ with dolfinx.io.XDMFFile(mesh.comm, "dlrbnicsx_solution/rb_u_online_mu.xdmf",
                             "w") as solution_file:
     solution_file.write_mesh(mesh)
     solution_file.write_function(rb_solution_u)
+
+# TODO code rearrange to separate u and sigma at ANN level, HR compliance
