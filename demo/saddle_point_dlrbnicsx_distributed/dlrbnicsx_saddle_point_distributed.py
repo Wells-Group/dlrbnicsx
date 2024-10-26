@@ -467,6 +467,7 @@ num_dofs_u = mesh_comm.allreduce(rend_u, op=MPI.MAX) - mesh_comm.allreduce(rstar
 
 computed_file_sigma = "dlrbnicsx_solution_saddle_point/solution_computed_sigma.xdmf"
 computed_file_u = "dlrbnicsx_solution_saddle_point/solution_computed_u.xdmf"
+'''
 if world_comm.rank == 0:
     with dolfinx.io.XDMFFile(mesh.comm, computed_file_sigma,
                             "w") as solution_file:
@@ -477,6 +478,7 @@ if world_comm.rank == 0:
                                 "w") as solution_file:
         solution_file.write_mesh(mesh)
         solution_file.write_function(u_h)
+'''
 
 # POD Starts ###
 Nmax_sigma = 30
@@ -747,6 +749,7 @@ for k in projection_error_indices:
 
 print(f"Rank: {world_comm.rank}, \nProjection errors (sigma): {projection_error_array_sigma}, \nProjection errors (u): {projection_error_array_u} ")
 
+'''
 if fem_comm_list[0] != MPI.COMM_NULL:
     fem_error_file \
         = "projection_error/fem_solution_sigma.xdmf"
@@ -800,6 +803,7 @@ if fem_comm_list[0] != MPI.COMM_NULL:
                             "w") as solution_file:
         solution_file.write_mesh(mesh)
         solution_file.write_function(error_function_u)
+'''
 # ### Projection error ends ###
 
 # Creating dataset
@@ -1558,6 +1562,7 @@ if fem_comm_list[0] != MPI.COMM_NULL:
     # Post processing
     # TODO make plotting work on CSD3
 
+    '''
     fem_online_file \
         = "dlrbnicsx_solution_mixed_poisson_0/fem_online_mu_computed_sigma.xdmf"
     with dolfinx.io.XDMFFile(mesh.comm, fem_online_file,
@@ -1583,6 +1588,7 @@ if fem_comm_list[0] != MPI.COMM_NULL:
                             "w") as solution_file:
         solution_file.write_mesh(mesh)
         solution_file.write_function(error_function_sigma)
+    '''
 
     print(f"FEM time 0: {fem_end_time_0 - fem_start_time_0}")
     print(f"RB time (sigma) 0: {rb_end_time_0 - rb_start_time_0}")
