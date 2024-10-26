@@ -1265,24 +1265,24 @@ if world_comm.size == 8:
          cpu_group2_comm_u, cpu_group3_comm_u]
 
 elif world_comm.size == 4:
-    cpu_group0_procs_sigma = world_comm.group.Incl([0])
-    cpu_group0_comm_sigma = \
-        world_comm.Create_group(cpu_group0_procs_sigma)
+    cpu_group0_procs_u = world_comm.group.Incl([0])
+    cpu_group0_comm_u = \
+        world_comm.Create_group(cpu_group0_procs_u)
 
-    cpu_group1_procs_sigma = world_comm.group.Incl([1])
-    cpu_group1_comm_sigma = \
-        world_comm.Create_group(cpu_group1_procs_sigma)
+    cpu_group1_procs_u = world_comm.group.Incl([1])
+    cpu_group1_comm_u = \
+        world_comm.Create_group(cpu_group1_procs_u)
 
-    cpu_group2_procs_sigma = world_comm.group.Incl([2])
-    cpu_group2_comm_sigma = \
-        world_comm.Create_group(cpu_group2_procs_sigma)
+    cpu_group2_procs_u = world_comm.group.Incl([2])
+    cpu_group2_comm_u = \
+        world_comm.Create_group(cpu_group2_procs_u)
 
-    cpu_group3_procs_sigma = world_comm.group.Incl([3])
-    cpu_group3_comm_sigma = world_comm.Create_group(cpu_group3_procs_sigma)
+    cpu_group3_procs_u = world_comm.group.Incl([3])
+    cpu_group3_comm_u = world_comm.Create_group(cpu_group3_procs_u)
 
-    ann_comm_list_sigma = \
-        [cpu_group0_comm_sigma, cpu_group1_comm_sigma,
-         cpu_group2_comm_sigma, cpu_group3_comm_sigma]
+    ann_comm_list_u = \
+        [cpu_group0_comm_u, cpu_group1_comm_u,
+         cpu_group2_comm_u, cpu_group3_comm_u]
 
 elif world_comm.size == 1:
     cpu_group0_procs_u = world_comm.group.Incl([0])
