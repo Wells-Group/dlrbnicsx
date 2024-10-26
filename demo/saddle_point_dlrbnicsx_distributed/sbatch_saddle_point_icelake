@@ -21,4 +21,4 @@ spack clean
 # cd mesh_data
 # mpiexec -n 1 python3 mesh.py
 cd ..
-/usr/bin/time -v  mpiexec -n 4 python3 dlrbnicsx_saddle_point_distributed.py
+/usr/bin/time -v mpiexec -n 4 python3 dlrbnicsx_saddle_point_distributed.py
