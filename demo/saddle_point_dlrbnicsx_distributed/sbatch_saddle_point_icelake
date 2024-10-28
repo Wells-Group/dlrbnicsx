@@ -5,8 +5,8 @@
 #SBATCH --error=test_job_%A_%a.err
 
 #SBATCH --nodes=1
-#SBATCH --ntasks=4
-#SBATCH --time=00:30:00
+#SBATCH --ntasks=8
+#SBATCH --time=08:00:00
 #SBATCH --mem=42000mb
 
 #SBATCH -p icelake-himem
