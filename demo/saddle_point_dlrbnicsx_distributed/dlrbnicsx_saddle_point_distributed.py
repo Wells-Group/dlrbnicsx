@@ -493,7 +493,7 @@ for comm_i in fem_comm_list:
     if comm_i != MPI.COMM_NULL:
         mesh_comm = comm_i
 
-nx, ny, nz = 5, 5, 5 # 20, 20, 20
+nx, ny, nz = 20, 20, 20
 mesh = dolfinx.mesh.create_box(mesh_comm,
                                [[0.0, 0.0, 0.0], [1., 1, 1]],
                                [nx, ny, nz],
@@ -506,9 +506,9 @@ problem_parametric = ParametricProblem(mesh)
 mu = np.array([-1., 1.5, 0.7, 0.3, 3.4])
 
 para_dim = 5
-ann_input_samples_num = 300 # 23
-error_analysis_samples_num = 11#0
-num_snapshots = 10#0
+ann_input_samples_num = 1100
+error_analysis_samples_num = 500
+num_snapshots = 1000
 itemsize = MPI.DOUBLE.Get_size()
 
 sigma_h, u_h = problem_parametric.solve(mu)
@@ -1096,7 +1096,7 @@ else:
 print(f"Rank: {world_comm.rank}, Training set indices: {training_set_indices}, Validation set indices: {validation_set_indices}")
 
 # ANN model
-model_sigma0 = HiddenLayersNet(para_dim, [50, 50, 50],
+model_sigma0 = HiddenLayersNet(para_dim, [45, 45, 45],
                                len(reduced_problem._basis_functions_sigma),
                                Tanh())
 
@@ -1104,11 +1104,11 @@ model_sigma1 = HiddenLayersNet(para_dim, [55, 55, 55],
                                len(reduced_problem._basis_functions_sigma),
                                Tanh())
 
-model_sigma2 = HiddenLayersNet(para_dim, [60, 60, 60],
+model_sigma2 = HiddenLayersNet(para_dim, [65, 65, 65],
                                len(reduced_problem._basis_functions_sigma),
                                Tanh())
 
-model_sigma3 = HiddenLayersNet(para_dim, [65, 65, 65],
+model_sigma3 = HiddenLayersNet(para_dim, [75, 75, 75],
                                len(reduced_problem._basis_functions_sigma),
                                Tanh())
 
@@ -1191,7 +1191,7 @@ for j in range(len(ann_comm_list_sigma)):
         training_loss = list()
         validation_loss = list()
 
-        max_epochs_sigma = 50 # 50000
+        max_epochs_sigma = 50000
         min_validation_loss_sigma = None
         start_epoch_sigma = 0
         checkpoint_epoch_sigma = 10
@@ -1296,11 +1296,8 @@ if world_comm.rank == 0:
 world_comm.Barrier()
 
 if world_comm.size != 1:
-    '''
     error_array_list_sigma = [error_numpy_sigma0, error_numpy_sigma1,
                               error_numpy_sigma2, error_numpy_sigma3]
-    '''
-    error_array_list_sigma = [error_numpy_sigma0, error_numpy_sigma1]
 else:
     error_array_list_sigma = [error_numpy_sigma0]
 
@@ -1328,16 +1325,16 @@ for j in range(len(fem_comm_list)):
                 print(f"Error analysis (sigma) {i+1} of {error_analysis_set.shape[0]}, Model {array_num}, Error: {error_array_list_sigma[array_num][i]}")
 
 if world_comm.size == 8:
-    cpu_group0_procs_u = world_comm.group.Incl([0, 4])
+    cpu_group0_procs_u = world_comm.group.Incl([0, 1])
     cpu_group0_comm_u = world_comm.Create_group(cpu_group0_procs_u)
 
-    cpu_group1_procs_u = world_comm.group.Incl([1, 5])
+    cpu_group1_procs_u = world_comm.group.Incl([2, 3])
     cpu_group1_comm_u = world_comm.Create_group(cpu_group1_procs_u)
 
-    cpu_group2_procs_u = world_comm.group.Incl([2, 6])
+    cpu_group2_procs_u = world_comm.group.Incl([4, 5])
     cpu_group2_comm_u = world_comm.Create_group(cpu_group2_procs_u)
 
-    cpu_group3_procs_u = world_comm.group.Incl([3, 7])
+    cpu_group3_procs_u = world_comm.group.Incl([6, 7])
     cpu_group3_comm_u = world_comm.Create_group(cpu_group3_procs_u)
 
     ann_comm_list_u = \
@@ -1388,7 +1385,7 @@ else:
 print(f"Rank: {world_comm.rank}, Training set indices: {training_set_indices}, Validation set indices: {validation_set_indices}")
 
 # ANN model
-model_u0 = HiddenLayersNet(para_dim, [50, 50, 50],
+model_u0 = HiddenLayersNet(para_dim, [45, 45, 45],
                            len(reduced_problem._basis_functions_u),
                            Tanh())
 
@@ -1396,11 +1393,11 @@ model_u1 = HiddenLayersNet(para_dim, [55, 55, 55],
                            len(reduced_problem._basis_functions_u),
                            Tanh())
 
-model_u2 = HiddenLayersNet(para_dim, [60, 60, 60],
+model_u2 = HiddenLayersNet(para_dim, [65, 65, 65],
                            len(reduced_problem._basis_functions_u),
                            Tanh())
 
-model_u3 = HiddenLayersNet(para_dim, [65, 65, 65],
+model_u3 = HiddenLayersNet(para_dim, [75, 75, 75],
                            len(reduced_problem._basis_functions_u),
                            Tanh())
 
@@ -1412,7 +1409,7 @@ if world_comm.size == 8:
     checkpoint_path_list_u = \
         ["checkpoint_u0", "checkpoint_u1",
          "checkpoint_u2", "checkpoint_u3"]
-    model_root_process_list_u = [0, 3, 4, 7]
+    model_root_process_list_u = [0, 2, 4, 6]
     trained_model_path_list_u = \
         ["trained_model_u0.pth", "trained_model_u1.pth",
          "trained_model_u2.pth", "trained_model_u3.pth"]
@@ -1589,11 +1586,8 @@ if world_comm.rank == 0:
 world_comm.Barrier()
 
 if world_comm.size != 1:
-    '''
     error_array_list_u = [error_numpy_u0, error_numpy_u1,
                           error_numpy_u2, error_numpy_u3]
-    '''
-    error_array_list_u = [error_numpy_u0, error_numpy_u1]
 else:
     error_array_list_u = [error_numpy_u0]
 
