@@ -552,7 +552,13 @@ tol_sigma = 1.e-4
 tol_u = 1.e-4
 
 def generate_training_set(num_samples, para_dim):
-    training_set = np.random.uniform(size=(num_samples, para_dim))
+    # training_set = np.random.uniform(size=(num_samples, para_dim))
+    training_set = np.zeros((num_samples, para_dim))
+    training_set[:, 0] = np.linspace(0., 1., num=num_samples)
+    training_set[:, 1] = np.linspace(0., 1., num=num_samples)
+    training_set[:, 2] = np.linspace(0., 1., num=num_samples)
+    training_set[:, 3] = np.linspace(0., 1., num=num_samples)
+    training_set[:, 4] = np.linspace(0., 1., num=num_samples)
     training_set[:, 0] = (-1.5 + 2.5) * training_set[:, 0] - 2.5
     training_set[:, 1] = (1. - 0.) * training_set[:, 1] + 0.
     training_set[:, 2] = (0.8 - 0.2) * training_set[:, 2] + 0.2
@@ -724,11 +730,24 @@ print(f"Norm reconstructed: {sigma_norm}, projection error: {sigma_error}")
 # ### Projection error samples ###
 # Creating dataset
 def generate_projection_error_set(num_projection_samples=10):
+    '''
     xlimits = np.array([[-1., 1.], [0.4, 0.6],
                         [0.4, 0.6], [0.4, 0.6],
                         [2.5, 3.5]])
     sampling = LHS(xlimits=xlimits)
     training_set = sampling(num_projection_samples)
+    '''
+    training_set = np.zeros((num_projection_samples, para_dim))
+    training_set[:, 0] = np.linspace(0., 1., num=num_projection_samples)
+    training_set[:, 1] = np.linspace(0., 1., num=num_projection_samples)
+    training_set[:, 2] = np.linspace(0., 1., num=num_projection_samples)
+    training_set[:, 3] = np.linspace(0., 1., num=num_projection_samples)
+    training_set[:, 4] = np.linspace(0., 1., num=num_projection_samples)
+    training_set[:, 0] = (-1.5 + 2.5) * training_set[:, 0] - 2.5
+    training_set[:, 1] = (1. - 0.) * training_set[:, 1] + 0.
+    training_set[:, 2] = (0.8 - 0.2) * training_set[:, 2] + 0.2
+    training_set[:, 3] = (0.8 - 0.2) * training_set[:, 3] + 0.2
+    training_set[:, 4] = (3.5 - 2.5) * training_set[:, 3] + 2.5
     return training_set
 
 if world_comm.rank == 0:
@@ -854,12 +873,25 @@ if fem_comm_list[0] != MPI.COMM_NULL:
 
 # Creating dataset
 def generate_ann_input_set(num_ann_samples=10):
+    '''
     # ((-2.5, -1.5), (0., 1.), (0.2, 0.8), (0.2, 0.8), (2.5, 3.5))
     xlimits = np.array([[-2.5, -1.5], [0., 1.],
                         [0.2, 0.8], [0.2, 0.8],
                         [2.5, 3.5]])
     sampling = LHS(xlimits=xlimits)
     training_set = sampling(num_ann_samples)
+    '''
+    training_set = np.zeros((num_ann_samples, para_dim))
+    training_set[:, 0] = np.linspace(0., 1., num=num_ann_samples)
+    training_set[:, 1] = np.linspace(0., 1., num=num_ann_samples)
+    training_set[:, 2] = np.linspace(0., 1., num=num_ann_samples)
+    training_set[:, 3] = np.linspace(0., 1., num=num_ann_samples)
+    training_set[:, 4] = np.linspace(0., 1., num=num_ann_samples)
+    training_set[:, 0] = (-1.5 + 2.5) * training_set[:, 0] - 2.5
+    training_set[:, 1] = (1. - 0.) * training_set[:, 1] + 0.
+    training_set[:, 2] = (0.8 - 0.2) * training_set[:, 2] + 0.2
+    training_set[:, 3] = (0.8 - 0.2) * training_set[:, 3] + 0.2
+    training_set[:, 4] = (3.5 - 2.5) * training_set[:, 3] + 2.5
     return training_set
 
 def generate_ann_output_set(problem, reduced_problem, input_set,
@@ -1151,7 +1183,7 @@ for j in range(len(ann_comm_list_sigma)):
             DataLoader(customDataset_sigma, batch_size=input_validation_set.shape[0], shuffle=False)
 
         # save_model(ann_model_list_sigma[j], path_list_sigma[j])
-        # load_model(ann_model_list_sigma[j], path_list_sigma[j])
+        load_model(ann_model_list_sigma[j], path_list_sigma[j])
 
         model_synchronise(ann_model_list_sigma[j], verbose=False)
 
@@ -1441,7 +1473,7 @@ for j in range(len(ann_comm_list_u)):
             DataLoader(customDataset_u, batch_size=input_validation_set.shape[0], shuffle=False)
 
         # save_model(ann_model_list_u[j], path_list_u[j])
-        # load_model(ann_model_list_u[j], path_list_u[j])
+        load_model(ann_model_list_u[j], path_list_u[j])
 
         model_synchronise(ann_model_list_u[j], verbose=False)
 
