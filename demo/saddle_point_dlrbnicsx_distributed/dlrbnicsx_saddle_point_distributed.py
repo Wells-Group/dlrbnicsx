@@ -507,7 +507,7 @@ mu = np.array([-1., 1.5, 0.7, 0.3, 3.4])
 
 para_dim = 5
 ann_input_samples_num = 1100
-error_analysis_samples_num = 500
+error_analysis_samples_num = 800
 num_snapshots = 1000
 itemsize = MPI.DOUBLE.Get_size()
 
@@ -546,19 +546,13 @@ if world_comm.rank == 0:
 '''
 
 # POD Starts ###
-Nmax_sigma = 30
-Nmax_u = 30
-tol_sigma = 1.e-4
-tol_u = 1.e-4
+Nmax_sigma = 100
+Nmax_u = 100
+tol_sigma = 1.e-6
+tol_u = 1.e-6
 
 def generate_training_set(num_samples, para_dim):
-    # training_set = np.random.uniform(size=(num_samples, para_dim))
-    training_set = np.zeros((num_samples, para_dim))
-    training_set[:, 0] = np.linspace(0., 1., num=num_samples)
-    training_set[:, 1] = np.linspace(0., 1., num=num_samples)
-    training_set[:, 2] = np.linspace(0., 1., num=num_samples)
-    training_set[:, 3] = np.linspace(0., 1., num=num_samples)
-    training_set[:, 4] = np.linspace(0., 1., num=num_samples)
+    training_set = np.random.uniform(size=(num_samples, para_dim))
     training_set[:, 0] = (-1.5 + 2.5) * training_set[:, 0] - 2.5
     training_set[:, 1] = (1. - 0.) * training_set[:, 1] + 0.
     training_set[:, 2] = (0.8 - 0.2) * training_set[:, 2] + 0.2
@@ -730,24 +724,11 @@ print(f"Norm reconstructed: {sigma_norm}, projection error: {sigma_error}")
 # ### Projection error samples ###
 # Creating dataset
 def generate_projection_error_set(num_projection_samples=10):
-    '''
     xlimits = np.array([[-1., 1.], [0.4, 0.6],
                         [0.4, 0.6], [0.4, 0.6],
                         [2.5, 3.5]])
     sampling = LHS(xlimits=xlimits)
     training_set = sampling(num_projection_samples)
-    '''
-    training_set = np.zeros((num_projection_samples, para_dim))
-    training_set[:, 0] = np.linspace(0., 1., num=num_projection_samples)
-    training_set[:, 1] = np.linspace(0., 1., num=num_projection_samples)
-    training_set[:, 2] = np.linspace(0., 1., num=num_projection_samples)
-    training_set[:, 3] = np.linspace(0., 1., num=num_projection_samples)
-    training_set[:, 4] = np.linspace(0., 1., num=num_projection_samples)
-    training_set[:, 0] = (-1.5 + 2.5) * training_set[:, 0] - 2.5
-    training_set[:, 1] = (1. - 0.) * training_set[:, 1] + 0.
-    training_set[:, 2] = (0.8 - 0.2) * training_set[:, 2] + 0.2
-    training_set[:, 3] = (0.8 - 0.2) * training_set[:, 3] + 0.2
-    training_set[:, 4] = (3.5 - 2.5) * training_set[:, 3] + 2.5
     return training_set
 
 if world_comm.rank == 0:
@@ -873,25 +854,12 @@ if fem_comm_list[0] != MPI.COMM_NULL:
 
 # Creating dataset
 def generate_ann_input_set(num_ann_samples=10):
-    '''
     # ((-2.5, -1.5), (0., 1.), (0.2, 0.8), (0.2, 0.8), (2.5, 3.5))
     xlimits = np.array([[-2.5, -1.5], [0., 1.],
                         [0.2, 0.8], [0.2, 0.8],
                         [2.5, 3.5]])
     sampling = LHS(xlimits=xlimits)
     training_set = sampling(num_ann_samples)
-    '''
-    training_set = np.zeros((num_ann_samples, para_dim))
-    training_set[:, 0] = np.linspace(0., 1., num=num_ann_samples)
-    training_set[:, 1] = np.linspace(0., 1., num=num_ann_samples)
-    training_set[:, 2] = np.linspace(0., 1., num=num_ann_samples)
-    training_set[:, 3] = np.linspace(0., 1., num=num_ann_samples)
-    training_set[:, 4] = np.linspace(0., 1., num=num_ann_samples)
-    training_set[:, 0] = (-1.5 + 2.5) * training_set[:, 0] - 2.5
-    training_set[:, 1] = (1. - 0.) * training_set[:, 1] + 0.
-    training_set[:, 2] = (0.8 - 0.2) * training_set[:, 2] + 0.2
-    training_set[:, 3] = (0.8 - 0.2) * training_set[:, 3] + 0.2
-    training_set[:, 4] = (3.5 - 2.5) * training_set[:, 3] + 2.5
     return training_set
 
 def generate_ann_output_set(problem, reduced_problem, input_set,
@@ -1120,7 +1088,7 @@ if world_comm.size == 8:
     checkpoint_path_list_sigma = \
         ["checkpoint_sigma0", "checkpoint_sigma1",
          "checkpoint_sigma2", "checkpoint_sigma3"]
-    model_root_process_list_sigma = [0, 3, 4, 7]
+    model_root_process_list_sigma = [0, 2, 4, 6]
     trained_model_path_list_sigma = \
         ["trained_model_sigma0.pth", "trained_model_sigma1.pth",
          "trained_model_sigma2.pth", "trained_model_sigma3.pth"]
@@ -1183,7 +1151,7 @@ for j in range(len(ann_comm_list_sigma)):
             DataLoader(customDataset_sigma, batch_size=input_validation_set.shape[0], shuffle=False)
 
         # save_model(ann_model_list_sigma[j], path_list_sigma[j])
-        load_model(ann_model_list_sigma[j], path_list_sigma[j])
+        # load_model(ann_model_list_sigma[j], path_list_sigma[j])
 
         model_synchronise(ann_model_list_sigma[j], verbose=False)
 
@@ -1196,7 +1164,7 @@ for j in range(len(ann_comm_list_sigma)):
         start_epoch_sigma = 0
         checkpoint_epoch_sigma = 10
 
-        learning_rate_sigma = 5.e-6 # 1.e-4
+        learning_rate_sigma = 1.e-5 # 1.e-4
         optimiser_sigma = get_optimiser(ann_model_list_sigma[j], "Adam", learning_rate_sigma)
         loss_fn_sigma = get_loss_func("MSE", reduction="sum")
 
@@ -1206,6 +1174,7 @@ for j in range(len(ann_comm_list_sigma)):
                                 optimiser_sigma)
 
         import time
+        ann_comm_list_sigma[j].Barrier()
         start_time = time.process_time()
         for epochs in range(start_epoch_sigma, max_epochs_sigma):
             if epochs > 0 and epochs % checkpoint_epoch_sigma == 0:
@@ -1473,7 +1442,7 @@ for j in range(len(ann_comm_list_u)):
             DataLoader(customDataset_u, batch_size=input_validation_set.shape[0], shuffle=False)
 
         # save_model(ann_model_list_u[j], path_list_u[j])
-        load_model(ann_model_list_u[j], path_list_u[j])
+        # load_model(ann_model_list_u[j], path_list_u[j])
 
         model_synchronise(ann_model_list_u[j], verbose=False)
 
@@ -1481,12 +1450,12 @@ for j in range(len(ann_comm_list_u)):
         training_loss = list()
         validation_loss = list()
 
-        max_epochs_u = 50 # 50000
+        max_epochs_u = 50000
         min_validation_loss_u = None
         start_epoch_u = 0
         checkpoint_epoch_u = 10
 
-        learning_rate_u = 5.e-6 # 1.e-4
+        learning_rate_u = 1.e-5 # 1.e-4
         optimiser_u = get_optimiser(ann_model_list_u[j], "Adam", learning_rate_u)
         loss_fn_u = get_loss_func("MSE", reduction="sum")
 
@@ -1496,6 +1465,7 @@ for j in range(len(ann_comm_list_u)):
                                 optimiser_u)
 
         import time
+        ann_comm_list_u[j].Barrier()
         start_time = time.process_time()
         for epochs in range(start_epoch_u, max_epochs_u):
             if epochs > 0 and epochs % checkpoint_epoch_u == 0:
