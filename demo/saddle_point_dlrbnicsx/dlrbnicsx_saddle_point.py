@@ -392,7 +392,7 @@ mu = np.array([-1., 1.5, 0.7, 0.3, 3.4])
 
 para_dim = 5
 ann_input_samples_num = 23 # 640
-error_analysis_samples_num = 11#0
+error_analysis_samples_num = 300 # 11#0
 num_snapshots = 10#0
 
 sigma_h, u_h = problem_parametric.solve(mu)

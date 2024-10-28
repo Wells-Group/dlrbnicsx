@@ -199,7 +199,7 @@ class ParametricProblem(abc.ABC):
         bcs = [bc_x0, bc_y0, bc_z0]
 
         return bcs
-
+    '''
     def solve(self, mu):
         self.mu_0.value = mu[0]
         self.mu_1.value = mu[1]
@@ -273,6 +273,61 @@ class ParametricProblem(abc.ABC):
         A.destroy()
         L.destroy()
         w_h.x.scatter_forward()
+        sigma_h, u_h = w_h.split()
+        sigma_h = sigma_h.collapse()
+        u_h = u_h.collapse()
+        print(f"Solve time: {solve_end_time - solve_start_time}")
+        return sigma_h, u_h
+    '''
+
+    def solve(self, mu):
+        self.mu_0.value = mu[0]
+        self.mu_1.value = mu[1]
+        self.mu_2.value = mu[2]
+        self.mu_3.value = mu[3]
+        self.mu_4.value = mu[4]
+
+        a = self.bilinear_form
+        L = self.linear_form
+        bcs = self.assemble_bcs
+
+        V0 = self._V.sub(0)
+        Q, VQ_map = V0.collapse()
+        V1 = self._V.sub(1)
+        W, VW_map = V1.collapse()
+
+        a_cpp = dolfinx.fem.form(a)
+        l_cpp = dolfinx.fem.form(L)
+
+        A = dolfinx.fem.petsc.assemble_matrix(a_cpp, bcs=bcs)
+        A.assemble()
+        L = dolfinx.fem.petsc.assemble_vector(l_cpp)
+        dolfinx.fem.petsc.apply_lifting(L, [a_cpp], [bcs])
+        L.ghostUpdate(addv=PETSc.InsertMode.ADD,
+                      mode=PETSc.ScatterMode.REVERSE)
+        dolfinx.fem.petsc.set_bc(L, bcs)
+
+        ksp = PETSc.KSP()
+        ksp.create(mesh.comm)
+        ksp.setOperators(A)
+        # Set GMRES solver
+        ksp.setType("gmres")
+        ksp.setGMRESRestart(100)
+        # Convergence criteria based on residual tolerance
+        ksp.rtol = 1.e-8
+        # Solve and see convergence details
+        ksp.setFromOptions()
+        w_h = dolfinx.fem.Function(self._V)
+        solve_start_time = time.process_time()
+        ksp.solve(L, w_h.vector)
+        solve_end_time = time.process_time()
+        print(f"Number of iterations: {ksp.getIterationNumber()}")
+        print(f"Convergence reason: {ksp.getConvergedReason()}")
+        ksp.destroy()
+        A.destroy()
+        L.destroy()
+        w_h.x.scatter_forward()
+        # Split the FEM solutions sigma and u
         sigma_h, u_h = w_h.split()
         sigma_h = sigma_h.collapse()
         u_h = u_h.collapse()
@@ -400,6 +455,7 @@ if world_comm.size == 8:
                      fem2_procs_comm, fem3_procs_comm]
 
 elif world_comm.size == 4:
+    '''
     fem0_procs = world_comm.group.Incl([0])
     fem0_procs_comm = world_comm.Create_group(fem0_procs)
 
@@ -414,6 +470,15 @@ elif world_comm.size == 4:
 
     fem_comm_list = [fem0_procs_comm, fem1_procs_comm,
                      fem2_procs_comm, fem3_procs_comm]
+    '''
+
+    fem0_procs = world_comm.group.Incl([0, 1])
+    fem0_procs_comm = world_comm.Create_group(fem0_procs)
+
+    fem1_procs = world_comm.group.Incl([2, 3])
+    fem1_procs_comm = world_comm.Create_group(fem1_procs)
+
+    fem_comm_list = [fem0_procs_comm, fem1_procs_comm]
 
 elif world_comm.size == 1:
     fem0_procs = world_comm.group.Incl([0])
@@ -428,7 +493,7 @@ for comm_i in fem_comm_list:
     if comm_i != MPI.COMM_NULL:
         mesh_comm = comm_i
 
-nx, ny, nz = 20, 20, 20
+nx, ny, nz = 5, 5, 5 # 20, 20, 20
 mesh = dolfinx.mesh.create_box(mesh_comm,
                                [[0.0, 0.0, 0.0], [1., 1, 1]],
                                [nx, ny, nz],
@@ -441,7 +506,7 @@ problem_parametric = ParametricProblem(mesh)
 mu = np.array([-1., 1.5, 0.7, 0.3, 3.4])
 
 para_dim = 5
-ann_input_samples_num = 23
+ann_input_samples_num = 300 # 23
 error_analysis_samples_num = 11#0
 num_snapshots = 10#0
 itemsize = MPI.DOUBLE.Get_size()
@@ -988,6 +1053,7 @@ if world_comm.size == 8:
          cpu_group2_comm_sigma, cpu_group3_comm_sigma]
 
 elif world_comm.size == 4:
+    '''
     cpu_group0_procs_sigma = world_comm.group.Incl([0])
     cpu_group0_comm_sigma = \
         world_comm.Create_group(cpu_group0_procs_sigma)
@@ -1006,6 +1072,17 @@ elif world_comm.size == 4:
     ann_comm_list_sigma = \
         [cpu_group0_comm_sigma, cpu_group1_comm_sigma,
          cpu_group2_comm_sigma, cpu_group3_comm_sigma]
+    '''
+    cpu_group0_procs_sigma = world_comm.group.Incl([0, 1])
+    cpu_group0_comm_sigma = \
+        world_comm.Create_group(cpu_group0_procs_sigma)
+
+    cpu_group1_procs_sigma = world_comm.group.Incl([2, 3])
+    cpu_group1_comm_sigma = \
+        world_comm.Create_group(cpu_group1_procs_sigma)
+
+    ann_comm_list_sigma = \
+        [cpu_group0_comm_sigma, cpu_group1_comm_sigma]
 
 elif world_comm.size == 1:
     cpu_group0_procs_sigma = world_comm.group.Incl([0])
@@ -1055,7 +1132,7 @@ elif world_comm.size == 4:
     checkpoint_path_list_sigma = \
         ["checkpoint_sigma0", "checkpoint_sigma1",
          "checkpoint_sigma2", "checkpoint_sigma3"]
-    model_root_process_list_sigma = [0, 1, 2, 3]
+    model_root_process_list_sigma = [0, 2] # [0, 1, 2, 3]
     trained_model_path_list_sigma = \
         ["trained_model_sigma0.pth", "trained_model_sigma1.pth",
          "trained_model_sigma2.pth", "trained_model_sigma3.pth"]
@@ -1219,8 +1296,11 @@ if world_comm.rank == 0:
 world_comm.Barrier()
 
 if world_comm.size != 1:
+    '''
     error_array_list_sigma = [error_numpy_sigma0, error_numpy_sigma1,
                               error_numpy_sigma2, error_numpy_sigma3]
+    '''
+    error_array_list_sigma = [error_numpy_sigma0, error_numpy_sigma1]
 else:
     error_array_list_sigma = [error_numpy_sigma0]
 
@@ -1265,6 +1345,7 @@ if world_comm.size == 8:
          cpu_group2_comm_u, cpu_group3_comm_u]
 
 elif world_comm.size == 4:
+    '''
     cpu_group0_procs_u = world_comm.group.Incl([0])
     cpu_group0_comm_u = \
         world_comm.Create_group(cpu_group0_procs_u)
@@ -1283,6 +1364,17 @@ elif world_comm.size == 4:
     ann_comm_list_u = \
         [cpu_group0_comm_u, cpu_group1_comm_u,
          cpu_group2_comm_u, cpu_group3_comm_u]
+    '''
+    cpu_group0_procs_u = world_comm.group.Incl([0, 1])
+    cpu_group0_comm_u = \
+        world_comm.Create_group(cpu_group0_procs_u)
+
+    cpu_group1_procs_u = world_comm.group.Incl([2, 3])
+    cpu_group1_comm_u = \
+        world_comm.Create_group(cpu_group1_procs_u)
+
+    ann_comm_list_u = \
+        [cpu_group0_comm_u, cpu_group1_comm_u]
 
 elif world_comm.size == 1:
     cpu_group0_procs_u = world_comm.group.Incl([0])
@@ -1332,7 +1424,7 @@ elif world_comm.size == 4:
     checkpoint_path_list_u = \
         ["checkpoint_u0", "checkpoint_u1",
          "checkpoint_u2", "checkpoint_u3"]
-    model_root_process_list_u = [0, 1, 2, 3]
+    model_root_process_list_u = [0, 2] # [0, 1, 2, 3]
     trained_model_path_list_u = \
         ["trained_model_u0.pth", "trained_model_u1.pth",
          "trained_model_u2.pth", "trained_model_u3.pth"]
@@ -1497,8 +1589,11 @@ if world_comm.rank == 0:
 world_comm.Barrier()
 
 if world_comm.size != 1:
+    '''
     error_array_list_u = [error_numpy_u0, error_numpy_u1,
                           error_numpy_u2, error_numpy_u3]
+    '''
+    error_array_list_u = [error_numpy_u0, error_numpy_u1]
 else:
     error_array_list_u = [error_numpy_u0]
 
