@@ -493,7 +493,7 @@ for comm_i in fem_comm_list:
     if comm_i != MPI.COMM_NULL:
         mesh_comm = comm_i
 
-nx, ny, nz = 20, 20, 20
+nx, ny, nz = 5, 5, 5 # 20, 20, 20
 mesh = dolfinx.mesh.create_box(mesh_comm,
                                [[0.0, 0.0, 0.0], [1., 1, 1]],
                                [nx, ny, nz],
@@ -506,9 +506,9 @@ problem_parametric = ParametricProblem(mesh)
 mu = np.array([-1., 1.5, 0.7, 0.3, 3.4])
 
 para_dim = 5
-ann_input_samples_num = 1100
-error_analysis_samples_num = 800
-num_snapshots = 1000
+ann_input_samples_num = 13 # 1100
+error_analysis_samples_num = 14 # 800
+num_snapshots = 15 # 1000
 itemsize = MPI.DOUBLE.Get_size()
 
 sigma_h, u_h = problem_parametric.solve(mu)
@@ -1159,7 +1159,7 @@ for j in range(len(ann_comm_list_sigma)):
         training_loss = list()
         validation_loss = list()
 
-        max_epochs_sigma = 50000
+        max_epochs_sigma = 50 # 50000
         min_validation_loss_sigma = None
         start_epoch_sigma = 0
         checkpoint_epoch_sigma = 10
@@ -1167,11 +1167,13 @@ for j in range(len(ann_comm_list_sigma)):
         learning_rate_sigma = 1.e-5 # 1.e-4
         optimiser_sigma = get_optimiser(ann_model_list_sigma[j], "Adam", learning_rate_sigma)
         loss_fn_sigma = get_loss_func("MSE", reduction="sum")
-
+        
+        '''
         if os.path.exists(checkpoint_path_list_sigma[j]):
             start_epoch_sigma, min_validation_loss_sigma = \
                 load_checkpoint(checkpoint_path_list_sigma[j], ann_model_list_sigma[j],
                                 optimiser_sigma)
+        '''
 
         import time
         ann_comm_list_sigma[j].Barrier()
@@ -1209,7 +1211,7 @@ world_comm.Barrier()
 for j in range(len(model_root_process_list_sigma)):
     share_model(ann_model_list_sigma[j], world_comm,
                 model_root_process_list_sigma[j])
-    # save_model(ann_model_list_sigma[j], trained_model_path_list_sigma[j])
+    save_model(ann_model_list_sigma[j], trained_model_path_list_sigma[j])
 
 # Error analysis dataset
 print("\n")
@@ -1450,7 +1452,7 @@ for j in range(len(ann_comm_list_u)):
         training_loss = list()
         validation_loss = list()
 
-        max_epochs_u = 50000
+        max_epochs_u = 50 # 50000
         min_validation_loss_u = None
         start_epoch_u = 0
         checkpoint_epoch_u = 10
@@ -1458,11 +1460,13 @@ for j in range(len(ann_comm_list_u)):
         learning_rate_u = 1.e-5 # 1.e-4
         optimiser_u = get_optimiser(ann_model_list_u[j], "Adam", learning_rate_u)
         loss_fn_u = get_loss_func("MSE", reduction="sum")
-
+        
+        '''
         if os.path.exists(checkpoint_path_list_u[j]):
             start_epoch_u, min_validation_loss_u = \
                 load_checkpoint(checkpoint_path_list_u[j], ann_model_list_u[j],
                                 optimiser_u)
+        '''
 
         import time
         ann_comm_list_u[j].Barrier()
