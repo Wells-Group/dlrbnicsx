@@ -6,7 +6,7 @@
 
 #SBATCH --nodes=1
 #SBATCH --ntasks=8
-#SBATCH --time=08:00:00
+#SBATCH --time=11:00:00
 #SBATCH --mem=42000mb
 
 #SBATCH -p icelake-himem
