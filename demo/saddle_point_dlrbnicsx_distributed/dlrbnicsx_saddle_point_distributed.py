@@ -583,7 +583,7 @@ def generate_training_set(num_samples, para_dim):
     training_set[:, 1] = (1. - 0.) * training_set[:, 1] + 0.
     training_set[:, 2] = (0.8 - 0.2) * training_set[:, 2] + 0.2
     training_set[:, 3] = (0.8 - 0.2) * training_set[:, 3] + 0.2
-    training_set[:, 4] = (3.5 - 2.5) * training_set[:, 3] + 2.5
+    # training_set[:, 4] = (3.5 - 2.5) * training_set[:, 3] + 2.5
     return training_set
 
 if world_comm.rank == 0:
@@ -750,9 +750,13 @@ print(f"Norm reconstructed: {sigma_norm}, projection error: {sigma_error}")
 # ### Projection error samples ###
 # Creating dataset
 def generate_projection_error_set(num_projection_samples=10):
+    '''
     xlimits = np.array([[-1., 1.], [0.4, 0.6],
                         [0.4, 0.6], [0.4, 0.6],
                         [2.5, 3.5]])
+    '''
+    xlimits = np.array([[-1., 1.], [0.4, 0.6],
+                        [0.4, 0.6], [0.4, 0.6]])
     sampling = LHS(xlimits=xlimits)
     training_set = sampling(num_projection_samples)
     return training_set
@@ -876,6 +880,7 @@ if fem_comm_list[0] != MPI.COMM_NULL:
         solution_file.write_mesh(mesh)
         solution_file.write_function(error_function_u)
 '''
+
 # ### Projection error ends ###
 
 # Creating dataset
