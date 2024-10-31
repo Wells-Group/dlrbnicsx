@@ -362,9 +362,14 @@ class PODANNReducedProblem(abc.ABC):
             rbnicsx.backends.bilinear_form_action(self._inner_product_u,
                                                   part="real")
         self.input_scaling_range = [-1., 1.]
+        '''
         self.input_range = \
             np.array([[-2.5, 0., 0.2, 0.2, 2.5],
                       [-1.5, 1., 0.8, 0.8, 3.5]])
+        '''
+        self.input_range = \
+            np.array([[-2.5, 0., 0.2, 0.2],
+                      [-1.5, 1., 0.8, 0.8]])
 
         self.output_scaling_range_sigma = [-1., 1.]
         self.output_range_sigma = [None, None]
