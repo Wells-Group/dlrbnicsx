@@ -160,8 +160,11 @@ class ParametricProblem(abc.ABC):
         dofs_x0 = dolfinx.fem.locate_dofs_topological((V0, Q), gdim-1,
                                                       self._boundaries.find(30))
 
-        mu = [self.mu_0.value, self.mu_1.value, self.mu_2.value,
-              self.mu_3.value, self.mu_4.value]
+        #mu = [self.mu_0.value, self.mu_1.value, self.mu_2.value,
+              #self.mu_3.value, self.mu_4.value]
+
+        mu = [self.mu_0.value, self.mu_1.value,
+              self.mu_2.value, self.mu_3.value]
 
         def f1(x):
             values = np.zeros((3, x.shape[1]))
