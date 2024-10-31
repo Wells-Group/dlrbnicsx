@@ -526,9 +526,9 @@ problem_parametric = ParametricProblem(mesh)
 mu = np.array([-1., 1.5, 0.7, 0.3])
 
 para_dim = 4
-ann_input_samples_num = 17 # 1100
-error_analysis_samples_num = 14 # 800
-num_snapshots = 22 # 1000
+ann_input_samples_num = 27 # 1100
+error_analysis_samples_num = 33 # 800
+num_snapshots = 43 # 1000
 itemsize = MPI.DOUBLE.Get_size()
 
 sigma_h, u_h = problem_parametric.solve(mu)
