@@ -457,7 +457,7 @@ if world_comm.size == 8:
     fem_comm_list = [fem0_procs_comm, fem1_procs_comm,
                      fem2_procs_comm, fem3_procs_comm]
 
-elif world_comm.size = 12:
+elif world_comm.size == 12:
     fem0_procs = world_comm.group.Incl([0, 1, 2])
     fem0_procs_comm = world_comm.Create_group(fem0_procs)
 
