@@ -524,9 +524,9 @@ for comm_i in fem_comm_list:
     if comm_i != MPI.COMM_NULL:
         mesh_comm = comm_i
 
-nx, ny, nz = 5, 5, 5 # 20, 20, 20
+nx, ny, nz = 20, 20, 20
 mesh = dolfinx.mesh.create_box(mesh_comm,
-                               [[0.0, 0.0, 0.0], [1., 1, 1]],
+                               [[0.0, 0.0, 0.0], [1, 1, 1]],
                                [nx, ny, nz],
                                dolfinx.mesh.CellType.tetrahedron)
 problem_parametric = ParametricProblem(mesh)
@@ -537,9 +537,9 @@ problem_parametric = ParametricProblem(mesh)
 mu = np.array([-1., 1.5, 0.7, 0.3])
 
 para_dim = 4
-ann_input_samples_num = 27 # 1100
-error_analysis_samples_num = 33 # 800
-num_snapshots = 43 # 1000
+ann_input_samples_num = 1100
+error_analysis_samples_num = 800
+num_snapshots = 1000
 itemsize = MPI.DOUBLE.Get_size()
 
 sigma_h, u_h = problem_parametric.solve(mu)
