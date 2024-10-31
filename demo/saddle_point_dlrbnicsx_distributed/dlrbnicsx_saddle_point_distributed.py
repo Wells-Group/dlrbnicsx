@@ -76,7 +76,7 @@ class ParametricProblem(abc.ABC):
         self.mu_1 = dolfinx.fem.Constant(mesh, PETSc.ScalarType(0.5))
         self.mu_2 = dolfinx.fem.Constant(mesh, PETSc.ScalarType(0.5))
         self.mu_3 = dolfinx.fem.Constant(mesh, PETSc.ScalarType(0.5))
-        self.mu_4 = dolfinx.fem.Constant(mesh, PETSc.ScalarType(3.))
+        # self.mu_4 = dolfinx.fem.Constant(mesh, PETSc.ScalarType(3.))
 
     @property
     def mark_boundaries(self):
@@ -111,8 +111,8 @@ class ParametricProblem(abc.ABC):
     @property
     def source_term(self):
         x = ufl.SpatialCoordinate(self._mesh)
-        mu_0, mu_1, mu_2, mu_3, mu_4 = \
-            self.mu_0, self.mu_1, self.mu_2, self.mu_3, self.mu_4
+        # mu_0, mu_1, mu_2, mu_3, mu_4 = \
+        #     self.mu_0, self.mu_1, self.mu_2, self.mu_3, self.mu_4
         mu = [mu_0, mu_1, mu_2, mu_3, mu_4]
         f = 10. * ufl.exp(-mu[0] * ((x[0] - mu[1]) * (x[0] - mu[1]) +
                                     (x[1] - mu[2]) * (x[1] - mu[2]) +
@@ -162,7 +162,8 @@ class ParametricProblem(abc.ABC):
 
         def f1(x):
             values = np.zeros((3, x.shape[1]))
-            values[0, :] = np.sin(mu[4] * x[0])
+            # values[0, :] = np.sin(mu[4] * x[0])
+            values[0, :] = np.sin(x[0])
             return values
 
 
@@ -175,7 +176,8 @@ class ParametricProblem(abc.ABC):
 
         def f2(x):
             values = np.zeros((3, x.shape[1]))
-            values[1, :] = np.sin(mu[4] * x[1])
+            # values[1, :] = np.sin(mu[4] * x[1])
+            values[1, :] = np.sin(x[1])
             return values
 
         f_h2 = dolfinx.fem.Function(Q)
@@ -187,7 +189,8 @@ class ParametricProblem(abc.ABC):
 
         def f3(x):
             values = np.zeros((3, x.shape[1]))
-            values[2, :] = np.sin(mu[4] * x[2])
+            # values[2, :] = np.sin(mu[4] * x[2])
+            values[2, :] = np.sin(x[2])
             return values
 
 
@@ -285,7 +288,7 @@ class ParametricProblem(abc.ABC):
         self.mu_1.value = mu[1]
         self.mu_2.value = mu[2]
         self.mu_3.value = mu[3]
-        self.mu_4.value = mu[4]
+        # self.mu_4.value = mu[4]
 
         a = self.bilinear_form
         L = self.linear_form
@@ -454,6 +457,23 @@ if world_comm.size == 8:
     fem_comm_list = [fem0_procs_comm, fem1_procs_comm,
                      fem2_procs_comm, fem3_procs_comm]
 
+elif world_comm.size = 12:
+    fem0_procs = world_comm.group.Incl([0, 1, 2])
+    fem0_procs_comm = world_comm.Create_group(fem0_procs)
+
+    fem1_procs = world_comm.group.Incl([3, 4, 5])
+    fem1_procs_comm = world_comm.Create_group(fem1_procs)
+
+    fem2_procs = world_comm.group.Incl([6, 7, 8])
+    fem2_procs_comm = world_comm.Create_group(fem2_procs)
+
+    fem3_procs = world_comm.group.Incl([9, 10, 11])
+    fem3_procs_comm = world_comm.Create_group(fem3_procs)
+
+    fem_comm_list = [fem0_procs_comm, fem1_procs_comm,
+                     fem2_procs_comm, fem3_procs_comm]
+
+
 elif world_comm.size == 4:
     '''
     fem0_procs = world_comm.group.Incl([0])
@@ -493,7 +513,7 @@ for comm_i in fem_comm_list:
     if comm_i != MPI.COMM_NULL:
         mesh_comm = comm_i
 
-nx, ny, nz = 20, 20, 20
+nx, ny, nz = 5, 5, 5 # 20, 20, 20
 mesh = dolfinx.mesh.create_box(mesh_comm,
                                [[0.0, 0.0, 0.0], [1., 1, 1]],
                                [nx, ny, nz],
@@ -503,12 +523,12 @@ problem_parametric = ParametricProblem(mesh)
 
 # mu_range = ((-2.5, -1.5), (0., 1.), (0.2, 0.8), (0.2, 0.8), (2.5, 3.5))
 # mu = np.array([-2., 0.5, 0.5, 0.5, 3.])
-mu = np.array([-1., 1.5, 0.7, 0.3, 3.4])
+mu = np.array([-1., 1.5, 0.7, 0.3])
 
-para_dim = 5
-ann_input_samples_num = 1100
-error_analysis_samples_num = 800
-num_snapshots = 1000
+para_dim = 4
+ann_input_samples_num = 17 # 1100
+error_analysis_samples_num = 14 # 800
+num_snapshots = 22 # 1000
 itemsize = MPI.DOUBLE.Get_size()
 
 sigma_h, u_h = problem_parametric.solve(mu)
@@ -1020,6 +1040,34 @@ if world_comm.size == 8:
         [cpu_group0_comm_sigma, cpu_group1_comm_sigma,
          cpu_group2_comm_sigma, cpu_group3_comm_sigma]
 
+elif world_comm.size == 12:
+    cpu_group0_procs_sigma = world_comm.group.Incl([0, 1])
+    cpu_group0_comm_sigma = \
+        world_comm.Create_group(cpu_group0_procs_sigma)
+
+    cpu_group1_procs_sigma = world_comm.group.Incl([2, 3])
+    cpu_group1_comm_sigma = \
+        world_comm.Create_group(cpu_group1_procs_sigma)
+
+    cpu_group2_procs_sigma = world_comm.group.Incl([4, 5])
+    cpu_group2_comm_sigma = \
+        world_comm.Create_group(cpu_group2_procs_sigma)
+
+    cpu_group3_procs_sigma = world_comm.group.Incl([6, 7])
+    cpu_group3_comm_sigma = world_comm.Create_group(cpu_group3_procs_sigma)
+
+    cpu_group4_procs_sigma = world_comm.group.Incl([8, 9])
+    cpu_group4_comm_sigma = \
+        world_comm.Create_group(cpu_group4_procs_sigma)
+
+    cpu_group5_procs_sigma = world_comm.group.Incl([10, 11])
+    cpu_group5_comm_sigma = world_comm.Create_group(cpu_group5_procs_sigma)
+
+    ann_comm_list_sigma = \
+        [cpu_group0_comm_sigma, cpu_group1_comm_sigma,
+         cpu_group2_comm_sigma, cpu_group3_comm_sigma,
+         cpu_group4_comm_sigma, cpu_group5_comm_sigma,]
+
 elif world_comm.size == 4:
     '''
     cpu_group0_procs_sigma = world_comm.group.Incl([0])
@@ -1080,6 +1128,14 @@ model_sigma3 = HiddenLayersNet(para_dim, [75, 75, 75],
                                len(reduced_problem._basis_functions_sigma),
                                Tanh())
 
+model_sigma4 = HiddenLayersNet(para_dim, [85, 85, 85],
+                               len(reduced_problem._basis_functions_sigma),
+                               Tanh())
+
+model_sigma5 = HiddenLayersNet(para_dim, [95, 95, 95],
+                               len(reduced_problem._basis_functions_sigma),
+                               Tanh())
+
 if world_comm.size == 8:
     ann_model_list_sigma = [model_sigma0, model_sigma1,
                             model_sigma2, model_sigma3]
@@ -1092,6 +1148,22 @@ if world_comm.size == 8:
     trained_model_path_list_sigma = \
         ["trained_model_sigma0.pth", "trained_model_sigma1.pth",
          "trained_model_sigma2.pth", "trained_model_sigma3.pth"]
+elif world_comm.size == 12:
+    ann_model_list_sigma = [model_sigma0, model_sigma1,
+                            model_sigma2, model_sigma3,
+                            model_sigma4, model_sigma5]
+    path_list_sigma = ["model_sigma0.pth", "model_sigma1.pth",
+                       "model_sigma2.pth", "model_sigma3.pth",
+                       "model_sigma4.pth", "model_sigma5.pth"]
+    checkpoint_path_list_sigma = \
+        ["checkpoint_sigma0", "checkpoint_sigma1",
+         "checkpoint_sigma2", "checkpoint_sigma3",
+         "checkpoint_sigma4", "checkpoint_sigma5"]
+    model_root_process_list_sigma = [0, 2, 4, 6, 8, 10]
+    trained_model_path_list_sigma = \
+        ["trained_model_sigma0.pth", "trained_model_sigma1.pth",
+         "trained_model_sigma2.pth", "trained_model_sigma3.pth",
+         "trained_model_sigma4.pth", "trained_model_sigma5.pth"]
 elif world_comm.size == 4:
     ann_model_list_sigma = [model_sigma0, model_sigma1,
                             model_sigma2, model_sigma3]
@@ -1159,7 +1231,7 @@ for j in range(len(ann_comm_list_sigma)):
         training_loss = list()
         validation_loss = list()
 
-        max_epochs_sigma = 50000
+        max_epochs_sigma = 50 # 50000
         min_validation_loss_sigma = None
         start_epoch_sigma = 0
         checkpoint_epoch_sigma = 10
@@ -1327,7 +1399,8 @@ elif world_comm.size == 4:
         world_comm.Create_group(cpu_group2_procs_u)
 
     cpu_group3_procs_u = world_comm.group.Incl([3])
-    cpu_group3_comm_u = world_comm.Create_group(cpu_group3_procs_u)
+    cpu_group3_comm_u = \
+        world_comm.Create_group(cpu_group3_procs_u)
 
     ann_comm_list_u = \
         [cpu_group0_comm_u, cpu_group1_comm_u,
@@ -1343,6 +1416,34 @@ elif world_comm.size == 4:
 
     ann_comm_list_u = \
         [cpu_group0_comm_u, cpu_group1_comm_u]
+
+elif world_comm.size == 12:
+    cpu_group0_procs_u = world_comm.group.Incl([0, 1])
+    cpu_group0_comm_u = \
+        world_comm.Create_group(cpu_group0_procs_u)
+
+    cpu_group1_procs_u = world_comm.group.Incl([2, 3])
+    cpu_group1_comm_u = \
+        world_comm.Create_group(cpu_group1_procs_u)
+
+    cpu_group2_procs_u = world_comm.group.Incl([4, 5])
+    cpu_group2_comm_u = \
+        world_comm.Create_group(cpu_group2_procs_u)
+
+    cpu_group3_procs_u = world_comm.group.Incl([6, 7])
+    cpu_group3_comm_u = world_comm.Create_group(cpu_group3_procs_u)
+
+    cpu_group4_procs_u = world_comm.group.Incl([8, 9])
+    cpu_group4_comm_u = \
+        world_comm.Create_group(cpu_group4_procs_u)
+
+    cpu_group5_procs_u = world_comm.group.Incl([10, 11])
+    cpu_group5_comm_u = world_comm.Create_group(cpu_group5_procs_u)
+
+    ann_comm_list_u = \
+        [cpu_group0_comm_u, cpu_group1_comm_u,
+         cpu_group2_comm_u, cpu_group3_comm_u,
+         cpu_group4_comm_u, cpu_group5_comm_u]
 
 elif world_comm.size == 1:
     cpu_group0_procs_u = world_comm.group.Incl([0])
@@ -1372,6 +1473,14 @@ model_u3 = HiddenLayersNet(para_dim, [75, 75, 75],
                            len(reduced_problem._basis_functions_u),
                            Tanh())
 
+model_u4 = HiddenLayersNet(para_dim, [85, 85, 85],
+                           len(reduced_problem._basis_functions_u),
+                           Tanh())
+
+model_u5 = HiddenLayersNet(para_dim, [95, 95, 95],
+                           len(reduced_problem._basis_functions_u),
+                           Tanh())
+
 if world_comm.size == 8:
     ann_model_list_u = [model_u0, model_u1,
                         model_u2, model_u3]
@@ -1384,6 +1493,22 @@ if world_comm.size == 8:
     trained_model_path_list_u = \
         ["trained_model_u0.pth", "trained_model_u1.pth",
          "trained_model_u2.pth", "trained_model_u3.pth"]
+elif world_comm.size == 12:
+    ann_model_list_u = [model_u0, model_u1,
+                        model_u2, model_u3,
+                        model_u4, model_u5]
+    path_list_u = ["model_u0.pth", "model_u1.pth",
+                   "model_u2.pth", "model_u3.pth",
+                   "model_u4.pth", "model_u5.pth"]
+    checkpoint_path_list_u = \
+        ["checkpoint_u0", "checkpoint_u1",
+         "checkpoint_u2", "checkpoint_u3",
+         "checkpoint_u4", "checkpoint_u5"]
+    model_root_process_list_u = [0, 2, 4, 6, 8, 10]
+    trained_model_path_list_u = \
+        ["trained_model_u0.pth", "trained_model_u1.pth",
+         "trained_model_u2.pth", "trained_model_u3.pth",
+         "trained_model_u4.pth", "trained_model_u5.pth"]
 elif world_comm.size == 4:
     ann_model_list_u = [model_u0, model_u1,
                         model_u2, model_u3]
@@ -1443,7 +1568,7 @@ for j in range(len(ann_comm_list_u)):
         valid_dataloader_u = \
             DataLoader(customDataset_u, batch_size=input_validation_set.shape[0], shuffle=False)
 
-        # save_model(ann_model_list_u[j], path_list_u[j])
+        save_model(ann_model_list_u[j], path_list_u[j])
         # load_model(ann_model_list_u[j], path_list_u[j])
 
         model_synchronise(ann_model_list_u[j], verbose=False)
@@ -1452,7 +1577,7 @@ for j in range(len(ann_comm_list_u)):
         training_loss = list()
         validation_loss = list()
 
-        max_epochs_u = 50000
+        max_epochs_u = 60 # 50000
         min_validation_loss_u = None
         start_epoch_u = 0
         checkpoint_epoch_u = 10
@@ -1504,7 +1629,7 @@ world_comm.Barrier()
 for j in range(len(model_root_process_list_u)):
     share_model(ann_model_list_u[j], world_comm,
                 model_root_process_list_u[j])
-    # save_model(ann_model_list_u[j], trained_model_path_list_u[j])
+    save_model(ann_model_list_u[j], trained_model_path_list_u[j])
 
 # Error analysis dataset
 print("\n")
@@ -1590,7 +1715,7 @@ for j in range(len(fem_comm_list)):
 
 if fem_comm_list[0] != MPI.COMM_NULL:
     # Online phase at parameter online_mu
-    online_mu = np.array([1., 0.4, 0.55, 0.27, 3.])
+    online_mu = np.array([1., 0.4, 0.55, 0.27])
     fem_start_time_0 = time.process_time()
     fem_solution_sigma, fem_solution_u = problem_parametric.solve(online_mu)
     fem_end_time_0 = time.process_time()
