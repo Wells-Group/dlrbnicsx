@@ -886,9 +886,13 @@ if fem_comm_list[0] != MPI.COMM_NULL:
 # Creating dataset
 def generate_ann_input_set(num_ann_samples=10):
     # ((-2.5, -1.5), (0., 1.), (0.2, 0.8), (0.2, 0.8), (2.5, 3.5))
+    '''
     xlimits = np.array([[-2.5, -1.5], [0., 1.],
                         [0.2, 0.8], [0.2, 0.8],
                         [2.5, 3.5]])
+    '''
+    xlimits = np.array([[-2.5, -1.5], [0., 1.],
+                        [0.2, 0.8], [0.2, 0.8]])
     sampling = LHS(xlimits=xlimits)
     training_set = sampling(num_ann_samples)
     return training_set
