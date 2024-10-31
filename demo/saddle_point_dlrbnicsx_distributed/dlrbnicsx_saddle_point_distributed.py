@@ -113,7 +113,10 @@ class ParametricProblem(abc.ABC):
         x = ufl.SpatialCoordinate(self._mesh)
         # mu_0, mu_1, mu_2, mu_3, mu_4 = \
         #     self.mu_0, self.mu_1, self.mu_2, self.mu_3, self.mu_4
-        mu = [mu_0, mu_1, mu_2, mu_3, mu_4]
+        # mu = [mu_0, mu_1, mu_2, mu_3, mu_4]
+        mu_0, mu_1, mu_2, mu_3 = \
+            self.mu_0, self.mu_1, self.mu_2, self.mu_3
+        mu = [mu_0, mu_1, mu_2, mu_3]
         f = 10. * ufl.exp(-mu[0] * ((x[0] - mu[1]) * (x[0] - mu[1]) +
                                     (x[1] - mu[2]) * (x[1] - mu[2]) +
                                     (x[2] - mu[3]) * (x[2] - mu[3])))
