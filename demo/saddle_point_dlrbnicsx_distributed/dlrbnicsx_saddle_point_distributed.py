@@ -567,7 +567,7 @@ computed_file_u = "dlrbnicsx_solution_saddle_point/solution_computed_u.bp"
 
 if fem_comm_list[0] != MPI.COMM_NULL:
     
-      # NOTE Function interpolated to CG space for plotting.
+    # NOTE Functions (sigma, u) interpolated to CG spaces for plotting.
     
     Q_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("CG", 1))
     sigma_plot = dolfinx.fem.Function(Q_plot)
@@ -588,7 +588,8 @@ if fem_comm_list[0] != MPI.COMM_NULL:
     with dolfinx.io.XDMFFile(mesh.comm, computed_file_u, "w") as file:
         file.write_mesh(mesh)
         file.write_function(u_h)
-
+    
+    '''
     W_plot = dolfinx.fem.FunctionSpace(mesh, ("CG", 1))
     u_plot = dolfinx.fem.Function(W_plot)
     u_plot.interpolate(u_h)
@@ -600,6 +601,7 @@ if fem_comm_list[0] != MPI.COMM_NULL:
     u_norm = mesh.comm.allreduce(dolfinx.fem.assemble_scalar
                                 (dolfinx.fem.form(ufl.inner(u_plot, u_plot) *
                                                 ufl.dx)), op=MPI.SUM)
+    '''
 
 exit()
 
