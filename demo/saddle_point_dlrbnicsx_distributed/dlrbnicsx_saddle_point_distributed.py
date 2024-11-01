@@ -573,9 +573,9 @@ if fem_comm_list[0] != MPI.COMM_NULL:
     sigma_plot = dolfinx.fem.Function(Q_plot)
     sigma_plot.interpolate(sigma_h)
     
-    with dolfinx.io.XDMFFile(mesh.comm, computed_file_sigma, "w") as file:
-        file.write_mesh(mesh)
-        file.write_function(sigma_plot)
+    with dolfinx.io.XDMFFile(mesh.comm, computed_file_sigma, "w") as solution_file_sigma:
+        solution_file_sigma.write_mesh(mesh)
+        solution_file_sigma.write_function(sigma_plot)
 
     sigma_norm = mesh.comm.allreduce(dolfinx.fem.assemble_scalar
                                     (dolfinx.fem.form(ufl.inner(sigma_plot, sigma_plot) *
@@ -585,11 +585,9 @@ if fem_comm_list[0] != MPI.COMM_NULL:
                                                                 ufl.dx)), op=MPI.SUM)
     print(f"Sigma plot norm: {sigma_norm}")
     
-    with dolfinx.io.XDMFFile(mesh.comm, computed_file_u, "w") as file:
-        file.write_mesh(mesh)
-        file.write_function(u_h)
-
-exit()
+    with dolfinx.io.XDMFFile(mesh.comm, computed_file_u, "w") as solution_file_u:
+        solution_file_u.write_mesh(mesh)
+        solution_file_u.write_function(u_h)
 
 # POD Starts ###
 Nmax_sigma = 100
