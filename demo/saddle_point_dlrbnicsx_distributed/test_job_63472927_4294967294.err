@@ -1,0 +1,48 @@
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+rm: cannot remove 'checkpoint_sigma0': No such file or directory
+rm: cannot remove 'checkpoint_sigma5': No such file or directory
+rm: cannot remove 'checkpoint_sigma4': No such file or directory
+rm: cannot remove 'checkpoint_sigma3': No such file or directory
+rm: cannot remove 'checkpoint_sigma1': No such file or directory
+rm: cannot remove 'checkpoint_sigma2': No such file or directory
+rm: cannot remove 'checkpoint_u2': No such file or directory
+rm: cannot remove 'checkpoint_u3': No such file or directory
+rm: cannot remove 'checkpoint_u5': No such file or directory
+rm: cannot remove 'checkpoint_u4': No such file or directory
+rm: cannot remove 'checkpoint_u0': No such file or directory
+rm: cannot remove 'checkpoint_u1': No such file or directory

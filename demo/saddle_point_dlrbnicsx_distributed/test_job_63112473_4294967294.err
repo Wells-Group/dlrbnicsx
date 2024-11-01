@@ -1,0 +1,187 @@
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+Traceback (most recent call last):
+  File "/home/nvs31/dlrbnicsx_cpu/demo/saddle_point_dlrbnicsx_distributed/dlrbnicsx_saddle_point_distributed.py", line 1186, in <module>
+Traceback (most recent call last):
+  File "/home/nvs31/dlrbnicsx_cpu/demo/saddle_point_dlrbnicsx_distributed/dlrbnicsx_saddle_point_distributed.py", line 1186, in <module>
+Traceback (most recent call last):
+  File "/home/nvs31/dlrbnicsx_cpu/demo/saddle_point_dlrbnicsx_distributed/dlrbnicsx_saddle_point_distributed.py", line 1186, in <module>
+Traceback (most recent call last):
+  File "/home/nvs31/dlrbnicsx_cpu/demo/saddle_point_dlrbnicsx_distributed/dlrbnicsx_saddle_point_distributed.py", line 1186, in <module>
+Traceback (most recent call last):
+  File "/home/nvs31/dlrbnicsx_cpu/demo/saddle_point_dlrbnicsx_distributed/dlrbnicsx_saddle_point_distributed.py", line 1186, in <module>
+Traceback (most recent call last):
+  File "/home/nvs31/dlrbnicsx_cpu/demo/saddle_point_dlrbnicsx_distributed/dlrbnicsx_saddle_point_distributed.py", line 1186, in <module>
+Traceback (most recent call last):
+  File "/home/nvs31/dlrbnicsx_cpu/demo/saddle_point_dlrbnicsx_distributed/dlrbnicsx_saddle_point_distributed.py", line 1186, in <module>
+Traceback (most recent call last):
+  File "/home/nvs31/dlrbnicsx_cpu/demo/saddle_point_dlrbnicsx_distributed/dlrbnicsx_saddle_point_distributed.py", line 1186, in <module>
+    load_model(ann_model_list_sigma[j], path_list_sigma[j])
+    load_model(ann_model_list_sigma[j], path_list_sigma[j])
+    load_model(ann_model_list_sigma[j], path_list_sigma[j])
+    load_model(ann_model_list_sigma[j], path_list_sigma[j])
+    load_model(ann_model_list_sigma[j], path_list_sigma[j])
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/dlrbnicsx/interface/wrappers.py", line 58, in load_model
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/dlrbnicsx/interface/wrappers.py", line 58, in load_model
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/dlrbnicsx/interface/wrappers.py", line 58, in load_model
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/dlrbnicsx/interface/wrappers.py", line 58, in load_model
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/dlrbnicsx/interface/wrappers.py", line 58, in load_model
+    load_model(ann_model_list_sigma[j], path_list_sigma[j])
+    load_model(ann_model_list_sigma[j], path_list_sigma[j])
+    load_model(ann_model_list_sigma[j], path_list_sigma[j])
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/dlrbnicsx/interface/wrappers.py", line 58, in load_model
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/dlrbnicsx/interface/wrappers.py", line 58, in load_model
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/dlrbnicsx/interface/wrappers.py", line 58, in load_model
+    model.load_state_dict(torch.load(path))
+    model.load_state_dict(torch.load(path))
+    model.load_state_dict(torch.load(path))
+    model.load_state_dict(torch.load(path))
+    model.load_state_dict(torch.load(path))
+    model.load_state_dict(torch.load(path))
+    model.load_state_dict(torch.load(path))
+    model.load_state_dict(torch.load(path))
+                          ^^^^^^^^^^^^^^^^
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/torch/serialization.py", line 986, in load
+                          ^^^^^^^^^^^^^^^^
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/torch/serialization.py", line 986, in load
+                          ^^^^^^^^^^^^^^^^
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/torch/serialization.py", line 986, in load
+                          ^^^^^^^^^^^^^^^^
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/torch/serialization.py", line 986, in load
+                          ^^^^^^^^^^^^^^^^
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/torch/serialization.py", line 986, in load
+                          ^^^^^^^^^^^^^^^^
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/torch/serialization.py", line 986, in load
+                          ^^^^^^^^^^^^^^^^
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/torch/serialization.py", line 986, in load
+                          ^^^^^^^^^^^^^^^^
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/torch/serialization.py", line 986, in load
+    with _open_file_like(f, 'rb') as opened_file:
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/torch/serialization.py", line 435, in _open_file_like
+    return _open_file(name_or_buffer, mode)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/torch/serialization.py", line 416, in __init__
+    with _open_file_like(f, 'rb') as opened_file:
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/torch/serialization.py", line 435, in _open_file_like
+    return _open_file(name_or_buffer, mode)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/torch/serialization.py", line 416, in __init__
+    with _open_file_like(f, 'rb') as opened_file:
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/torch/serialization.py", line 435, in _open_file_like
+    with _open_file_like(f, 'rb') as opened_file:
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/torch/serialization.py", line 435, in _open_file_like
+    return _open_file(name_or_buffer, mode)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/torch/serialization.py", line 416, in __init__
+    with _open_file_like(f, 'rb') as opened_file:
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/torch/serialization.py", line 435, in _open_file_like
+    return _open_file(name_or_buffer, mode)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/torch/serialization.py", line 416, in __init__
+    with _open_file_like(f, 'rb') as opened_file:
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/torch/serialization.py", line 435, in _open_file_like
+    return _open_file(name_or_buffer, mode)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/torch/serialization.py", line 416, in __init__
+    with _open_file_like(f, 'rb') as opened_file:
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/torch/serialization.py", line 435, in _open_file_like
+    return _open_file(name_or_buffer, mode)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/torch/serialization.py", line 416, in __init__
+    with _open_file_like(f, 'rb') as opened_file:
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/torch/serialization.py", line 435, in _open_file_like
+    return _open_file(name_or_buffer, mode)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/torch/serialization.py", line 416, in __init__
+    return _open_file(name_or_buffer, mode)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/torch/serialization.py", line 416, in __init__
+    super().__init__(open(name, mode))
+    super().__init__(open(name, mode))
+    super().__init__(open(name, mode))
+    super().__init__(open(name, mode))
+    super().__init__(open(name, mode))
+                     ^^^^^^^^^^^^^^^^
+                     ^^^^^^^^^^^^^^^^
+                     ^^^^^^^^^^^^^^^^
+                     ^^^^^^^^^^^^^^^^
+                     ^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'model_sigma1.pth'
+FileNotFoundError: [Errno 2] No such file or directory: 'model_sigma0.pth'
+FileNotFoundError: [Errno 2] No such file or directory: 'model_sigma1.pth'
+FileNotFoundError: [Errno 2] No such file or directory: 'model_sigma3.pth'
+FileNotFoundError: [Errno 2] No such file or directory: 'model_sigma2.pth'
+    super().__init__(open(name, mode))
+                     ^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'model_sigma3.pth'
+    super().__init__(open(name, mode))
+                     ^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'model_sigma2.pth'
+    super().__init__(open(name, mode))
+                     ^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'model_sigma0.pth'
+--------------------------------------------------------------------------
+Primary job  terminated normally, but 1 process returned
+a non-zero exit code. Per user-direction, the job has been aborted.
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+mpiexec detected that one or more processes exited with non-zero status, thus causing
+the job to be terminated. The first process to do so was:
+
+  Process name: [[40813,1],0]
+  Exit code:    1
+--------------------------------------------------------------------------
+Command exited with non-zero status 1
+	Command being timed: "mpiexec -n 8 python3 dlrbnicsx_saddle_point_distributed.py"
+	User time (seconds): 119776.70
+	System time (seconds): 180.72
+	Percent of CPU this job got: 780%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 4:16:04
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 2265028
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 136828
+	Minor (reclaiming a frame) page faults: 88314683
+	Voluntary context switches: 428417
+	Involuntary context switches: 1387421
+	Swaps: 0
+	File system inputs: 906792
+	File system outputs: 9736
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 1
