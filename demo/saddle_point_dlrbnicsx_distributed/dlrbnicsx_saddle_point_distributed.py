@@ -697,6 +697,8 @@ print(f"Sigma RB size: {reduced_size_sigma}, Sigma eigenvalues: {eigenvalues_sig
 
 print(rbnicsx.io.TextBox("POD-Galerkin offline phase ends", fill="="))
 
+exit()
+
 positive_eigenvalues_sigma = np.where(eigenvalues_sigma > 0., eigenvalues_sigma, np.nan)
 singular_values_sigma = np.sqrt(positive_eigenvalues_sigma)
 
@@ -757,7 +759,6 @@ if world_comm.rank == 0:
 del(snapshot_arrays_u)
 
 # ### POD Ends ###
-exit()
 
 sigma_h_projected = reduced_problem.project_snapshot_sigma(sigma_h, reduced_size_sigma)
 sigma_h_reconstructed = reduced_problem.reconstruct_solution_sigma(sigma_h_projected)
