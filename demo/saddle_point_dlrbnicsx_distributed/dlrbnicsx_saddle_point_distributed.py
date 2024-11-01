@@ -1251,7 +1251,7 @@ for j in range(len(ann_comm_list_sigma)):
         training_loss = list()
         validation_loss = list()
 
-        max_epochs_sigma = 50 # 50000
+        max_epochs_sigma = 70000
         min_validation_loss_sigma = None
         start_epoch_sigma = 0
         checkpoint_epoch_sigma = 10
@@ -1597,7 +1597,7 @@ for j in range(len(ann_comm_list_u)):
         training_loss = list()
         validation_loss = list()
 
-        max_epochs_u = 60 # 50000
+        max_epochs_u = 70000
         min_validation_loss_u = None
         start_epoch_u = 0
         checkpoint_epoch_u = 10
