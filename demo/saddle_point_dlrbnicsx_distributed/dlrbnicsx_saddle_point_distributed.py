@@ -557,6 +557,8 @@ u_norm = mesh.comm.allreduce(dolfinx.fem.assemble_scalar
 
 print(f"sigma norm squared: {sigma_norm}, u norm squared: {u_norm}")
 
+exit()
+
 rstart_sigma, rend_sigma = sigma_h.vector.getOwnershipRange()
 num_dofs_sigma = mesh_comm.allreduce(rend_sigma, op=MPI.MAX) - mesh_comm.allreduce(rstart_sigma, op=MPI.MIN)
 rstart_u, rend_u = u_h.vector.getOwnershipRange()
@@ -851,8 +853,6 @@ for k in projection_error_indices:
         reduced_problem.norm_error_sigma(fem_sol_sigma, reconstructed_sol_sigma)
     projection_error_array_u[k] = \
         reduced_problem.norm_error_u(fem_sol_u, reconstructed_sol_u)
-
-exit()
 
 print(f"Rank: {world_comm.rank}, \nProjection errors (sigma): {projection_error_array_sigma}, \nProjection errors (u): {projection_error_array_u} ")
 
