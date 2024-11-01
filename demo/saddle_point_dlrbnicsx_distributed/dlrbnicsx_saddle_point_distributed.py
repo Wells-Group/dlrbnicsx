@@ -539,8 +539,8 @@ mu = np.array([-1., 1.5, 0.7, 0.3])
 
 para_dim = 4
 ann_input_samples_num = 34 # 1100
-error_analysis_samples_num = 27 # 800
-num_snapshots = 43 # 1000
+error_analysis_samples_num = 43 # 800
+num_snapshots = 54 # 1000
 itemsize = MPI.DOUBLE.Get_size()
 
 sigma_h, u_h = problem_parametric.solve(mu)
@@ -556,8 +556,6 @@ u_norm = mesh.comm.allreduce(dolfinx.fem.assemble_scalar
                                                ufl.dx)), op=MPI.SUM)
 
 print(f"sigma norm squared: {sigma_norm}, u norm squared: {u_norm}")
-
-exit()
 
 rstart_sigma, rend_sigma = sigma_h.vector.getOwnershipRange()
 num_dofs_sigma = mesh_comm.allreduce(rend_sigma, op=MPI.MAX) - mesh_comm.allreduce(rstart_sigma, op=MPI.MIN)
