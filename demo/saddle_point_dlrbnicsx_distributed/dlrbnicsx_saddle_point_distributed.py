@@ -887,36 +887,32 @@ if fem_comm_list[0] != MPI.COMM_NULL:
     fem_rb_error_file \
         = "projection_error/projection_error_sigma.xdmf"
     sigma_plot = dolfinx.fem.Function(Q_plot)
-    sigma_plot.interpolate(error_function_sigma)    
-    with dolfinx.io.VTXWriter(mesh.comm, fem_rb_error_file, sigma_plot, engine="bp4") as file:
-        file.write(0.0)
+    sigma_plot.interpolate(error_function_sigma)
+    with dolfinx.io.XDMFFile(mesh.comm, fem_rb_error_file, "w") as solution_file_sigma:
+        solution_file_sigma.write_mesh(mesh)
+        solution_file_sigma.write_function(sigma_plot)
 
-    W_plot = dolfinx.fem.FunctionSpace(mesh, ("DG", 1))
-    
-    u_plot = dolfinx.fem.Function(W_plot)
-    u_plot.interpolate(fem_sol_u)
     fem_error_file \
         = "projection_error/fem_solution_u.xdmf"
-    with dolfinx.io.VTXWriter(mesh.comm, fem_error_file, fem_sol_u, engine="bp4") as file:
-            file.write(0.0)
+    with dolfinx.io.XDMFFile(mesh.comm, fem_error_file, "w") as solution_file_u:
+        solution_file_u.write_mesh(mesh)
+        solution_file_u.write_function(fem_sol_u)
 
-    u_rb_error_plot = dolfinx.fem.Function(W_plot)
-    u_rb_error_plot.interpolate(reconstruct_solution_u)
     rb_error_file \
         = "projection_error/rb_solution_u.xdmf"
-    with dolfinx.io.VTXWriter(mesh.comm, rb_error_file, reconstructed_sol_u, engine="bp4") as file:
-            file.write(0.0)
-
+    with dolfinx.io.XDMFFile(mesh.comm, rb_error_file, "w") as solution_file_u:
+        solution_file_u.write_mesh(mesh)
+        solution_file_u.write_function(reconstructed_sol_u)
+    
     error_function_u = dolfinx.fem.Function(problem_parametric._W)
     error_function_u.vector[rstart_u:rend_u] = \
         abs(fem_sol_u.vector[rstart_u:rend_u] -
             reconstructed_sol_u.vector[rstart_u:rend_u])
     fem_rb_error_file \
         = "projection_error/projection_error_u.xdmf"
-    fem_rb_error_u = dolfinx.fem.Function(W_plot)
-    fem_rb_error_u.interpolate(error_function_u)
-    with dolfinx.io.VTXWriter(mesh.comm, fem_rb_error_file, fem_rb_error_u, engine="bp4") as file:
-            file.write(0.0)
+    with dolfinx.io.XDMFFile(mesh.comm, fem_rb_error_file, "w") as solution_file_u:
+        solution_file_u.write_mesh(mesh)
+        solution_file_u.write_function(error_function_u)
 
 # ### Projection error ends ###
 
