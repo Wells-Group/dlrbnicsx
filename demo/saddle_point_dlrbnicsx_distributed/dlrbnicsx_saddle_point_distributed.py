@@ -524,7 +524,7 @@ for comm_i in fem_comm_list:
     if comm_i != MPI.COMM_NULL:
         mesh_comm = comm_i
 
-nx, ny, nz = 20, 20, 20
+nx, ny, nz = 5, 5, 5 # 20, 20, 20
 mesh = dolfinx.mesh.create_box(mesh_comm,
                                [[0.0, 0.0, 0.0], [1, 1, 1]],
                                [nx, ny, nz],
@@ -537,9 +537,9 @@ problem_parametric = ParametricProblem(mesh)
 mu = np.array([-1., 1.5, 0.7, 0.3])
 
 para_dim = 4
-ann_input_samples_num = 1100
-error_analysis_samples_num = 800
-num_snapshots = 1000
+ann_input_samples_num = 34 # 1100
+error_analysis_samples_num = 27 # 800
+num_snapshots = 43 # 1000
 itemsize = MPI.DOUBLE.Get_size()
 
 sigma_h, u_h = problem_parametric.solve(mu)
@@ -575,6 +575,18 @@ if world_comm.rank == 0:
         solution_file.write_mesh(mesh)
         solution_file.write_function(u_h)
 '''
+
+if fem_comm_list[0] != MPI.COMM_NULL:
+    with dolfinx.io.XDMFFile(mesh.comm, computed_file_sigma,
+                            "w") as solution_file:
+        solution_file.write_mesh(mesh)
+        solution_file.write_function(sigma_h)
+    
+    Q_plot = dolfinx.fem.FunctionSpace(mesh, ("DG", 1))
+    u_plot = dolfinx.fem.Function(Q_plot)
+    u_plot.interpolate(u_h)
+    with dolfinx.io.VTXWriter(mesh.comm, computed_file_u, u_plot, engine="bp4") as file:
+            file.write(0.0)
 
 # POD Starts ###
 Nmax_sigma = 100
@@ -830,7 +842,18 @@ for k in projection_error_indices:
 
 print(f"Rank: {world_comm.rank}, \nProjection errors (sigma): {projection_error_array_sigma}, \nProjection errors (u): {projection_error_array_u} ")
 
-'''
+if fem_comm_list[0] != MPI.COMM_NULL:
+    with dolfinx.io.XDMFFile(mesh.comm, computed_file_sigma,
+                            "w") as solution_file:
+        solution_file.write_mesh(mesh)
+        solution_file.write_function(sigma_h)
+    
+    Q_plot = dolfinx.fem.FunctionSpace(mesh, ("DG", 1))
+    u_plot = dolfinx.fem.Function(Q_plot)
+    u_plot.interpolate(u_h)
+    with dolfinx.io.VTXWriter(mesh.comm, computed_file_u, u_plot, engine="bp4") as file:
+            file.write(0.0)
+
 if fem_comm_list[0] != MPI.COMM_NULL:
     fem_error_file \
         = "projection_error/fem_solution_sigma.xdmf"
@@ -859,20 +882,36 @@ if fem_comm_list[0] != MPI.COMM_NULL:
         solution_file.write_mesh(mesh)
         solution_file.write_function(error_function_sigma)
 
+    Q_plot = dolfinx.fem.FunctionSpace(mesh, ("DG", 1))
+    
+    u_plot = dolfinx.fem.Function(Q_plot)
+    u_plot.interpolate(fem_sol_u)
     fem_error_file \
         = "projection_error/fem_solution_u.xdmf"
+    with dolfinx.io.VTXWriter(mesh.comm, fem_error_file, fem_sol_u, engine="bp4") as file:
+            file.write(0.0)
+
+    '''
     with dolfinx.io.XDMFFile(mesh.comm, fem_error_file,
                             "w") as solution_file:
         solution_file.write_mesh(mesh)
         solution_file.write_function(fem_sol_u)
-
+    '''
+    
+    u_rb_error_plot = dolfinx.fem.Function(Q_plot)
+    u_rb_error_plot.interpolate(reconstruct_solution_u)
     rb_error_file \
         = "projection_error/rb_solution_u.xdmf"
+    with dolfinx.io.VTXWriter(mesh.comm, rb_error_file, reconstructed_sol_u, engine="bp4") as file:
+            file.write(0.0)
+
+    '''
     with dolfinx.io.XDMFFile(mesh.comm, rb_error_file,
                             "w") as solution_file:
         # NOTE scatter_forward not considered for online solution
         solution_file.write_mesh(mesh)
         solution_file.write_function(reconstructed_sol_u)
+    '''
 
     error_function_u = dolfinx.fem.Function(problem_parametric._W)
     error_function_u.vector[rstart_u:rend_u] = \
@@ -880,11 +919,17 @@ if fem_comm_list[0] != MPI.COMM_NULL:
             reconstructed_sol_u.vector[rstart_u:rend_u])
     fem_rb_error_file \
         = "projection_error/projection_error_u.xdmf"
+    fem_rb_error_u = dolfinx.fem.Function(Q_plot)
+    fem_rb_error_u.interpolate(error_function_u)
+    with dolfinx.io.VTXWriter(mesh.comm, fem_rb_error_file, fem_rb_error_u, engine="bp4") as file:
+            file.write(0.0)
+
+    '''
     with dolfinx.io.XDMFFile(mesh.comm, fem_rb_error_file,
                             "w") as solution_file:
         solution_file.write_mesh(mesh)
         solution_file.write_function(error_function_u)
-'''
+    '''
 
 # ### Projection error ends ###
 
@@ -1770,7 +1815,6 @@ if fem_comm_list[0] != MPI.COMM_NULL:
     # Post processing
     # TODO make plotting work on CSD3
 
-    '''
     fem_online_file \
         = "dlrbnicsx_solution_mixed_poisson_0/fem_online_mu_computed_sigma.xdmf"
     with dolfinx.io.XDMFFile(mesh.comm, fem_online_file,
@@ -1796,7 +1840,34 @@ if fem_comm_list[0] != MPI.COMM_NULL:
                             "w") as solution_file:
         solution_file.write_mesh(mesh)
         solution_file.write_function(error_function_sigma)
-    '''
+
+    Q_plot = dolfinx.fem.FunctionSpace(mesh, ("DG", 1))
+    
+    u_fem_plot = dolfinx.fem.Function(Q_plot)
+    u_fem_plot.interpolate(fem_solution_u)
+    fem_online_file \
+        = "dlrbnicsx_solution_mixed_poisson_0/fem_online_mu_computed_u.xdmf"
+    with dolfinx.io.VTXWriter(mesh.comm, fem_online_file, u_fem_plot, engine="bp4") as file:
+            file.write(0.0)
+    
+    u_rb_plot = dolfinx.fem.Function(Q_plot)
+    u_rb_plot.interpolate(rb_solution_u)
+    rb_online_file \
+        = "dlrbnicsx_solution_mixed_poisson_0/rb_online_mu_computed_u.xdmf"
+    with dolfinx.io.VTXWriter(mesh.comm, rb_online_file, u_rb_plot, engine="bp4") as file:
+        # NOTE scatter_forward not considered for online solution
+        file.write(0.0)
+
+    error_function_u = dolfinx.fem.Function(problem_parametric._W)
+    error_function_u.vector[rstart_u:rend_u] = \
+        abs(fem_sol_u.vector[rstart_u:rend_u] -
+            reconstructed_sol_u.vector[rstart_u:rend_u])
+    fem_rb_online_error_file \
+        = "dlrbnicsx_solution_mixed_poisson_0/fem_rb_error_computed_u.xdmf"
+    fem_rb_error_u = dolfinx.fem.Function(Q_plot)
+    fem_rb_error_u.interpolate(error_function_u)
+    with dolfinx.io.VTXWriter(mesh.comm, fem_rb_online_error_file, fem_rb_error_u, engine="bp4") as file:
+            file.write(0.0)
 
     print(f"FEM time 0: {fem_end_time_0 - fem_start_time_0}")
     print(f"RB time (sigma) 0: {rb_end_time_0 - rb_start_time_0}")
