@@ -529,6 +529,7 @@ mesh = dolfinx.mesh.create_box(mesh_comm,
                                [[0.0, 0.0, 0.0], [1, 1, 1]],
                                [nx, ny, nz],
                                dolfinx.mesh.CellType.tetrahedron)
+gdim = mesh.topology.dim
 problem_parametric = ParametricProblem(mesh)
 
 
@@ -577,16 +578,18 @@ if world_comm.rank == 0:
 '''
 
 if fem_comm_list[0] != MPI.COMM_NULL:
-    with dolfinx.io.XDMFFile(mesh.comm, computed_file_sigma,
-                            "w") as solution_file:
-        solution_file.write_mesh(mesh)
-        solution_file.write_function(sigma_h)
     
-    Q_plot = dolfinx.fem.FunctionSpace(mesh, ("DG", 1))
-    u_plot = dolfinx.fem.Function(Q_plot)
+    Q_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("DG", 1))
+    sigma_plot = dolfinx.fem.Function(Q_plot)
+    sigma_plot.interpolate(sigma_h)
+    with dolfinx.io.VTXWriter(mesh.comm, computed_file_sigma, sigma_plot, engine="bp4") as file:
+        file.write(0.0)
+
+    W_plot = dolfinx.fem.FunctionSpace(mesh, ("DG", 1))
+    u_plot = dolfinx.fem.Function(W_plot)
     u_plot.interpolate(u_h)
     with dolfinx.io.VTXWriter(mesh.comm, computed_file_u, u_plot, engine="bp4") as file:
-            file.write(0.0)
+        file.write(0.0)
 
 # POD Starts ###
 Nmax_sigma = 100
@@ -843,32 +846,23 @@ for k in projection_error_indices:
 print(f"Rank: {world_comm.rank}, \nProjection errors (sigma): {projection_error_array_sigma}, \nProjection errors (u): {projection_error_array_u} ")
 
 if fem_comm_list[0] != MPI.COMM_NULL:
-    with dolfinx.io.XDMFFile(mesh.comm, computed_file_sigma,
-                            "w") as solution_file:
-        solution_file.write_mesh(mesh)
-        solution_file.write_function(sigma_h)
-    
-    Q_plot = dolfinx.fem.FunctionSpace(mesh, ("DG", 1))
-    u_plot = dolfinx.fem.Function(Q_plot)
-    u_plot.interpolate(u_h)
-    with dolfinx.io.VTXWriter(mesh.comm, computed_file_u, u_plot, engine="bp4") as file:
-            file.write(0.0)
 
-if fem_comm_list[0] != MPI.COMM_NULL:
+    Q_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("DG", 1))
+
     fem_error_file \
         = "projection_error/fem_solution_sigma.xdmf"
-    with dolfinx.io.XDMFFile(mesh.comm, fem_error_file,
-                            "w") as solution_file:
-        solution_file.write_mesh(mesh)
-        solution_file.write_function(fem_sol_sigma)
+    sigma_plot = dolfinx.fem.Function(Q_plot)
+    sigma_plot.interpolate(fem_sol_sigma)
+    with dolfinx.io.VTXWriter(mesh.comm, fem_error_file, sigma_plot, engine="bp4") as file:
+        file.write(0.0)
 
     rb_error_file \
         = "projection_error/rb_solution_sigma.xdmf"
-    with dolfinx.io.XDMFFile(mesh.comm, rb_error_file,
-                            "w") as solution_file:
+    sigma_plot = dolfinx.fem.Function(Q_plot)
+    sigma_plot.interpolate(reconstructed_sol_sigma)
+    with dolfinx.io.VTXWriter(mesh.comm, rb_error_file, sigma_plot, engine="bp4") as file:
         # NOTE scatter_forward not considered for online solution
-        solution_file.write_mesh(mesh)
-        solution_file.write_function(reconstructed_sol_sigma)
+        file.write(0.0)
 
     error_function_sigma = dolfinx.fem.Function(problem_parametric._Q)
     error_function_sigma.vector[rstart_sigma:rend_sigma] = \
@@ -877,41 +871,26 @@ if fem_comm_list[0] != MPI.COMM_NULL:
 
     fem_rb_error_file \
         = "projection_error/projection_error_sigma.xdmf"
-    with dolfinx.io.XDMFFile(mesh.comm, fem_rb_error_file,
-                            "w") as solution_file:
-        solution_file.write_mesh(mesh)
-        solution_file.write_function(error_function_sigma)
+    sigma_plot = dolfinx.fem.Function(Q_plot)
+    sigma_plot.interpolate(error_function_sigma)    
+    with dolfinx.io.VTXWriter(mesh.comm, fem_rb_error_file, sigma_plot, engine="bp4") as file:
+        file.write(0.0)
 
-    Q_plot = dolfinx.fem.FunctionSpace(mesh, ("DG", 1))
+    W_plot = dolfinx.fem.FunctionSpace(mesh, ("DG", 1))
     
-    u_plot = dolfinx.fem.Function(Q_plot)
+    u_plot = dolfinx.fem.Function(W_plot)
     u_plot.interpolate(fem_sol_u)
     fem_error_file \
         = "projection_error/fem_solution_u.xdmf"
     with dolfinx.io.VTXWriter(mesh.comm, fem_error_file, fem_sol_u, engine="bp4") as file:
             file.write(0.0)
 
-    '''
-    with dolfinx.io.XDMFFile(mesh.comm, fem_error_file,
-                            "w") as solution_file:
-        solution_file.write_mesh(mesh)
-        solution_file.write_function(fem_sol_u)
-    '''
-    
-    u_rb_error_plot = dolfinx.fem.Function(Q_plot)
+    u_rb_error_plot = dolfinx.fem.Function(W_plot)
     u_rb_error_plot.interpolate(reconstruct_solution_u)
     rb_error_file \
         = "projection_error/rb_solution_u.xdmf"
     with dolfinx.io.VTXWriter(mesh.comm, rb_error_file, reconstructed_sol_u, engine="bp4") as file:
             file.write(0.0)
-
-    '''
-    with dolfinx.io.XDMFFile(mesh.comm, rb_error_file,
-                            "w") as solution_file:
-        # NOTE scatter_forward not considered for online solution
-        solution_file.write_mesh(mesh)
-        solution_file.write_function(reconstructed_sol_u)
-    '''
 
     error_function_u = dolfinx.fem.Function(problem_parametric._W)
     error_function_u.vector[rstart_u:rend_u] = \
@@ -919,17 +898,10 @@ if fem_comm_list[0] != MPI.COMM_NULL:
             reconstructed_sol_u.vector[rstart_u:rend_u])
     fem_rb_error_file \
         = "projection_error/projection_error_u.xdmf"
-    fem_rb_error_u = dolfinx.fem.Function(Q_plot)
+    fem_rb_error_u = dolfinx.fem.Function(W_plot)
     fem_rb_error_u.interpolate(error_function_u)
     with dolfinx.io.VTXWriter(mesh.comm, fem_rb_error_file, fem_rb_error_u, engine="bp4") as file:
             file.write(0.0)
-
-    '''
-    with dolfinx.io.XDMFFile(mesh.comm, fem_rb_error_file,
-                            "w") as solution_file:
-        solution_file.write_mesh(mesh)
-        solution_file.write_function(error_function_u)
-    '''
 
 # ### Projection error ends ###
 
@@ -1815,20 +1787,22 @@ if fem_comm_list[0] != MPI.COMM_NULL:
     # Post processing
     # TODO make plotting work on CSD3
 
+    Q_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("DG", 1))
+
     fem_online_file \
         = "dlrbnicsx_solution_mixed_poisson_0/fem_online_mu_computed_sigma.xdmf"
-    with dolfinx.io.XDMFFile(mesh.comm, fem_online_file,
-                            "w") as solution_file:
-        solution_file.write_mesh(mesh)
-        solution_file.write_function(fem_solution_sigma)
+    sigma_plot = dolfinx.fem.Function(Q_plot)
+    sigma_plot.interpolate(fem_solution_sigma)
+    with dolfinx.io.VTXWriter(mesh.comm, fem_online_file, sigma_plot, engine="bp4") as file:
+        file.write(0.0)
 
     rb_online_file \
         = "dlrbnicsx_solution_mixed_poisson_0/rb_online_mu_computed_sigma.xdmf"
-    with dolfinx.io.XDMFFile(mesh.comm, rb_online_file,
-                            "w") as solution_file:
+    sigma_plot = dolfinx.fem.Function(Q_plot)
+    sigma_plot.interpolate(rb_solution_sigma)
+    with dolfinx.io.VTXWriter(mesh.comm, rb_online_file, sigma_plot, engine="bp4") as file:
         # NOTE scatter_forward not considered for online solution
-        solution_file.write_mesh(mesh)
-        solution_file.write_function(rb_solution_sigma)
+        file.write(0.0)
 
     error_function_sigma = dolfinx.fem.Function(problem_parametric._Q)
     error_function_sigma.vector[rstart_sigma:rend_sigma] = \
@@ -1836,21 +1810,21 @@ if fem_comm_list[0] != MPI.COMM_NULL:
             rb_solution_sigma.vector[rstart_sigma:rend_sigma])
     fem_rb_error_file \
         = "dlrbnicsx_solution_mixed_poisson_0/fem_rb_error_computed_sigma.xdmf"
-    with dolfinx.io.XDMFFile(mesh.comm, fem_rb_error_file,
-                            "w") as solution_file:
-        solution_file.write_mesh(mesh)
-        solution_file.write_function(error_function_sigma)
-
-    Q_plot = dolfinx.fem.FunctionSpace(mesh, ("DG", 1))
+    sigma_plot = dolfinx.fem.Function(Q_plot)
+    sigma_plot.interpolate(error_function_sigma)
+    with dolfinx.io.VTXWriter(mesh.comm, fem_rb_error_file, sigma_plot, engine="bp4") as file:
+        file.write(0.0)
+        
+    W_plot = dolfinx.fem.FunctionSpace(mesh, ("DG", 1))
     
-    u_fem_plot = dolfinx.fem.Function(Q_plot)
+    u_fem_plot = dolfinx.fem.Function(W_plot)
     u_fem_plot.interpolate(fem_solution_u)
     fem_online_file \
         = "dlrbnicsx_solution_mixed_poisson_0/fem_online_mu_computed_u.xdmf"
     with dolfinx.io.VTXWriter(mesh.comm, fem_online_file, u_fem_plot, engine="bp4") as file:
             file.write(0.0)
     
-    u_rb_plot = dolfinx.fem.Function(Q_plot)
+    u_rb_plot = dolfinx.fem.Function(W_plot)
     u_rb_plot.interpolate(rb_solution_u)
     rb_online_file \
         = "dlrbnicsx_solution_mixed_poisson_0/rb_online_mu_computed_u.xdmf"
@@ -1864,7 +1838,7 @@ if fem_comm_list[0] != MPI.COMM_NULL:
             reconstructed_sol_u.vector[rstart_u:rend_u])
     fem_rb_online_error_file \
         = "dlrbnicsx_solution_mixed_poisson_0/fem_rb_error_computed_u.xdmf"
-    fem_rb_error_u = dolfinx.fem.Function(Q_plot)
+    fem_rb_error_u = dolfinx.fem.Function(W_plot)
     fem_rb_error_u.interpolate(error_function_u)
     with dolfinx.io.VTXWriter(mesh.comm, fem_rb_online_error_file, fem_rb_error_u, engine="bp4") as file:
             file.write(0.0)
