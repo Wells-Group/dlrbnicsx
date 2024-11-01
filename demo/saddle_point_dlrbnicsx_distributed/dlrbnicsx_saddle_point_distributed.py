@@ -628,9 +628,6 @@ if fem_comm_list[0] != MPI.COMM_NULL:
         file.write(0.0)
     '''
 
-    W_plot = dolfinx.fem.FunctionSpace(mesh, ("Discontinuous Lagrange", 1))
-    u_plot = dolfinx.fem.Function(W_plot)
-    u_plot.interpolate(u_h)
     with dolfinx.io.VTKFile(mesh.comm, computed_file_u, "w") as file:
         file.write_mesh(mesh)
         file.write_function(u_h)
