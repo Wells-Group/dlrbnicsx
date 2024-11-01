@@ -757,6 +757,7 @@ if world_comm.rank == 0:
 del(snapshot_arrays_u)
 
 # ### POD Ends ###
+exit()
 
 sigma_h_projected = reduced_problem.project_snapshot_sigma(sigma_h, reduced_size_sigma)
 sigma_h_reconstructed = reduced_problem.reconstruct_solution_sigma(sigma_h_projected)
