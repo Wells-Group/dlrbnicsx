@@ -579,14 +579,6 @@ if world_comm.rank == 0:
 
 if fem_comm_list[0] != MPI.COMM_NULL:
     
-    '''
-    Q_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("DG", 1))
-    sigma_plot = dolfinx.fem.Function(Q_plot)
-    sigma_plot.interpolate(sigma_h)
-    with dolfinx.io.VTXWriter(mesh.comm, computed_file_sigma, sigma_plot, engine="bp4") as file:
-        file.write(0.0)
-    '''
-
     Q_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("Discontinuous Lagrange", 1))
     sigma_plot = dolfinx.fem.Function(Q_plot)
     sigma_plot.interpolate(sigma_h)
@@ -602,55 +594,9 @@ if fem_comm_list[0] != MPI.COMM_NULL:
                                                                 ufl.dx)), op=MPI.SUM)
     print(sigma_norm)
 
-    '''
-    Q_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("Discontinuous Lagrange", 1))
-    sigma_plot = dolfinx.fem.Function(Q_plot)
-    sigma_plot.interpolate(sigma_h)
-    with dolfinx.io.XDMFFile(mesh.comm, computed_file_sigma,
-                            "w") as solution_file:
-        solution_file.write_mesh(mesh)
-        solution_file.write_function(sigma_plot)
-
-    sigma_norm = mesh.comm.allreduce(dolfinx.fem.assemble_scalar
-                                    (dolfinx.fem.form(ufl.inner(sigma_plot, sigma_plot) *
-                                                    ufl.dx +
-                                                    ufl.inner(ufl.div(sigma_plot),
-                                                                ufl.div(sigma_plot)) *
-                                                                ufl.dx)), op=MPI.SUM)
-    print(sigma_norm)
-    '''
-    
-    '''
-    W_plot = dolfinx.fem.FunctionSpace(mesh, ("DG", 1))
-    u_plot = dolfinx.fem.Function(W_plot)
-    u_plot.interpolate(u_h)
-    with dolfinx.io.VTXWriter(mesh.comm, computed_file_u, u_plot, engine="bp4") as file:
-        file.write(0.0)
-    '''
-
     with dolfinx.io.VTKFile(mesh.comm, computed_file_u, "w") as file:
         file.write_mesh(mesh)
         file.write_function(u_h)
-    '''
-    u_norm = mesh.comm.allreduce(dolfinx.fem.assemble_scalar
-                                (dolfinx.fem.form(ufl.inner(u_plot, u_plot) *
-                                                ufl.dx)), op=MPI.SUM)
-    print(u_norm)
-    '''
-
-    '''
-    W_plot = dolfinx.fem.FunctionSpace(mesh, ("Discontinuous Lagrange", 1))
-    u_plot = dolfinx.fem.Function(W_plot)
-    u_plot.interpolate(u_h)
-    with dolfinx.io.XDMFFile(mesh.comm, computed_file_u,
-                            "w") as solution_file:
-        solution_file.write_mesh(mesh)
-        solution_file.write_function(u_plot)
-    u_norm = mesh.comm.allreduce(dolfinx.fem.assemble_scalar
-                                (dolfinx.fem.form(ufl.inner(u_plot, u_plot) *
-                                                ufl.dx)), op=MPI.SUM)
-    print(u_norm)
-    '''
 
 exit()
 
