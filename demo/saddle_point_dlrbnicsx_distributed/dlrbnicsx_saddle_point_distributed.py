@@ -852,8 +852,9 @@ for k in projection_error_indices:
     projection_error_array_u[k] = \
         reduced_problem.norm_error_u(fem_sol_u, reconstructed_sol_u)
 
-print(f"Rank: {world_comm.rank}, \nProjection errors (sigma): {projection_error_array_sigma}, \nProjection errors (u): {projection_error_array_u} ")
 exit()
+
+print(f"Rank: {world_comm.rank}, \nProjection errors (sigma): {projection_error_array_sigma}, \nProjection errors (u): {projection_error_array_u} ")
 
 with dolfinx.io.XDMFFile(mesh.comm, computed_file_u, "w") as solution_file_u:
     solution_file_u.write_mesh(mesh)
