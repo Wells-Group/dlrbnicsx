@@ -828,14 +828,25 @@ print(f"Rank: {world_comm.rank}, Indices (projection error): {projection_error_i
 for k in projection_error_indices:
     print(f"Index: {k}")
     fem_sol_sigma, fem_sol_u = problem_parametric.solve(projection_error_samples[k, :])
+    proj_sigma_time_start = time.process_time()
+    proj_sol_sigma = reduced_problem.project_snapshot_sigma(fem_sol_sigma,
+                                                   reduced_size_sigma)
+    proj_sigma_time_end = time.process_time()
+    print(f"Projection time (sigma) : {proj_sigma_time_end - proj_sigma_time_start}")
+    
     reconstructed_sol_sigma = \
-        reduced_problem.reconstruct_solution_sigma(
-            reduced_problem.project_snapshot_sigma(fem_sol_sigma,
-                                                   reduced_size_sigma))
+        reduced_problem.reconstruct_solution_sigma(proj_sol_sigma)
+    
+    proj_u_time_start = time.process_time()
+    proj_sol_u = \
+        reduced_problem.project_snapshot_u(fem_sol_u,
+                                           reduced_size_u)
+    proj_u_time_end = time.process_time()
+    print(f"Projection time (U) : {proj_u_time_end - proj_u_time_start}")
+    
     reconstructed_sol_u = \
-        reduced_problem.reconstruct_solution_u(
-            reduced_problem.project_snapshot_u(fem_sol_u,
-                                                reduced_size_u))
+        reduced_problem.reconstruct_solution_u(proj_sol_u)
+    
     projection_error_array_sigma[k] = \
         reduced_problem.norm_error_sigma(fem_sol_sigma, reconstructed_sol_sigma)
     projection_error_array_u[k] = \
@@ -843,24 +854,30 @@ for k in projection_error_indices:
 
 print(f"Rank: {world_comm.rank}, \nProjection errors (sigma): {projection_error_array_sigma}, \nProjection errors (u): {projection_error_array_u} ")
 
+with dolfinx.io.XDMFFile(mesh.comm, computed_file_u, "w") as solution_file_u:
+    solution_file_u.write_mesh(mesh)
+    solution_file_u.write_function(u_h)
+
 if fem_comm_list[0] != MPI.COMM_NULL:
 
-    Q_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("DG", 1))
+    Q_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("CG", 1))
 
     fem_error_file \
         = "projection_error/fem_solution_sigma.xdmf"
     sigma_plot = dolfinx.fem.Function(Q_plot)
     sigma_plot.interpolate(fem_sol_sigma)
-    with dolfinx.io.VTXWriter(mesh.comm, fem_error_file, sigma_plot, engine="bp4") as file:
-        file.write(0.0)
-
+    with dolfinx.io.XDMFFile(mesh.comm, fem_error_file, "w") as solution_file_sigma:
+        solution_file_sigma.write_mesh(mesh)
+        solution_file_sigma.write_function(sigma_plot)
+    
     rb_error_file \
         = "projection_error/rb_solution_sigma.xdmf"
     sigma_plot = dolfinx.fem.Function(Q_plot)
     sigma_plot.interpolate(reconstructed_sol_sigma)
-    with dolfinx.io.VTXWriter(mesh.comm, rb_error_file, sigma_plot, engine="bp4") as file:
+    with dolfinx.io.XDMFFile(mesh.comm, rb_error_file, "w") as solution_file_sigma:
         # NOTE scatter_forward not considered for online solution
-        file.write(0.0)
+        solution_file_sigma.write_mesh(mesh)
+        solution_file_sigma.write_function(sigma_plot)
 
     error_function_sigma = dolfinx.fem.Function(problem_parametric._Q)
     error_function_sigma.vector[rstart_sigma:rend_sigma] = \
