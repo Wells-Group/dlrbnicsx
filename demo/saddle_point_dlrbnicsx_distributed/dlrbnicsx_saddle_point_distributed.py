@@ -578,6 +578,7 @@ if world_comm.rank == 0:
 '''
 
 if fem_comm_list[0] != MPI.COMM_NULL:
+    
     '''
     Q_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("DG", 1))
     sigma_plot = dolfinx.fem.Function(Q_plot)
@@ -597,7 +598,7 @@ if fem_comm_list[0] != MPI.COMM_NULL:
     with dolfinx.io.VTXWriter(mesh.comm, computed_file_u, u_plot, engine="bp4") as file:
         file.write(0.0)
     '''
-    # TODO 
+
     W_plot = dolfinx.fem.FunctionSpace(mesh, ("Discontinuous Lagrange", 1))
     u_plot = dolfinx.fem.Function(W_plot)
     u_plot.interpolate(u_h)
