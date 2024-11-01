@@ -538,8 +538,8 @@ problem_parametric = ParametricProblem(mesh)
 mu = np.array([-1., 1.5, 0.7, 0.3])
 
 para_dim = 4
-ann_input_samples_num = 34 # 1100
-error_analysis_samples_num = 43 # 800
+ann_input_samples_num = 43 # 1100
+error_analysis_samples_num = 32 # 800
 num_snapshots = 54 # 1000
 itemsize = MPI.DOUBLE.Get_size()
 
@@ -1379,6 +1379,18 @@ buf16, itemsize = win16.Shared_query(0)
 error_numpy_sigma3 = np.ndarray(buffer=buf16, dtype="d",
                          shape=(error_analysis_samples_num))
 
+win22 = MPI.Win.Allocate_shared(nbytes_error_sigma, itemsize,
+                                comm=world_comm)
+buf22, itemsize = win22.Shared_query(0)
+error_numpy_sigma4 = np.ndarray(buffer=buf22, dtype="d",
+                         shape=(error_analysis_samples_num))
+
+win23 = MPI.Win.Allocate_shared(nbytes_error_sigma, itemsize,
+                                comm=world_comm)
+buf23, itemsize = win23.Shared_query(0)
+error_numpy_sigma5 = np.ndarray(buffer=buf23, dtype="d",
+                         shape=(error_analysis_samples_num))
+
 if world_comm.rank == 0:
     error_analysis_set[:, :] = \
         generate_ann_input_set(num_ann_samples=error_analysis_samples_num)
@@ -1386,11 +1398,17 @@ if world_comm.rank == 0:
 
 world_comm.Barrier()
 
+'''
 if world_comm.size != 1:
     error_array_list_sigma = [error_numpy_sigma0, error_numpy_sigma1,
                               error_numpy_sigma2, error_numpy_sigma3]
 else:
     error_array_list_sigma = [error_numpy_sigma0]
+'''
+
+error_array_list_sigma = [error_numpy_sigma0, error_numpy_sigma1,
+                          error_numpy_sigma2, error_numpy_sigma3,
+                          error_numpy_sigma4, error_numpy_sigma5]
 
 for j in range(len(fem_comm_list)):
     if fem_comm_list[j] != MPI.COMM_NULL:
@@ -1725,6 +1743,18 @@ buf21, itemsize = win21.Shared_query(0)
 error_numpy_u3 = np.ndarray(buffer=buf21, dtype="d",
                          shape=(error_analysis_samples_num))
 
+win24 = MPI.Win.Allocate_shared(nbytes_error_u, itemsize,
+                               comm=world_comm)
+buf24, itemsize = win24.Shared_query(0)
+error_numpy_u4 = np.ndarray(buffer=buf24, dtype="d",
+                         shape=(error_analysis_samples_num))
+
+win25 = MPI.Win.Allocate_shared(nbytes_error_u, itemsize,
+                               comm=world_comm)
+buf25, itemsize = win25.Shared_query(0)
+error_numpy_u5 = np.ndarray(buffer=buf25, dtype="d",
+                         shape=(error_analysis_samples_num))
+
 if world_comm.rank == 0:
     error_analysis_set[:, :] = \
         generate_ann_input_set(num_ann_samples=error_analysis_samples_num)
@@ -1732,11 +1762,17 @@ if world_comm.rank == 0:
 
 world_comm.Barrier()
 
+'''
 if world_comm.size != 1:
     error_array_list_u = [error_numpy_u0, error_numpy_u1,
                           error_numpy_u2, error_numpy_u3]
 else:
     error_array_list_u = [error_numpy_u0]
+'''
+
+error_array_list_u = [error_numpy_u0, error_numpy_u1,
+                      error_numpy_u2, error_numpy_u3,
+                      error_numpy_u4, error_numpy_u5]
 
 for j in range(len(fem_comm_list)):
     if fem_comm_list[j] != MPI.COMM_NULL:
