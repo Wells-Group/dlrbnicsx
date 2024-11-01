@@ -694,7 +694,6 @@ eigenvalues_sigma, modes_sigma, _ = \
                                     N=Nmax_sigma, tol=tol_sigma)
 pod_sigma_end_time = time.process_time()
 print(f"Time take for POD (sigma): {pod_sigma_end_time - pod_sigma_start_time}")
-exit()
 
 reduced_problem._basis_functions_sigma.extend(modes_sigma)
 reduced_size_sigma = len(reduced_problem._basis_functions_sigma)
@@ -735,6 +734,7 @@ eigenvalues_u, modes_u, _ = \
                                     N=Nmax_u, tol=tol_u)
 pod_u_end_time = time.process_time()
 print(f"Time take for POD (U): {pod_u_end_time - pod_u_start_time}")
+exit()
 
 reduced_problem._basis_functions_u.extend(modes_u)
 reduced_size_u = len(reduced_problem._basis_functions_u)
