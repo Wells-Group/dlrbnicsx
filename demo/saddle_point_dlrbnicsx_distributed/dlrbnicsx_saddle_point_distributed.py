@@ -631,10 +631,12 @@ if fem_comm_list[0] != MPI.COMM_NULL:
     with dolfinx.io.VTKFile(mesh.comm, computed_file_u, "w") as file:
         file.write_mesh(mesh)
         file.write_function(u_h)
+    '''
     u_norm = mesh.comm.allreduce(dolfinx.fem.assemble_scalar
                                 (dolfinx.fem.form(ufl.inner(u_plot, u_plot) *
                                                 ufl.dx)), op=MPI.SUM)
     print(u_norm)
+    '''
 
     '''
     W_plot = dolfinx.fem.FunctionSpace(mesh, ("Discontinuous Lagrange", 1))
