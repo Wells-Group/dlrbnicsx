@@ -826,7 +826,7 @@ for j in range(len(fem_comm_list)):
 print(f"Rank: {world_comm.rank}, Indices (projection error): {projection_error_indices}")
 
 for k in projection_error_indices:
-    print(f"Index: {k}")
+    print(f"Index: {k}, Parameter: {projection_error_samples[k, :]}")
     fem_sol_sigma, fem_sol_u = problem_parametric.solve(projection_error_samples[k, :])
     proj_sigma_time_start = time.process_time()
     proj_sol_sigma = reduced_problem.project_snapshot_sigma(fem_sol_sigma,
