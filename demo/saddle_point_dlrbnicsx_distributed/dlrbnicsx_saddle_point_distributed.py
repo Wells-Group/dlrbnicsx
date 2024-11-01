@@ -697,8 +697,6 @@ print(f"Sigma RB size: {reduced_size_sigma}, Sigma eigenvalues: {eigenvalues_sig
 
 print(rbnicsx.io.TextBox("POD-Galerkin offline phase ends", fill="="))
 
-exit()
-
 positive_eigenvalues_sigma = np.where(eigenvalues_sigma > 0., eigenvalues_sigma, np.nan)
 singular_values_sigma = np.sqrt(positive_eigenvalues_sigma)
 
@@ -855,6 +853,7 @@ for k in projection_error_indices:
         reduced_problem.norm_error_u(fem_sol_u, reconstructed_sol_u)
 
 print(f"Rank: {world_comm.rank}, \nProjection errors (sigma): {projection_error_array_sigma}, \nProjection errors (u): {projection_error_array_u} ")
+exit()
 
 with dolfinx.io.XDMFFile(mesh.comm, computed_file_u, "w") as solution_file_u:
     solution_file_u.write_mesh(mesh)
