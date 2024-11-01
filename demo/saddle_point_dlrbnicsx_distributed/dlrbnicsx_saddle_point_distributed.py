@@ -1841,7 +1841,7 @@ if fem_comm_list[0] != MPI.COMM_NULL:
     fem_rb_error_u = dolfinx.fem.Function(W_plot)
     fem_rb_error_u.interpolate(error_function_u)
     with dolfinx.io.VTXWriter(mesh.comm, fem_rb_online_error_file, fem_rb_error_u, engine="bp4") as file:
-            file.write(0.0)
+        file.write(0.0)
 
     print(f"FEM time 0: {fem_end_time_0 - fem_start_time_0}")
     print(f"RB time (sigma) 0: {rb_end_time_0 - rb_start_time_0}")
