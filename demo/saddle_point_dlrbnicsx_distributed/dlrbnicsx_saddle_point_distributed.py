@@ -592,7 +592,7 @@ if fem_comm_list[0] != MPI.COMM_NULL:
     sigma_plot.interpolate(sigma_h)
     with dolfinx.io.VTKFile(mesh.comm, computed_file_sigma, "w") as file:
         file.write_mesh(mesh)
-        file.write_function(sigma_plot)
+        file.write_function(sigma_h)
 
     sigma_norm = mesh.comm.allreduce(dolfinx.fem.assemble_scalar
                                     (dolfinx.fem.form(ufl.inner(sigma_plot, sigma_plot) *
