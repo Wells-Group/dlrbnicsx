@@ -586,6 +586,7 @@ if fem_comm_list[0] != MPI.COMM_NULL:
     with dolfinx.io.VTXWriter(mesh.comm, computed_file_sigma, sigma_plot, engine="bp4") as file:
         file.write(0.0)
     '''
+    '''
     Q_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("Discontinuous Lagrange", 1))
     sigma_plot = dolfinx.fem.Function(Q_plot)
     sigma_plot.interpolate(sigma_h)
@@ -601,6 +602,7 @@ if fem_comm_list[0] != MPI.COMM_NULL:
                                                                 ufl.div(sigma_plot)) *
                                                                 ufl.dx)), op=MPI.SUM)
     print(sigma_norm)
+    '''
     
     '''
     W_plot = dolfinx.fem.FunctionSpace(mesh, ("DG", 1))
