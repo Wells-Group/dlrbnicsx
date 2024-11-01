@@ -562,17 +562,23 @@ num_dofs_sigma = mesh_comm.allreduce(rend_sigma, op=MPI.MAX) - mesh_comm.allredu
 rstart_u, rend_u = u_h.vector.getOwnershipRange()
 num_dofs_u = mesh_comm.allreduce(rend_u, op=MPI.MAX) - mesh_comm.allreduce(rstart_u, op=MPI.MIN)
 
-computed_file_sigma = "dlrbnicsx_solution_saddle_point/solution_computed_sigma.xdmf"
-computed_file_u = "dlrbnicsx_solution_saddle_point/solution_computed_u.xdmf"
+computed_file_sigma = "dlrbnicsx_solution_saddle_point/solution_computed_sigma.bp"
+computed_file_u = "dlrbnicsx_solution_saddle_point/solution_computed_u.bp"
 
 if fem_comm_list[0] != MPI.COMM_NULL:
     
     Q_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("DG", 1))
     sigma_plot = dolfinx.fem.Function(Q_plot)
     sigma_plot.interpolate(sigma_h)
+    
+    '''
     with dolfinx.io.VTKFile(mesh.comm, computed_file_sigma, "w") as file:
         file.write_mesh(mesh)
         file.write_function(sigma_plot)
+    '''
+    
+    with dolfinx.io.VTXWriter(mesh.comm, computed_file_sigma, sigma_plot, engine="bp4") as file:
+            file.write(0.0)
 
     sigma_norm = mesh.comm.allreduce(dolfinx.fem.assemble_scalar
                                     (dolfinx.fem.form(ufl.inner(sigma_plot, sigma_plot) *
@@ -580,11 +586,23 @@ if fem_comm_list[0] != MPI.COMM_NULL:
                                                     ufl.inner(ufl.div(sigma_plot),
                                                                 ufl.div(sigma_plot)) *
                                                                 ufl.dx)), op=MPI.SUM)
-    print(sigma_norm)
-
-    with dolfinx.io.VTKFile(mesh.comm, computed_file_u, "w") as file:
+    print(f"Sigma plot norm: {sigma_norm}")
+    
+    with dolfinx.io.XDMFFile(mesh.comm, computed_file_u, "w") as file:
         file.write_mesh(mesh)
         file.write_function(u_h)
+
+    W_plot = dolfinx.fem.FunctionSpace(mesh, ("DG", 1))
+    u_plot = dolfinx.fem.Function(W_plot)
+    u_plot.interpolate(u_h)
+    
+    with dolfinx.io.XDMFFile(mesh.comm, computed_file_u, "w") as file:
+        file.write_mesh(mesh)
+        file.write_function(u_plot)
+
+    u_norm = mesh.comm.allreduce(dolfinx.fem.assemble_scalar
+                                (dolfinx.fem.form(ufl.inner(u_plot, u_plot) *
+                                                ufl.dx)), op=MPI.SUM)
 
 exit()
 
