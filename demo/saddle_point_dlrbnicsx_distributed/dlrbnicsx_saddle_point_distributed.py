@@ -685,11 +685,16 @@ reduced_problem = PODANNReducedProblem(problem_parametric)
 print("")
 
 print(rbnicsx.io.TextLine("Perform POD (Sigma)", fill="#"))
+world_comm.barrier()
+pod_sigma_start_time = time.process_time()
 eigenvalues_sigma, modes_sigma, _ = \
     rbnicsx.backends.\
     proper_orthogonal_decomposition(snapshots_matrix_sigma,
                                     problem_parametric._inner_product_action_sigma,
                                     N=Nmax_sigma, tol=tol_sigma)
+pod_sigma_end_time = time.process_time()
+print(f"Time take for POD (sigma): {pod_sigma_end_time - pod_sigma_start_time}")
+exit()
 
 reduced_problem._basis_functions_sigma.extend(modes_sigma)
 reduced_size_sigma = len(reduced_problem._basis_functions_sigma)
@@ -721,11 +726,15 @@ if world_comm.rank == 0:
 del(snapshot_arrays_sigma)
 
 print(rbnicsx.io.TextLine("Perform POD (U)", fill="#"))
+world_comm.barrier()
+pod_u_start_time = time.process_time()
 eigenvalues_u, modes_u, _ = \
     rbnicsx.backends.\
     proper_orthogonal_decomposition(snapshots_matrix_u,
                                     problem_parametric._inner_product_action_u,
                                     N=Nmax_u, tol=tol_u)
+pod_u_end_time = time.process_time()
+print(f"Time take for POD (U): {pod_u_end_time - pod_u_start_time}")
 
 reduced_problem._basis_functions_u.extend(modes_u)
 reduced_size_u = len(reduced_problem._basis_functions_u)
