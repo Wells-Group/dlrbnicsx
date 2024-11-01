@@ -576,9 +576,6 @@ if fem_comm_list[0] != MPI.COMM_NULL:
         file.write_mesh(mesh)
         file.write_function(sigma_plot)
     '''
-    
-    with dolfinx.io.VTXWriter(mesh.comm, computed_file_sigma, sigma_plot, engine="bp4") as file:
-            file.write(0.0)
 
     sigma_norm = mesh.comm.allreduce(dolfinx.fem.assemble_scalar
                                     (dolfinx.fem.form(ufl.inner(sigma_plot, sigma_plot) *
