@@ -587,7 +587,7 @@ if fem_comm_list[0] != MPI.COMM_NULL:
         file.write(0.0)
     '''
 
-    Q_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("DG", 1))
+    Q_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("Discontinuous Lagrange", 1))
     sigma_plot = dolfinx.fem.Function(Q_plot)
     sigma_plot.interpolate(sigma_h)
     with dolfinx.io.VTKFile(mesh.comm, computed_file_sigma, "w") as file:
