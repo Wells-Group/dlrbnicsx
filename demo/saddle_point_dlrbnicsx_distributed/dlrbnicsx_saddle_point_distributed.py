@@ -1796,7 +1796,6 @@ for j in range(len(fem_comm_list)):
                                    index=1
                                 )
                 print(f"Error analysis (U) {i+1} of {error_analysis_set.shape[0]}, Model {array_num}, Error: {error_array_list_u[array_num][i]}")
-exit()
 
 if fem_comm_list[0] != MPI.COMM_NULL:
     # Online phase at parameter online_mu
