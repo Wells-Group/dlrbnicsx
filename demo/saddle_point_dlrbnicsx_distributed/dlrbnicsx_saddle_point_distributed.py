@@ -586,10 +586,21 @@ if fem_comm_list[0] != MPI.COMM_NULL:
     with dolfinx.io.VTXWriter(mesh.comm, computed_file_sigma, sigma_plot, engine="bp4") as file:
         file.write(0.0)
     '''
+    Q_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("Discontinuous Lagrange", 1))
+    sigma_plot = dolfinx.fem.Function(Q_plot)
+    sigma_plot.interpolate(sigma_h)
     with dolfinx.io.XDMFFile(mesh.comm, computed_file_sigma,
                             "w") as solution_file:
         solution_file.write_mesh(mesh)
-        solution_file.write_function(sigma_h)
+        solution_file.write_function(sigma_plot)
+
+    sigma_norm = mesh.comm.allreduce(dolfinx.fem.assemble_scalar
+                                    (dolfinx.fem.form(ufl.inner(sigma_plot, sigma_plot) *
+                                                    ufl.dx +
+                                                    ufl.inner(ufl.div(sigma_plot),
+                                                                ufl.div(sigma_plot)) *
+                                                                ufl.dx)), op=MPI.SUM)
+    print(sigma_norm)
     
     '''
     W_plot = dolfinx.fem.FunctionSpace(mesh, ("DG", 1))
