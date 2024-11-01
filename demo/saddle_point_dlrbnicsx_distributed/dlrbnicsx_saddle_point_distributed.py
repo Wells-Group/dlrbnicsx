@@ -564,22 +564,10 @@ num_dofs_u = mesh_comm.allreduce(rend_u, op=MPI.MAX) - mesh_comm.allreduce(rstar
 
 computed_file_sigma = "dlrbnicsx_solution_saddle_point/solution_computed_sigma.xdmf"
 computed_file_u = "dlrbnicsx_solution_saddle_point/solution_computed_u.xdmf"
-'''
-if world_comm.rank == 0:
-    with dolfinx.io.XDMFFile(mesh.comm, computed_file_sigma,
-                            "w") as solution_file:
-        solution_file.write_mesh(mesh)
-        solution_file.write_function(sigma_h)
-
-    with dolfinx.io.XDMFFile(mesh.comm, computed_file_u,
-                                "w") as solution_file:
-        solution_file.write_mesh(mesh)
-        solution_file.write_function(u_h)
-'''
 
 if fem_comm_list[0] != MPI.COMM_NULL:
     
-    Q_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("Discontinuous Lagrange", 1))
+    Q_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("DG", 1))
     sigma_plot = dolfinx.fem.Function(Q_plot)
     sigma_plot.interpolate(sigma_h)
     with dolfinx.io.VTKFile(mesh.comm, computed_file_sigma, "w") as file:
