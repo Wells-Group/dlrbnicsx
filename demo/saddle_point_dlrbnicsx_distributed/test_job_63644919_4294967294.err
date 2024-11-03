@@ -1,0 +1,98 @@
+WARNING:py.warnings:/home/nvs31/dlrbnicsx_cpu/demo/saddle_point_dlrbnicsx_distributed/dlrbnicsx_saddle_point_distributed.py:572: DeprecationWarning: This method is deprecated. Use FunctionSpace with an element shape argument instead
+  Q_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("CG", 1))
+
+WARNING:py.warnings:/home/nvs31/dlrbnicsx_cpu/demo/saddle_point_dlrbnicsx_distributed/dlrbnicsx_saddle_point_distributed.py:572: DeprecationWarning: This method is deprecated. Use FunctionSpace with an element shape argument instead
+  Q_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("CG", 1))
+
+WARNING:py.warnings:/home/nvs31/dlrbnicsx_cpu/demo/saddle_point_dlrbnicsx_distributed/dlrbnicsx_saddle_point_distributed.py:572: DeprecationWarning: This method is deprecated. Use FunctionSpace with an element shape argument instead
+  Q_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("CG", 1))
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/rds/user/nvs31/hpc-work/spack/install/linux-rocky8-icelake/gcc-11.3.0/python-3.11.6-d2mrkcs4zb3wcmdtrqu72dotvcqzwv2z/lib/python3.11/site-packages/plum/type.py:207: UserWarning: Could not resolve the type hint of `numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]`. I have ended the resolution here to not make your code break, but some types might not be working correctly. Please open an issue at https://github.com/wesselb/plum.
+  return tuple(resolve_type_hint(arg) for arg in x)
+
+WARNING:py.warnings:/home/nvs31/dlrbnicsx_cpu/demo/saddle_point_dlrbnicsx_distributed/dlrbnicsx_saddle_point_distributed.py:867: DeprecationWarning: This method is deprecated. Use FunctionSpace with an element shape argument instead
+  Q_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("CG", 1))
+
+WARNING:py.warnings:/home/nvs31/dlrbnicsx_cpu/demo/saddle_point_dlrbnicsx_distributed/dlrbnicsx_saddle_point_distributed.py:867: DeprecationWarning: This method is deprecated. Use FunctionSpace with an element shape argument instead
+  Q_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("CG", 1))
+
+WARNING:py.warnings:/home/nvs31/dlrbnicsx_cpu/demo/saddle_point_dlrbnicsx_distributed/dlrbnicsx_saddle_point_distributed.py:867: DeprecationWarning: This method is deprecated. Use FunctionSpace with an element shape argument instead
+  Q_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("CG", 1))
+
+rm: cannot remove 'checkpoint_sigma5': No such file or directory
+rm: cannot remove 'checkpoint_sigma4': No such file or directory
+rm: cannot remove 'checkpoint_sigma3': No such file or directory
+rm: cannot remove 'checkpoint_sigma2': No such file or directory
+rm: cannot remove 'checkpoint_sigma1': No such file or directory
+rm: cannot remove 'checkpoint_sigma0': No such file or directory
+rm: cannot remove 'checkpoint_u5': No such file or directory
+rm: cannot remove 'checkpoint_u4': No such file or directory
+rm: cannot remove 'checkpoint_u3': No such file or directory
+rm: cannot remove 'checkpoint_u2': No such file or directory
+rm: cannot remove 'checkpoint_u1': No such file or directory
+rm: cannot remove 'checkpoint_u0': No such file or directory
+WARNING:py.warnings:/home/nvs31/dlrbnicsx_cpu/demo/saddle_point_dlrbnicsx_distributed/dlrbnicsx_saddle_point_distributed.py:1842: DeprecationWarning: This method is deprecated. Use FunctionSpace with an element shape argument instead
+  Q_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("CG", 1))
+
+WARNING:py.warnings:/home/nvs31/dlrbnicsx_cpu/demo/saddle_point_dlrbnicsx_distributed/dlrbnicsx_saddle_point_distributed.py:1842: DeprecationWarning: This method is deprecated. Use FunctionSpace with an element shape argument instead
+  Q_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("CG", 1))
+
+WARNING:py.warnings:/home/nvs31/dlrbnicsx_cpu/demo/saddle_point_dlrbnicsx_distributed/dlrbnicsx_saddle_point_distributed.py:1842: DeprecationWarning: This method is deprecated. Use FunctionSpace with an element shape argument instead
+  Q_plot = dolfinx.fem.VectorFunctionSpace(mesh, ("CG", 1))
+
+	Command being timed: "mpiexec -n 12 python3 dlrbnicsx_saddle_point_distributed.py"
+	User time (seconds): 427976.96
+	System time (seconds): 2113.85
+	Percent of CPU this job got: 1166%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 10:14:26
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 1819940
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 319184
+	Minor (reclaiming a frame) page faults: 368154447
+	Voluntary context switches: 130369843
+	Involuntary context switches: 7234910
+	Swaps: 0
+	File system inputs: 2543752
+	File system outputs: 26097720
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
