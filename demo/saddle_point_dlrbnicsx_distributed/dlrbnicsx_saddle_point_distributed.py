@@ -327,8 +327,7 @@ class ParametricProblem(abc.ABC):
         pc.setType("bjacobi")
         '''
         ksp.setType("preonly")
-        pc = ksp.getPC()
-        pc.setType("lu")
+        ksp.getPC().setType("lu")
         # Convergence criteria based on residual tolerance
         ksp.rtol = 1.e-8
         # Solve and see convergence details
