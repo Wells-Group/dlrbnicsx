@@ -322,8 +322,8 @@ class ParametricProblem(abc.ABC):
         # Set GMRES solver
         ksp.setType("gmres")
         ksp.setGMRESRestart(100)
-        # pc = ksp.getPC()
-        # pc.setType("bjacobi")
+        pc = ksp.getPC()
+        pc.setType("ilu")
         # Convergence criteria based on residual tolerance
         ksp.rtol = 1.e-8
         # Solve and see convergence details
