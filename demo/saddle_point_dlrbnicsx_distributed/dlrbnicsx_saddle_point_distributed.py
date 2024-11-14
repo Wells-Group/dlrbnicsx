@@ -322,7 +322,7 @@ class ParametricProblem(abc.ABC):
         # Set GMRES solver
         ksp.setType("gmres")
         ksp.setGMRESRestart(100)
-        # pc = ksp.getPC()
+        pc = ksp.getPC()
         # pc.setType("bjacobi")
         print(pc.getType())
         # Convergence criteria based on residual tolerance
