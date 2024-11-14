@@ -322,8 +322,8 @@ class ParametricProblem(abc.ABC):
         # Set GMRES solver
         ksp.setType("gmres")
         ksp.setGMRESRestart(100)
-        pc = ksp.getPC()
-        pc.setType("bjacobi")
+        # pc = ksp.getPC()
+        # pc.setType("bjacobi")
         print(pc.getType())
         # Convergence criteria based on residual tolerance
         ksp.rtol = 1.e-8
@@ -527,7 +527,7 @@ for comm_i in fem_comm_list:
     if comm_i != MPI.COMM_NULL:
         mesh_comm = comm_i
 
-nx, ny, nz = 5, 5, 5 # 20, 20, 20
+nx, ny, nz = 20, 20, 20
 mesh = dolfinx.mesh.create_box(mesh_comm,
                                [[0, 0, 0], [1, 1, 1]],
                                [nx, ny, nz],
