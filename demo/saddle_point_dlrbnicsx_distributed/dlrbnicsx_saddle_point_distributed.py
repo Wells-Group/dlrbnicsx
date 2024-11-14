@@ -319,6 +319,7 @@ class ParametricProblem(abc.ABC):
         ksp = PETSc.KSP()
         ksp.create(mesh.comm)
         ksp.setOperators(A)
+        '''
         # Set GMRES solver
         ksp.setType("gmres")
         ksp.setGMRESRestart(100)
@@ -326,6 +327,9 @@ class ParametricProblem(abc.ABC):
         pc.setType("ilu")
         # Convergence criteria based on residual tolerance
         ksp.rtol = 1.e-8
+        '''
+        ksp.setType("preonly")
+        ksp.getPC().setType("lu")
         # Solve and see convergence details
         ksp.setFromOptions()
         w_h = dolfinx.fem.Function(self._V)
