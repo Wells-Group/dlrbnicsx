@@ -319,11 +319,16 @@ class ParametricProblem(abc.ABC):
         ksp = PETSc.KSP()
         ksp.create(mesh.comm)
         ksp.setOperators(A)
+        '''
         # Set GMRES solver
         ksp.setType("gmres")
         ksp.setGMRESRestart(100)
         pc = ksp.getPC()
         pc.setType("bjacobi")
+        '''
+        ksp.setType("preonly")
+        pc = ksp.getPC()
+        pc.setType("lu")
         # Convergence criteria based on residual tolerance
         ksp.rtol = 1.e-8
         # Solve and see convergence details
