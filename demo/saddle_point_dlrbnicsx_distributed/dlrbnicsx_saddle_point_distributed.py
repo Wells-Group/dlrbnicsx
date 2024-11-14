@@ -557,6 +557,8 @@ u_norm = mesh.comm.allreduce(dolfinx.fem.assemble_scalar
 
 print(f"sigma norm squared: {sigma_norm}, u norm squared: {u_norm}")
 
+exit()
+
 rstart_sigma, rend_sigma = sigma_h.vector.getOwnershipRange()
 num_dofs_sigma = mesh_comm.allreduce(rend_sigma, op=MPI.MAX) - mesh_comm.allreduce(rstart_sigma, op=MPI.MIN)
 rstart_u, rend_u = u_h.vector.getOwnershipRange()
