@@ -536,8 +536,8 @@ problem_parametric = ParametricProblem(mesh)
 
 
 # mu_range = ((-2.5, -1.5), (0., 1.), (0.2, 0.8), (0.2, 0.8), (2.5, 3.5))
-# mu = np.array([-2., 0.5, 0.5, 0.5, 3.])
-mu = np.array([-1., 1.5, 0.7, 0.3])
+mu = np.array([-2., 0.5, 0.5, 0.5, 3.])
+# mu = np.array([-1., 1.5, 0.7, 0.3])
 
 para_dim = 4
 ann_input_samples_num = 1100
