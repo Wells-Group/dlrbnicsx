@@ -327,7 +327,7 @@ class ParametricProblem(abc.ABC):
         print(ksp.getPC().getType())
         # Convergence criteria based on residual tolerance
         ksp.rtol = 1.e-8
-        # Solve and see convergence details
+        # Solve, see convergence details
         ksp.setFromOptions()
         w_h = dolfinx.fem.Function(self._V)
         solve_start_time = time.process_time()
