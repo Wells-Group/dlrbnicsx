@@ -25,13 +25,16 @@ import time
 from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
 from dlrbnicsx.activation_function.activation_function_factory \
     import Tanh
-from dlrbnicsx.dataset.custom_partitioned_dataset \
-    import CustomPartitionedDataset
+from dlrbnicsx.dataset.custom_partitioned_dataset_gpu \
+    import CustomPartitionedDatasetGpu
 from dlrbnicsx.interface.wrappers import DataLoader, save_model, \
-    load_model, save_checkpoint, load_checkpoint, model_synchronise, \
-    init_cpu_process_group, get_optimiser, get_loss_func, share_model
+    load_model, model_synchronise, init_gpu_process_group, model_to_gpu, \
+    model_to_cpu, save_checkpoint, load_checkpoint, get_optimiser, \
+    get_loss_func, share_model
+from dlrbnicsx.train_validate_test.train_validate_test_multigpu \
+    import train_nn, validate_nn
 from dlrbnicsx.train_validate_test.train_validate_test_distributed \
-    import train_nn, validate_nn, online_nn, error_analysis
+    import online_nn, error_analysis
 
 
 class ProblemOnDeformedDomain(abc.ABC):
@@ -444,3 +447,280 @@ if __name__ == '__main__':
     print(f"Eigenvalues: {positive_eigenvalues[:reduced_size]}")
 
     # ### POD Ends ###
+
+    # ### ANN implementation ###
+    def generate_ann_input_set(samples=[4, 4, 4]):
+        # Select samples from the parameter space for ANN
+        training_set_0 = np.linspace(0.2, 0.3, samples[0])
+        training_set_1 = np.linspace(-0.2, -0.4, samples[1])
+        training_set_2 = np.linspace(1., 4., samples[2])
+        training_set_3 = np.linspace(1., 4., samples[3])
+        training_set = np.array(list(itertools.product(training_set_0,
+                                                    training_set_1,
+                                                    training_set_2,
+                                                    training_set_3)))
+        return training_set
+
+
+    def generate_ann_output_set(problem, reduced_problem, input_set,
+                                output_set, indices, mode=None):
+        # Solve the FE problem at given input_sets and
+        # project on the RB space
+        rb_size = len(reduced_problem._basis_functions)
+        for i in indices:
+            if mode is None:
+                print(f"Parameter {i+1}/{input_set.shape[0]}")
+            else:
+                print(f"{mode} parameter number {i+1}/{input_set.shape[0]}")
+            solution = problem.solve(input_set[i, :])
+            output_set[i, :] = reduced_problem.project_snapshot(solution,
+                                                                rb_size).array
+
+    num_ann_input_samples = np.product(ann_samples)
+    num_training_samples = int(0.7 * num_ann_input_samples)
+    num_validation_samples = num_ann_input_samples - int(0.7 * num_ann_input_samples)
+    itemsize = MPI.DOUBLE.Get_size()
+
+    if world_comm.rank == 0:
+        ann_input_set = generate_ann_input_set(samples=ann_samples)
+        # np.random.shuffle(ann_input_set)
+        nbytes_para_ann_training = num_training_samples * itemsize * para_dim
+        nbytes_dofs_ann_training = num_training_samples * itemsize * \
+            len(reduced_problem._basis_functions)
+        nbytes_para_ann_validation = num_validation_samples * itemsize * para_dim
+        nbytes_dofs_ann_validation = num_validation_samples * itemsize * \
+            len(reduced_problem._basis_functions)
+    else:
+        nbytes_para_ann_training = 0
+        nbytes_dofs_ann_training = 0
+        nbytes_para_ann_validation = 0
+        nbytes_dofs_ann_validation = 0
+
+    world_comm.barrier()
+
+    win2 = MPI.Win.Allocate_shared(nbytes_para_ann_training, itemsize,
+                                   comm=MPI.COMM_WORLD)
+    buf2, itemsize = win2.Shared_query(0)
+    input_training_set = \
+        np.ndarray(buffer=buf2, dtype="d",
+                   shape=(num_training_samples, para_dim))
+
+    win3 = MPI.Win.Allocate_shared(nbytes_para_ann_validation, itemsize,
+                                   comm=MPI.COMM_WORLD)
+    buf3, itemsize = win3.Shared_query(0)
+    input_validation_set = \
+        np.ndarray(buffer=buf3, dtype="d",
+                   shape=(num_validation_samples, para_dim))
+
+    win4 = MPI.Win.Allocate_shared(nbytes_dofs_ann_training,
+                                   itemsize, comm=MPI.COMM_WORLD)
+    buf4, itemsize = win4.Shared_query(0)
+    output_training_set = \
+        np.ndarray(buffer=buf4, dtype="d",
+                shape=(num_training_samples,
+                       len(reduced_problem._basis_functions)))
+
+    win5 = MPI.Win.Allocate_shared(nbytes_dofs_ann_validation,
+                                   itemsize, comm=MPI.COMM_WORLD)
+    buf5, itemsize = win5.Shared_query(0)
+    output_validation_set = \
+        np.ndarray(buffer=buf5, dtype="d",
+                shape=(num_validation_samples,
+                        len(reduced_problem._basis_functions)))
+
+    if world_comm.rank == 0:
+        input_training_set[:, :] = \
+            ann_input_set[:num_training_samples, :]
+        input_validation_set[:, :] = \
+            ann_input_set[num_training_samples:, :]
+        output_training_set[:, :] = \
+            np.zeros([num_training_samples,
+                    len(reduced_problem._basis_functions)])
+        output_validation_set[:, :] = \
+            np.zeros([num_validation_samples,
+                    len(reduced_problem._basis_functions)])
+
+    world_comm.Barrier()
+
+    training_set_indices = np.arange(world_comm.rank,
+                                    input_training_set.shape[0],
+                                    world_comm.size)
+
+    validation_set_indices = np.arange(world_comm.rank,
+                                    input_validation_set.shape[0],
+                                    world_comm.size)
+
+    world_comm.Barrier()
+
+    # Training dataset
+    generate_ann_output_set(problem_parametric, reduced_problem,
+                            input_training_set, output_training_set,
+                            training_set_indices, mode="Training")
+
+    generate_ann_output_set(problem_parametric, reduced_problem,
+                            input_validation_set, output_validation_set,
+                            validation_set_indices, mode="Validation")
+
+    world_comm.Barrier()
+
+    reduced_problem.output_range[0] = min(np.min(output_training_set),
+                                          np.min(output_validation_set))
+    reduced_problem.output_range[1] = max(np.max(output_training_set),
+                                          np.max(output_validation_set))
+
+    print("\n")
+
+    # gpu_group0_procs = world_comm.group.Incl([0, 1, 2, 3])
+    gpu_group0_procs = world_comm.group.Incl([0])
+    gpu_group0_comm = world_comm.Create_group(gpu_group0_procs)
+
+    # ANN model
+    model = HiddenLayersNet(para_matrix.shape[1], [35, 35],
+                            len(reduced_problem._basis_functions),
+                            Tanh())
+
+    if gpu_group0_comm != MPI.COMM_NULL:
+
+        cuda_rank_list = [0, 1, 2, 3]
+        init_gpu_process_group(gpu_group0_comm)
+
+        training_set_indices_gpu = np.arange(gpu_group0_comm.rank,
+                                            input_training_set.shape[0],
+                                            gpu_group0_comm.size)
+        validation_set_indices_gpu = np.arange(gpu_group0_comm.rank,
+                                            input_validation_set.shape[0],
+                                            gpu_group0_comm.size)
+
+
+        customDataset = \
+            CustomPartitionedDatasetGpu(reduced_problem,
+                                        input_training_set,
+                                        output_training_set,
+                                        training_set_indices_gpu,
+                                        cuda_rank_list[gpu_group0_comm.rank])
+        train_dataloader = DataLoader(customDataset, batch_size=40,
+                                      shuffle=False)#shuffle=True)
+
+        customDataset = \
+            CustomPartitionedDatasetGpu(reduced_problem,
+                                        input_validation_set,
+                                        output_validation_set,
+                                        validation_set_indices_gpu,
+                                        cuda_rank_list[gpu_group0_comm.rank])
+        valid_dataloader = DataLoader(customDataset, shuffle=False)
+
+        # ANN model
+        path = "model.pth"
+        save_model(model, path)
+        load_model(model, path)
+
+        model_to_gpu(model, cuda_rank=cuda_rank_list[gpu_group0_comm.rank])
+
+        model_synchronise(model, verbose=True)
+
+        # Training of ANN
+        training_loss = list()
+        validation_loss = list()
+
+        max_epochs = 20000
+        min_validation_loss = None
+        start_epoch = 0
+        checkpoint_path = "checkpoint"
+        checkpoint_epoch = 10
+
+        learning_rate = 1e-4
+        optimiser = get_optimiser(model, "Adam", learning_rate)
+        loss_fn = get_loss_func("MSE", reduction="sum")
+
+        if os.path.exists(checkpoint_path):
+            start_epoch, min_validation_loss = \
+                load_checkpoint(checkpoint_path, model, optimiser)
+
+        import time
+        start_time = time.time()
+
+        for epochs in range(start_epoch, max_epochs):
+            if epochs > 0 and epochs % checkpoint_epoch == 0:
+                save_checkpoint(checkpoint_path, epochs,
+                                model, optimiser,
+                                min_validation_loss)
+            print(f"Epoch: {epochs+1}/{max_epochs}")
+            current_training_loss = \
+                train_nn(reduced_problem, train_dataloader,
+                         model, loss_fn, optimiser)
+            training_loss.append(current_training_loss)
+            current_validation_loss = \
+                validate_nn(reduced_problem, valid_dataloader,
+                            model, cuda_rank_list[gpu_group0_comm.rank],
+                            loss_fn)
+            validation_loss.append(current_validation_loss)
+            if epochs > 0 and current_validation_loss > min_validation_loss \
+            and reduced_problem.regularisation == "EarlyStopping":
+                # 1% safety margin against min_validation_loss
+                # before invoking early stopping criteria
+                print(f"Early stopping criteria invoked at epoch: {epochs+1}")
+                break
+            min_validation_loss = min(validation_loss)
+
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        model_to_cpu(model)
+        os.system(f"rm {checkpoint_path}")
+
+    model_root_process = 0
+    share_model(model, world_comm, model_root_process)
+    world_comm.Barrier()
+
+    # Error analysis dataset
+    print("\n")
+    print("Generating error analysis (only input/parameters) dataset")
+    print("\n")
+
+    error_analysis_num_para = np.product(error_analysis_samples)
+    itemsize = MPI.DOUBLE.Get_size()
+
+    if world_comm.rank == 0:
+        nbytes_para = error_analysis_num_para * itemsize * para_dim
+        nbytes_error = error_analysis_num_para * itemsize
+    else:
+        nbytes_para = 0
+        nbytes_error = 0
+
+    win6 = MPI.Win.Allocate_shared(nbytes_para, itemsize,
+                                comm=world_comm)
+    buf6, itemsize = win6.Shared_query(0)
+    error_analysis_set = \
+        np.ndarray(buffer=buf6, dtype="d",
+                shape=(error_analysis_num_para,
+                        para_dim))
+
+    win7 = MPI.Win.Allocate_shared(nbytes_error, itemsize,
+                                comm=world_comm)
+    buf7, itemsize = win7.Shared_query(0)
+    error_numpy = np.ndarray(buffer=buf7, dtype="d",
+                            shape=(error_analysis_num_para))
+
+    if world_comm.rank == 0:
+        error_analysis_set[:, :] = \
+            generate_ann_input_set(samples=error_analysis_samples)
+
+    world_comm.Barrier()
+
+    error_analysis_indices = \
+        np.arange(world_comm.rank,
+                  error_analysis_set.shape[0],
+                  world_comm.size)
+    for i in error_analysis_indices:
+        error_numpy[i] = \
+            error_analysis(reduced_problem, problem_parametric,
+                           error_analysis_set[i, :], model,
+                           len(reduced_problem._basis_functions),
+                           online_nn)
+        print(f"Error analysis {i+1} of {error_analysis_set.shape[0]}, Error: {error_numpy[i]}")
+
+    world_comm.Barrier()
+
+    if gpu_group0_comm != MPI.COMM_NULL:
+        print(f"Rank {gpu_group0_comm.rank}, Training time: {elapsed_time}")
+
+    # Online phase at parameter online_mu TODO
