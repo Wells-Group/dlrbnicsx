@@ -331,15 +331,15 @@ if __name__ == '__main__':
     num_dofs = mesh.comm.allreduce(rend, op=MPI.MAX) - \
         mesh.comm.allreduce(rstart, op=MPI.MIN)
 
-    pod_samples = [9, 1, 1, 1]
-    ann_samples = [2, 1, 1, 1]
-    error_analysis_samples = [6, 1, 1, 1]
+    pod_samples = [25, 1, 1, 1]
+    ann_samples = [19, 1, 1, 1]
+    error_analysis_samples = [35, 1, 1, 1]
     num_snapshots = np.product(pod_samples)
     nbytes_para = itemsize * num_snapshots * para_dim
     nbytes_dofs = itemsize * num_snapshots * num_dofs
 
-    thermal_ann_input_samples_num = 12 # 420
-    thermal_error_analysis_samples_num = 14 # 144
+    thermal_ann_input_samples_num = 29 # 420
+    thermal_error_analysis_samples_num = 17 # 144
 
     # Thermal POD Starts ###
     def generate_training_set(num_samples, para_dim):
