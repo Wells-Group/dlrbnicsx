@@ -323,7 +323,7 @@ if __name__ == '__main__':
 
     with dolfinx.io.XDMFFile(mesh.comm, computed_file, "w") as solution_file:
         solution_file.write_mesh(mesh)
-        solution_file.write_function(uT_func_plot)
+        solution_file.write_function(uT_func)
     
     itemsize = MPI.DOUBLE.Get_size()
     para_dim = 4
