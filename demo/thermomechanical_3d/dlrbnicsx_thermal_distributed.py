@@ -570,8 +570,8 @@ if __name__ == '__main__':
 
     print("\n")
 
-    # gpu_group0_procs = world_comm.group.Incl([0, 1, 2, 3])
-    gpu_group0_procs = world_comm.group.Incl([0])
+    gpu_group0_procs = world_comm.group.Incl([0, 1, 2, 3])
+    # gpu_group0_procs = world_comm.group.Incl([0])
     gpu_group0_comm = world_comm.Create_group(gpu_group0_procs)
 
     # ANN model
@@ -584,12 +584,14 @@ if __name__ == '__main__':
         cuda_rank_list = [0, 1, 2, 3]
         init_gpu_process_group(gpu_group0_comm)
 
-        training_set_indices_gpu = np.arange(gpu_group0_comm.rank,
-                                            input_training_set.shape[0],
-                                            gpu_group0_comm.size)
-        validation_set_indices_gpu = np.arange(gpu_group0_comm.rank,
-                                            input_validation_set.shape[0],
-                                            gpu_group0_comm.size)
+        training_set_indices_gpu = \
+            np.arange(gpu_group0_comm.rank,
+                      input_training_set.shape[0],
+                      gpu_group0_comm.size)
+        validation_set_indices_gpu = \
+            np.arange(gpu_group0_comm.rank,
+                      input_validation_set.shape[0],
+                      gpu_group0_comm.size)
 
 
         customDataset = \
