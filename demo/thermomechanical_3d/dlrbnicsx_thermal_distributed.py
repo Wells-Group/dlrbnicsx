@@ -517,16 +517,16 @@ if __name__ == '__main__':
     buf4, itemsize = win4.Shared_query(0)
     output_training_set = \
         np.ndarray(buffer=buf4, dtype="d",
-                shape=(num_training_samples,
-                       len(reduced_problem._basis_functions)))
+                   shape=(num_training_samples,
+                          len(reduced_problem._basis_functions)))
 
     win5 = MPI.Win.Allocate_shared(nbytes_dofs_ann_validation,
                                    itemsize, comm=MPI.COMM_WORLD)
     buf5, itemsize = win5.Shared_query(0)
     output_validation_set = \
         np.ndarray(buffer=buf5, dtype="d",
-                shape=(num_validation_samples,
-                        len(reduced_problem._basis_functions)))
+                   shape=(num_validation_samples,
+                          len(reduced_problem._basis_functions)))
 
     if world_comm.rank == 0:
         input_training_set[:, :] = \
@@ -542,13 +542,13 @@ if __name__ == '__main__':
 
     world_comm.Barrier()
 
-    training_set_indices = np.arange(world_comm.rank,
-                                    input_training_set.shape[0],
-                                    world_comm.size)
+    training_set_indices = \
+        np.arange(world_comm.rank, input_training_set.shape[0],
+                  world_comm.size)
 
-    validation_set_indices = np.arange(world_comm.rank,
-                                    input_validation_set.shape[0],
-                                    world_comm.size)
+    validation_set_indices = \
+        np.arange(world_comm.rank, input_validation_set.shape[0],
+                  world_comm.size)
 
     world_comm.Barrier()
 
@@ -562,6 +562,7 @@ if __name__ == '__main__':
                             validation_set_indices, mode="Validation")
 
     world_comm.Barrier()
+    print("finished ann output sets")
 
     reduced_problem.output_range[0] = min(np.min(output_training_set),
                                           np.min(output_validation_set))
@@ -630,7 +631,7 @@ if __name__ == '__main__':
         checkpoint_path = "checkpoint"
         checkpoint_epoch = 10
 
-        learning_rate = 1e-4
+        learning_rate = 1.e-4
         optimiser = get_optimiser(model, "Adam", learning_rate)
         loss_fn = get_loss_func("MSE", reduction="sum")
 
