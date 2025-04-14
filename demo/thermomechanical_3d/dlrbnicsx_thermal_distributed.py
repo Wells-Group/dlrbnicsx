@@ -219,8 +219,6 @@ class ProblemOnDeformedDomain(abc.ABC):
 class PODANNReducedProblem(abc.ABC):
     def __init__(self, problem) -> None:
         self._basis_functions = rbnicsx.backends.FunctionsList(problem._VT)
-        uT, vT = ufl.TrialFunction(problem._VT), ufl.TestFunction(problem._VT)
-        x = ufl.SpatialCoordinate(problem._mesh)
         self._inner_product = problem._inner_product_uT
         self._inner_product_action = \
             rbnicsx.backends.bilinear_form_action(self._inner_product,
@@ -305,8 +303,6 @@ if __name__ == '__main__':
     mu = [0.23, 0.55, 0.8, 0.4] # Parametrised geometry
 
     para_dim = 4
-    thermal_ann_input_samples_num = 13 # 420
-    thermal_error_analysis_samples_num = 23 # 144
     num_snapshots = 17 # 400
     projection_error_samples_num = [7, 1, 1, 1]
 
@@ -337,9 +333,6 @@ if __name__ == '__main__':
     num_snapshots = np.product(pod_samples)
     nbytes_para = itemsize * num_snapshots * para_dim
     nbytes_dofs = itemsize * num_snapshots * num_dofs
-
-    thermal_ann_input_samples_num = 29 # 420
-    thermal_error_analysis_samples_num = 17 # 144
 
     # Thermal POD Starts ###
     def generate_training_set(num_samples, para_dim):
@@ -449,21 +442,23 @@ if __name__ == '__main__':
     # ### POD Ends ###
 
     # ### ANN implementation ###
-    def generate_ann_input_set(samples=[4, 4, 4]):
+    def generate_ann_input_set(samples=[4, 4, 4, 4]):
         # Select samples from the parameter space for ANN
         training_set_0 = np.linspace(0.2, 0.3, samples[0])
         training_set_1 = np.linspace(-0.2, -0.4, samples[1])
         training_set_2 = np.linspace(1., 4., samples[2])
         training_set_3 = np.linspace(1., 4., samples[3])
-        training_set = np.array(list(itertools.product(training_set_0,
-                                                    training_set_1,
-                                                    training_set_2,
-                                                    training_set_3)))
+        training_set = \
+            np.array(list(itertools.product(training_set_0,
+                                            training_set_1,
+                                            training_set_2,
+                                            training_set_3)))
         return training_set
 
 
-    def generate_ann_output_set(problem, reduced_problem, input_set,
-                                output_set, indices, mode=None):
+    def generate_ann_output_set(problem, reduced_problem,
+                                input_set, output_set,
+                                indices, mode=None):
         # Solve the FE problem at given input_sets and
         # project on the RB space
         rb_size = len(reduced_problem._basis_functions)
@@ -478,13 +473,15 @@ if __name__ == '__main__':
 
     num_ann_input_samples = np.product(ann_samples)
     num_training_samples = int(0.7 * num_ann_input_samples)
-    num_validation_samples = num_ann_input_samples - int(0.7 * num_ann_input_samples)
+    num_validation_samples = num_ann_input_samples - \
+        int(0.7 * num_ann_input_samples)
     itemsize = MPI.DOUBLE.Get_size()
 
     if world_comm.rank == 0:
         ann_input_set = generate_ann_input_set(samples=ann_samples)
         # np.random.shuffle(ann_input_set)
-        nbytes_para_ann_training = num_training_samples * itemsize * para_dim
+        nbytes_para_ann_training = num_training_samples * itemsize * \
+            para_dim
         nbytes_dofs_ann_training = num_training_samples * itemsize * \
             len(reduced_problem._basis_functions)
         nbytes_para_ann_validation = num_validation_samples * itemsize * para_dim
@@ -496,7 +493,7 @@ if __name__ == '__main__':
         nbytes_para_ann_validation = 0
         nbytes_dofs_ann_validation = 0
 
-    world_comm.barrier()
+    world_comm.Barrier()
 
     win2 = MPI.Win.Allocate_shared(nbytes_para_ann_training, itemsize,
                                    comm=MPI.COMM_WORLD)
@@ -542,15 +539,14 @@ if __name__ == '__main__':
 
     world_comm.Barrier()
 
-    training_set_indices = \
-        np.arange(world_comm.rank, input_training_set.shape[0],
-                  world_comm.size)
+    for j in range(len(fem_comm_list)):
+        if fem_comm_list[j] != MPI.COMM_NULL:
+            training_set_indices = \
+                np.arange(j, input_training_set.shape[0], len(fem_comm_list))
+            validation_set_indices = \
+                np.arange(j, input_validation_set.shape[0], len(fem_comm_list))
 
-    validation_set_indices = \
-        np.arange(world_comm.rank, input_validation_set.shape[0],
-                  world_comm.size)
-
-    world_comm.Barrier()
+    # world_comm.Barrier()
 
     # Training dataset
     generate_ann_output_set(problem_parametric, reduced_problem,
@@ -562,7 +558,6 @@ if __name__ == '__main__':
                             validation_set_indices, mode="Validation")
 
     world_comm.Barrier()
-    print("finished ann output sets")
 
     reduced_problem.output_range[0] = min(np.min(output_training_set),
                                           np.min(output_validation_set))
@@ -571,8 +566,8 @@ if __name__ == '__main__':
 
     print("\n")
 
-    gpu_group0_procs = world_comm.group.Incl([0, 1, 2, 3])
-    # gpu_group0_procs = world_comm.group.Incl([0])
+    # gpu_group0_procs = world_comm.group.Incl([0, 1, 2, 3])
+    gpu_group0_procs = world_comm.group.Incl([0])
     gpu_group0_comm = world_comm.Create_group(gpu_group0_procs)
 
     # ANN model
@@ -619,13 +614,13 @@ if __name__ == '__main__':
 
         model_to_gpu(model, cuda_rank=cuda_rank_list[gpu_group0_comm.rank])
 
-        model_synchronise(model, verbose=True)
+        model_synchronise(model, verbose=False)
 
         # Training of ANN
         training_loss = list()
         validation_loss = list()
 
-        max_epochs = 20000
+        max_epochs = 20 # 20000
         min_validation_loss = None
         start_epoch = 0
         checkpoint_path = "checkpoint"
@@ -673,7 +668,7 @@ if __name__ == '__main__':
     model_root_process = 0
     share_model(model, world_comm, model_root_process)
     world_comm.Barrier()
-
+    
     # Error analysis dataset
     print("\n")
     print("Generating error analysis (only input/parameters) dataset")
@@ -709,17 +704,25 @@ if __name__ == '__main__':
 
     world_comm.Barrier()
 
-    error_analysis_indices = \
-        np.arange(world_comm.rank,
-                  error_analysis_set.shape[0],
-                  world_comm.size)
-    for i in error_analysis_indices:
-        error_numpy[i] = \
-            error_analysis(reduced_problem, problem_parametric,
-                           error_analysis_set[i, :], model,
-                           len(reduced_problem._basis_functions),
-                           online_nn)
-        print(f"Error analysis {i+1} of {error_analysis_set.shape[0]}, Error: {error_numpy[i]}")
+for j in range(len(fem_comm_list)):
+    if fem_comm_list[j] != MPI.COMM_NULL:
+
+        error_analysis_indices = \
+            np.arange(j, error_analysis_set.shape[0],
+                      len(fem_comm_list))
+
+        for i in error_analysis_indices:
+            error_numpy[i] = \
+                error_analysis(reduced_problem, problem_parametric,
+                               error_analysis_set[i, :], model,
+                               reduced_size, online_nn,
+                               norm_error=reduced_problem.norm_error,
+                               reconstruct_solution=reduced_problem.reconstruct_solution,
+                               input_scaling_range=reduced_problem.input_scaling_range,
+                               output_scaling_range=reduced_problem.output_scaling_range,
+                               input_range=reduced_problem.input_range,
+                               output_range=reduced_problem.output_range)
+            print(f"Error analysis {i+1} of {error_analysis_set.shape[0]}, Error: {error_numpy[i]}")
 
     world_comm.Barrier()
 
