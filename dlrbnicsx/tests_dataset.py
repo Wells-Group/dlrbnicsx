@@ -86,7 +86,7 @@ class TestDataset(unittest.TestCase):
 
             if comm.rank == 0:
                 input_data = np.random.uniform(0., 1.,
-                                            [num_para,
+                                                [num_para,
                                                 input_para_dim])
                 output_data = np.random.uniform(0., 1.,
                                                 [num_para,
