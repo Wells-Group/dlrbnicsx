@@ -203,14 +203,16 @@ if __name__ == "__main__":
             self.output_scaling_range = [-1., 1.]
 
     input_data = np.random.uniform(0., 1., [100, 17])
-    output_data = np.random.uniform(0., 1., [input_data.shape[0], 7])
+    output_data = np.random.uniform(0., 1.,
+                                    [input_data.shape[0], 7])
 
     reduced_problem = ReducedProblem(input_data.shape[1])
 
     customDataset = CustomDataset(reduced_problem,
                                   input_data, output_data)
 
-    train_dataloader = DataLoader(customDataset, batch_size=3, shuffle=True)
+    train_dataloader = DataLoader(customDataset, batch_size=3,
+                                  shuffle=True)
     test_dataloader = DataLoader(customDataset, batch_size=2)
 
     for X, y in train_dataloader:

@@ -40,7 +40,7 @@ class CustomPartitionedDataset(CustomDataset):
 
 if __name__ == "__main__":
 
-    class ReducedProblem(object):
+     class ReducedProblem(object):
         def __init__(self, para_dim):
             super().__init__()
             self.input_range = np.vstack((np.zeros([1, para_dim]),
@@ -58,8 +58,12 @@ if __name__ == "__main__":
         output_para_dim = 7
 
         if comm.rank == 0:
-            input_data = np.random.uniform(0., 1., [num_para, input_para_dim])
-            output_data = np.random.uniform(0., 1., [num_para, output_para_dim])
+            input_data = np.random.uniform(0., 1.,
+                                           [num_para,
+                                            input_para_dim])
+            output_data = np.random.uniform(0., 1.,
+                                            [num_para,
+                                             output_para_dim])
         else:
             input_data = np.zeros([num_para, input_para_dim])
             output_data = np.zeros([num_para, output_para_dim])
@@ -71,10 +75,13 @@ if __name__ == "__main__":
 
         reduced_problem = ReducedProblem(input_para_dim)
         custom_partitioned_dataset = \
-            CustomPartitionedDataset(reduced_problem, input_data,
-                                    output_data, indices, verbose=False)
-        dataloader = torch.utils.data.DataLoader(custom_partitioned_dataset,
-                                                batch_size=2, shuffle=False)
+            CustomPartitionedDataset(reduced_problem,
+                                     input_data,
+                                    output_data,
+                                    indices, verbose=False)
+        dataloader = \
+            torch.utils.data.DataLoader(custom_partitioned_dataset,
+                                        batch_size=2, shuffle=False)
 
         for batch, (X, y) in enumerate(dataloader):
             print(f"Rank: {comm.rank}")
