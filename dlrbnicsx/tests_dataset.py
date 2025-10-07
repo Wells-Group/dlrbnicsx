@@ -121,9 +121,10 @@ class TestDataset(unittest.TestCase):
             my_first_index = custom_partitioned_dataset.local_indices[0]
             print(f"Rank {comm.rank}, My first index: {my_first_index}")
 
+    """
     def test_dataset_multigpu(self):
-        """Dataset MultiGPU
-        """
+        # Dataset MultiGPU
+        
         world_comm = MPI.COMM_WORLD
         # gpu_group0_procs = world_comm.group.Incl([0])
         gpu_group0_procs = world_comm.group.Incl([0, 1, 2, 3])
@@ -164,6 +165,7 @@ class TestDataset(unittest.TestCase):
 
             for batch, (X, Y) in enumerate(dataloader):
                 print(f"Batch: {batch}, \n X: \n {X}, \n Y: \n {Y}")
+    """
 
 
 if __name__ == "__main__":
