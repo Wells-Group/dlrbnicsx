@@ -115,9 +115,10 @@ class TestTrainValidateTest(unittest.TestCase):
 
         Higher number of processes can also be used instead of only 2.
         '''
+
         comm = MPI.COMM_WORLD
         init_cpu_process_group(comm)
-
+        
         class Problem(object):
             def __init__(self):
                 super().__init__()
@@ -230,6 +231,8 @@ class TestTrainValidateTest(unittest.TestCase):
                                 dim_out, online_nn)
         '''
         # TODO Dummy problem for error analysis
+
+
 
 if __name__ == "__main__":
     unittest.main()
