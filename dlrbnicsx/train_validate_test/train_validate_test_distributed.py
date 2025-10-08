@@ -10,6 +10,7 @@ from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
 from dlrbnicsx.activation_function.activation_function_factory import Tanh
 
 
+
 def train_nn(reduced_problem, dataloader, model, loss_fn,
              optimizer, report=True, verbose=False):
     '''

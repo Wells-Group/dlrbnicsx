@@ -241,23 +241,27 @@ if __name__ == "__main__":
     problem = Problem()
     reduced_problem = ReducedProblem()
 
-    input_training_data = np.random.default_rng().uniform(0., 1.,
-                                                          (10, 4)).astype("f")
+    input_training_data = \
+        np.random.default_rng().uniform(0., 1.,
+                                        (10, 4)).astype("f")
     output_training_data = \
         np.random.default_rng().uniform(0., 1.,
                                         (input_training_data.shape[0],
                                          6)).astype("f")
 
     # NOTE Updating output_range based on the computed values
-    reduced_problem.output_range[0] = np.min(output_training_data)
-    reduced_problem.output_range[1] = np.max(output_training_data)
+    reduced_problem.output_range[0] = \
+        np.min(output_training_data)
+    reduced_problem.output_range[1] = \
+        np.max(output_training_data)
 
-    customDataset = CustomDataset(problem, reduced_problem, 10,
-                                  input_training_data, output_training_data)
+    customDataset = \
+        CustomDataset(problem, reduced_problem, 10,
+                      input_training_data, output_training_data)
 
-    train_dataloader = torch.utils.data.DataLoader(customDataset,
-                                                   batch_size=5,
-                                                   shuffle=True)
+    train_dataloader = \
+        torch.utils.data.DataLoader(customDataset, batch_size=5,
+                                    shuffle=True)
 
     input_validation_data = \
         np.random.default_rng().uniform(0., 1.,
@@ -272,9 +276,10 @@ if __name__ == "__main__":
     customDataset = CustomDataset(problem, reduced_problem, 10,
                                   input_validation_data,
                                   output_validation_data)
-    valid_dataloader = torch.utils.data.DataLoader(customDataset,
-                                                   batch_size=100,
-                                                   shuffle=False)
+    valid_dataloader = \
+        torch.utils.data.DataLoader(customDataset,
+                                    batch_size=100,
+                                    shuffle=False)
 
     dim_in = input_training_data.shape[1]
     dim_out = output_training_data.shape[1]
@@ -285,12 +290,16 @@ if __name__ == "__main__":
 
     for epoch in range(max_epochs):
         print(f"Epoch {epoch+1} of Maximum epochs {max_epochs}")
-        train_loss = train_nn(reduced_problem, train_dataloader, model)
-        valid_loss = validate_nn(reduced_problem, valid_dataloader, model)
+        train_loss = train_nn(reduced_problem, train_dataloader,
+                              model)
+        valid_loss = validate_nn(reduced_problem, valid_dataloader,
+                                 model)
 
-    online_mu = np.random.default_rng().uniform(0., 1.,
-                                                input_training_data.shape[1])
-    _ = online_nn(reduced_problem, problem, online_mu, model, dim_out).array
+    online_mu = \
+        np.random.default_rng().uniform(0., 1.,
+                                        input_training_data.shape[1])
+    _ = online_nn(reduced_problem, problem, online_mu,
+                  model, dim_out).array
 
     '''
     error_analysis_mu = \
