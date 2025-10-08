@@ -40,7 +40,7 @@ class CustomPartitionedDataset(CustomDataset):
 
 if __name__ == "__main__":
 
-     class ReducedProblem(object):
+    class ReducedProblem(object):
         def __init__(self, para_dim):
             super().__init__()
             self.input_range = np.vstack((np.zeros([1, para_dim]),
