@@ -113,7 +113,7 @@ class TestTrainValidateTest(unittest.TestCase):
         and verify from printed terminal output whether the params
         after all_reduce are same in all processes.
 
-        Higher number of processes can also be used instead of only 2.
+        Higher number of processes could also be used instead of only 2.
         '''
 
         comm = MPI.COMM_WORLD
