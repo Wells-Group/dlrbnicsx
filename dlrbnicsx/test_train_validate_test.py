@@ -55,11 +55,13 @@ class TestTrainValidateTest(unittest.TestCase):
             np.max(output_training_data)
 
         customDataset = \
-            CustomDataset(problem, reduced_problem, 10,
-                        input_training_data, output_training_data)
+            CustomDataset(reduced_problem,
+                          input_training_data,
+                          output_training_data)
 
         train_dataloader = \
-            torch.utils.data.DataLoader(customDataset, batch_size=5,
+            torch.utils.data.DataLoader(customDataset,
+                                        batch_size=5,
                                         shuffle=True)
 
         input_validation_data = \
@@ -72,9 +74,9 @@ class TestTrainValidateTest(unittest.TestCase):
                                             output_training_data.shape[1])
                                             ).astype("f")
 
-        customDataset = CustomDataset(problem, reduced_problem, 10,
-                                    input_validation_data,
-                                    output_validation_data)
+        customDataset = CustomDataset(reduced_problem,
+                                      input_validation_data,
+                                      output_validation_data)
         valid_dataloader = \
             torch.utils.data.DataLoader(customDataset,
                                         batch_size=100,
