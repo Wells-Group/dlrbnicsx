@@ -171,14 +171,15 @@ class TestTrainValidateTest(unittest.TestCase):
         reduced_problem.output_range[0] = np.min(output_training_data)
         reduced_problem.output_range[1] = np.max(output_training_data)
 
-        indices = np.arange(comm.rank, input_training_data.shape[0],
-                            comm.size)
+        indices_train = \
+            np.arange(comm.rank, input_training_data.shape[0],
+                      comm.size)
 
         custom_partitioned_dataset = \
             CustomPartitionedDataset(reduced_problem,
                                      input_training_data,
                                      output_training_data,
-                                     indices)
+                                     indices_train)
 
         train_dataloader = \
             torch.utils.data.DataLoader(custom_partitioned_dataset,
@@ -207,11 +208,15 @@ class TestTrainValidateTest(unittest.TestCase):
         output_validation_data = \
             output_validation_data.detach().numpy()
 
+        indices_val = \
+            np.arange(comm.rank, input_validation_data.shape[0],
+                      comm.size)
+
         custom_partitioned_dataset = \
             CustomPartitionedDataset(reduced_problem,
                                      input_validation_data,
                                      output_validation_data,
-                                     indices)
+                                     indices_val)
         valid_dataloader = \
             torch.utils.data.DataLoader(custom_partitioned_dataset,
                                         shuffle=False)
