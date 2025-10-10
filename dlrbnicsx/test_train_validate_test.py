@@ -12,7 +12,10 @@ from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
 from dlrbnicsx.activation_function.activation_function_factory import Tanh
 from dlrbnicsx.dataset.custom_partitioned_dataset import CustomPartitionedDataset
 from dlrbnicsx.train_validate_test.train_validate_test import train_nn, validate_nn, error_analysis, online_nn
-from dlrbnicsx.train_validate_test.train_validate_test_distributed import train_nn, validate_nn, error_analysis, online_nn
+from dlrbnicsx.train_validate_test.train_validate_test_distributed import train_nn as train_nn_distributes
+from dlrbnicsx.train_validate_test.train_validate_test_distributed import validate_nn as validate_nn_distributed
+from dlrbnicsx.train_validate_test.train_validate_test_distributed import error_analysis as error_analysis_distributed
+from dlrbnicsx.train_validate_test.train_validate_test_distributed import online_nn as online_nn_distributed
 from dlrbnicsx.interface.wrappers import init_cpu_process_group
 
 class TestTrainValidateTest(unittest.TestCase):
