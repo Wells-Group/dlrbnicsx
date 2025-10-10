@@ -110,136 +110,136 @@ class TestTrainValidateTest(unittest.TestCase):
         _ = online_nn(reduced_problem, problem, online_mu,
                     model, dim_out).array
         
-    # def test_train_validate_test_distributed(self):
-    #     """Distributed case
-    #     """
-    #     '''
-    #     NOTE
-    #     Run below code with 2 processes
+    def test_train_validate_test_distributed(self):
+        """Distributed case
+        """
+        '''
+        NOTE
+        Run below code with 2 processes
 
-    #     ```mpiexec -n 2 python3 train_validate_test_distributed.py```
+        ```mpiexec -n 2 python3 train_validate_test_distributed.py```
 
-    #     and verify from printed terminal output whether the params
-    #     after all_reduce are same in all processes.
+        and verify from printed terminal output whether the params
+        after all_reduce are same in all processes.
 
-    #     Higher number of processes could also be used instead of only 2.
-    #     '''
+        Higher number of processes could also be used instead of only 2.
+        '''
 
-    #     comm = MPI.COMM_WORLD
-    #     init_cpu_process_group(comm)
+        comm = MPI.COMM_WORLD
+        init_cpu_process_group(comm)
         
-    #     class Problem(object):
-    #         def __init__(self):
-    #             super().__init__()
+        class Problem(object):
+            def __init__(self):
+                super().__init__()
 
-    #     class ReducedProblem(object):
-    #         def __init__(self):
-    #             super().__init__()
-    #             self.input_range = np.vstack((0.5*np.ones([1, 4]),
-    #                                         np.ones([1, 4])))
-    #             self.output_range = [0., 1.]
-    #             self.input_scaling_range = [-1., 1.]
-    #             self.output_scaling_range = [-1., 1.]
-    #             self.learning_rate = 1e-4
-    #             self.optimizer = "Adam"
-    #             self.loss_fn = "MSE"
+        class ReducedProblem(object):
+            def __init__(self):
+                super().__init__()
+                self.input_range = np.vstack((0.5*np.ones([1, 4]),
+                                            np.ones([1, 4])))
+                self.output_range = [0., 1.]
+                self.input_scaling_range = [-1., 1.]
+                self.output_scaling_range = [-1., 1.]
+                self.learning_rate = 1e-4
+                self.optimizer = "Adam"
+                self.loss_fn = "MSE"
 
-    #     problem = Problem()
-    #     reduced_problem = ReducedProblem()
+        problem = Problem()
+        reduced_problem = ReducedProblem()
 
-    #     input_training_data = np.random.default_rng().uniform(0., 1.,
-    #                                                         (30, 4)).astype("f")
-    #     output_training_data = \
-    #         np.random.default_rng().uniform(0., 1.,
-    #                                         (input_training_data.shape[0],
-    #                                         6)).astype("f")
-    #     input_training_data = \
-    #         torch.from_numpy(input_training_data).to(torch.float32)
-    #     output_training_data = \
-    #         torch.from_numpy(output_training_data).to(torch.float32)
-    #     dist.barrier()
-    #     dist.all_reduce(input_training_data, op=dist.ReduceOp.MAX)
-    #     dist.all_reduce(output_training_data, op=dist.ReduceOp.MAX)
-    #     input_training_data = input_training_data.detach().numpy()
-    #     output_training_data = output_training_data.detach().numpy()
+        input_training_data = np.random.default_rng().uniform(0., 1.,
+                                                            (30, 4)).astype("f")
+        output_training_data = \
+            np.random.default_rng().uniform(0., 1.,
+                                            (input_training_data.shape[0],
+                                            6)).astype("f")
+        input_training_data = \
+            torch.from_numpy(input_training_data).to(torch.float32)
+        output_training_data = \
+            torch.from_numpy(output_training_data).to(torch.float32)
+        dist.barrier()
+        dist.all_reduce(input_training_data, op=dist.ReduceOp.MAX)
+        dist.all_reduce(output_training_data, op=dist.ReduceOp.MAX)
+        input_training_data = input_training_data.detach().numpy()
+        output_training_data = output_training_data.detach().numpy()
 
-    #     # NOTE Updating output_range based on the computed values
-    #     reduced_problem.output_range[0] = np.min(output_training_data)
-    #     reduced_problem.output_range[1] = np.max(output_training_data)
+        # NOTE Updating output_range based on the computed values
+        reduced_problem.output_range[0] = np.min(output_training_data)
+        reduced_problem.output_range[1] = np.max(output_training_data)
 
-    #     custom_partitioned_dataset = \
-    #         CustomPartitionedDataset(problem, reduced_problem, 10,
-    #                                 input_training_data, output_training_data)
+        custom_partitioned_dataset = \
+            CustomPartitionedDataset(problem, reduced_problem, 10,
+                                    input_training_data, output_training_data)
 
-    #     train_dataloader = \
-    #         torch.utils.data.DataLoader(custom_partitioned_dataset,
-    #                                     batch_size=100, shuffle=True)
+        train_dataloader = \
+            torch.utils.data.DataLoader(custom_partitioned_dataset,
+                                        batch_size=100, shuffle=True)
 
-    #     input_validation_data = \
-    #         np.random.default_rng().uniform(0., 1.,
-    #                                         (3, input_training_data.shape[1])
-    #                                         ).astype("f")
-    #     output_validation_data = \
-    #         np.random.default_rng().uniform(0., 1.,
-    #                                         (input_validation_data.shape[0],
-    #                                         output_training_data.shape[1])
-    #                                         ).astype("f")
-    #     input_validation_data = \
-    #         torch.from_numpy(input_validation_data).to(torch.float32)
-    #     output_validation_data = \
-    #         torch.from_numpy(output_validation_data).to(torch.float32)
-    #     dist.barrier()
-    #     dist.all_reduce(input_validation_data, op=dist.ReduceOp.MAX)
-    #     dist.all_reduce(output_validation_data, op=dist.ReduceOp.MAX)
-    #     input_validation_data = input_validation_data.detach().numpy()
-    #     output_validation_data = output_validation_data.detach().numpy()
+        input_validation_data = \
+            np.random.default_rng().uniform(0., 1.,
+                                            (3, input_training_data.shape[1])
+                                            ).astype("f")
+        output_validation_data = \
+            np.random.default_rng().uniform(0., 1.,
+                                            (input_validation_data.shape[0],
+                                            output_training_data.shape[1])
+                                            ).astype("f")
+        input_validation_data = \
+            torch.from_numpy(input_validation_data).to(torch.float32)
+        output_validation_data = \
+            torch.from_numpy(output_validation_data).to(torch.float32)
+        dist.barrier()
+        dist.all_reduce(input_validation_data, op=dist.ReduceOp.MAX)
+        dist.all_reduce(output_validation_data, op=dist.ReduceOp.MAX)
+        input_validation_data = input_validation_data.detach().numpy()
+        output_validation_data = output_validation_data.detach().numpy()
 
-    #     custom_partitioned_dataset = \
-    #         CustomPartitionedDataset(problem, reduced_problem, 10,
-    #                                 input_validation_data,
-    #                                 output_validation_data)
-    #     valid_dataloader = \
-    #         torch.utils.data.DataLoader(custom_partitioned_dataset,
-    #                                     shuffle=False)
+        custom_partitioned_dataset = \
+            CustomPartitionedDataset(problem, reduced_problem, 10,
+                                    input_validation_data,
+                                    output_validation_data)
+        valid_dataloader = \
+            torch.utils.data.DataLoader(custom_partitioned_dataset,
+                                        shuffle=False)
 
-    #     dim_in = input_training_data.shape[1]
-    #     dim_out = output_training_data.shape[1]
+        dim_in = input_training_data.shape[1]
+        dim_out = output_training_data.shape[1]
 
-    #     model = HiddenLayersNet(dim_in, [4], dim_out, Tanh())
+        model = HiddenLayersNet(dim_in, [4], dim_out, Tanh())
 
-    #     for param in model.parameters():
-    #         print(f"Rank: {dist.get_rank()}, " +
-    #             f"Params before all_reduce: {param.data}")
+        for param in model.parameters():
+            print(f"Rank: {dist.get_rank()}, " +
+                f"Params before all_reduce: {param.data}")
 
-    #         '''
-    #         NOTE This ensures that models in all processes start with
-    #         same weights and biases
-    #         '''
-    #         dist.all_reduce(param.data, op=dist.ReduceOp.SUM)
-    #         print(f"Rank: {dist.get_rank()}, " +
-    #             f"Params after all_reduce: {param.data}")
+            '''
+            NOTE This ensures that models in all processes start with
+            same weights and biases
+            '''
+            dist.all_reduce(param.data, op=dist.ReduceOp.SUM)
+            print(f"Rank: {dist.get_rank()}, " +
+                f"Params after all_reduce: {param.data}")
 
-    #     max_epochs = 5  # 20000
+        max_epochs = 5  # 20000
 
-    #     for epoch in range(max_epochs):
-    #         print(f"Rank {dist.get_rank()} Epoch {epoch+1} of Maximum " +
-    #             f"epochs {max_epochs}")
-    #         train_loss = train_nn(reduced_problem, train_dataloader, model)
-    #         valid_loss = validate_nn(reduced_problem, valid_dataloader, model)
+        for epoch in range(max_epochs):
+            print(f"Rank {dist.get_rank()} Epoch {epoch+1} of Maximum " +
+                f"epochs {max_epochs}")
+            train_loss = train_nn(reduced_problem, train_dataloader, model)
+            valid_loss = validate_nn(reduced_problem, valid_dataloader, model)
 
-    #     online_mu = \
-    #         np.random.default_rng().uniform(0., 1., input_training_data.shape[1])
-    #     _ = online_nn(reduced_problem, problem, online_mu, model, dim_out)
+        online_mu = \
+            np.random.default_rng().uniform(0., 1., input_training_data.shape[1])
+        _ = online_nn(reduced_problem, problem, online_mu, model, dim_out)
 
-    #     '''
-    #     error_analysis_mu = \
-    #         np.random.default_rng().uniform(0., 1.,
-    #                                         (30, input_training_data.shape[1]))
-    #     for i in range(error_analysis_mu.shape[0]):
-    #         error = error_analysis(reduced_problem, problem,
-    #                             error_analysis_mu[i,:], model,
-    #                             dim_out, online_nn)
-    #    '''
+        '''
+        error_analysis_mu = \
+            np.random.default_rng().uniform(0., 1.,
+                                            (30, input_training_data.shape[1]))
+        for i in range(error_analysis_mu.shape[0]):
+            error = error_analysis(reduced_problem, problem,
+                                error_analysis_mu[i,:], model,
+                                dim_out, online_nn)
+       '''
         # TODO Dummy problem for error analysis
 
 
