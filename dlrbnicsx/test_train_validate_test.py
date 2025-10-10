@@ -1,5 +1,7 @@
 import unittest
 
+from mpi4py import MPI
+
 import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp  # noqa: F401
