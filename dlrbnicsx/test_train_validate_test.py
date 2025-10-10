@@ -91,10 +91,15 @@ class TestTrainValidateTest(unittest.TestCase):
 
         for epoch in range(max_epochs):
             print(f"Epoch {epoch+1} of Maximum epochs {max_epochs}")
-            train_loss = train_nn(reduced_problem, train_dataloader,
-                                model)
-            valid_loss = validate_nn(reduced_problem, valid_dataloader,
-                                    model)
+            loss_func = torch.nn.MSELoss()
+            optimiser = torch.optim.SGD(model.parameters(),
+                                        lr=3.e-4)
+            train_loss = train_nn(reduced_problem,
+                                  train_dataloader,
+                                  model, loss_func, optimiser)
+            valid_loss = validate_nn(reduced_problem,
+                                     valid_dataloader,
+                                     model, loss_func)
 
         online_mu = \
             np.random.default_rng().uniform(0., 1.,
