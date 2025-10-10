@@ -42,11 +42,6 @@ class TestTrainValidateTest(unittest.TestCase):
                 # self.optimizer = torch.optim.SGD()
                 # self.loss_fn = torch.nn.MSELoss()
 
-        dim_in = input_training_data.shape[1]
-        dim_out = output_training_data.shape[1]
-
-        model = HiddenLayersNet(dim_in, [4], dim_out, Tanh())
-
         problem = Problem()
         reduced_problem = ReducedProblem()
 
@@ -57,6 +52,11 @@ class TestTrainValidateTest(unittest.TestCase):
             np.random.default_rng().uniform(0., 1.,
                                             (input_training_data.shape[0],
                                             6)).astype("f")
+
+        dim_in = input_training_data.shape[1]
+        dim_out = output_training_data.shape[1]
+
+        model = HiddenLayersNet(dim_in, [4], dim_out, Tanh())
 
         # NOTE Updating output_range based on the computed values
         reduced_problem.output_range[0] = \
