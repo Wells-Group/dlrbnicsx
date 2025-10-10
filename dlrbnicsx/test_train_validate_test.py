@@ -39,8 +39,13 @@ class TestTrainValidateTest(unittest.TestCase):
                 self.input_scaling_range = [-1., 1.]
                 self.output_scaling_range = [-1., 1.]
                 self.learning_rate = 1e-4
-                self.optimizer = "Adam"
-                self.loss_fn = "MSE"
+                # self.optimizer = torch.optim.SGD()
+                # self.loss_fn = torch.nn.MSELoss()
+
+        dim_in = input_training_data.shape[1]
+        dim_out = output_training_data.shape[1]
+
+        model = HiddenLayersNet(dim_in, [4], dim_out, Tanh())
 
         problem = Problem()
         reduced_problem = ReducedProblem()
@@ -87,28 +92,27 @@ class TestTrainValidateTest(unittest.TestCase):
                                         batch_size=100,
                                         shuffle=False)
 
-        dim_in = input_training_data.shape[1]
-        dim_out = output_training_data.shape[1]
-
-        model = HiddenLayersNet(dim_in, [4], dim_out, Tanh())
-
         max_epochs = 5  # 20000
+
+        loss_func = torch.nn.MSELoss()
+        optimiser = torch.optim.SGD(model.parameters(),
+                                    lr=reduced_problem.learning_rate)
 
         for epoch in range(max_epochs):
             print(f"Epoch {epoch+1} of Maximum epochs {max_epochs}")
             train_loss = train_nn(reduced_problem,
                                   train_dataloader,
-                                  model, reduced_problem.loss_fn, 
-                                  reduced_problem.optimizer)
+                                  model, loss_func, 
+                                  optimiser)
             valid_loss = validate_nn(reduced_problem,
                                      valid_dataloader,
-                                     model, reduced_problem.loss_fn)
+                                     model, loss_func)
 
         online_mu = \
             np.random.default_rng().uniform(0., 1.,
                                             input_training_data.shape[1])
         _ = online_nn(reduced_problem, problem, online_mu,
-                    model, dim_out).array
+                      model, dim_out).array
         
     def test_train_validate_test_distributed(self):
         """Distributed case
@@ -174,7 +178,7 @@ class TestTrainValidateTest(unittest.TestCase):
             CustomPartitionedDataset(reduced_problem,
                                      input_training_data,
                                      output_training_data,
-                                     input_training_data.shape[0])
+                                     indices)
 
         train_dataloader = \
             torch.utils.data.DataLoader(custom_partitioned_dataset,
@@ -194,15 +198,20 @@ class TestTrainValidateTest(unittest.TestCase):
         output_validation_data = \
             torch.from_numpy(output_validation_data).to(torch.float32)
         dist.barrier()
-        dist.all_reduce(input_validation_data, op=dist.ReduceOp.MAX)
-        dist.all_reduce(output_validation_data, op=dist.ReduceOp.MAX)
-        input_validation_data = input_validation_data.detach().numpy()
-        output_validation_data = output_validation_data.detach().numpy()
+        dist.all_reduce(input_validation_data,
+                        op=dist.ReduceOp.MAX)
+        dist.all_reduce(output_validation_data,
+                        op=dist.ReduceOp.MAX)
+        input_validation_data = \
+            input_validation_data.detach().numpy()
+        output_validation_data = \
+            output_validation_data.detach().numpy()
 
         custom_partitioned_dataset = \
             CustomPartitionedDataset(reduced_problem,
                                      input_validation_data,
-                                     output_validation_data)
+                                     output_validation_data,
+                                     indices)
         valid_dataloader = \
             torch.utils.data.DataLoader(custom_partitioned_dataset,
                                         shuffle=False)
@@ -225,12 +234,21 @@ class TestTrainValidateTest(unittest.TestCase):
                 f"Params after all_reduce: {param.data}")
 
         max_epochs = 5  # 20000
+        loss_func = torch.nn.MSELoss()
+        optimiser = torch.optim.SGD(model.parameters(),
+                                    lr=reduced_problem.learning_rate)
+
 
         for epoch in range(max_epochs):
             print(f"Rank {dist.get_rank()} Epoch {epoch+1} of Maximum " +
                 f"epochs {max_epochs}")
-            train_loss = train_nn_distributed(reduced_problem, train_dataloader, model)
-            valid_loss = validate_nn_distributed(reduced_problem, valid_dataloader, model)
+            train_loss = train_nn_distributed(reduced_problem,
+                                              train_dataloader,
+                                              model, loss_func,
+                                              optimiser)
+            valid_loss = validate_nn_distributed(reduced_problem,
+                                                 valid_dataloader,
+                                                 model, loss_func)
 
         online_mu = \
             np.random.default_rng().uniform(0., 1., input_training_data.shape[1])
