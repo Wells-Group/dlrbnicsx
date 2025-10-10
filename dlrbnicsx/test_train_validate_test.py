@@ -12,7 +12,7 @@ from dlrbnicsx.neural_network.neural_network import HiddenLayersNet
 from dlrbnicsx.activation_function.activation_function_factory import Tanh
 from dlrbnicsx.dataset.custom_partitioned_dataset import CustomPartitionedDataset
 from dlrbnicsx.train_validate_test.train_validate_test import train_nn, validate_nn, error_analysis, online_nn
-from dlrbnicsx.train_validate_test.train_validate_test_distributed import train_nn as train_nn_distributes
+from dlrbnicsx.train_validate_test.train_validate_test_distributed import train_nn as train_nn_distributed
 from dlrbnicsx.train_validate_test.train_validate_test_distributed import validate_nn as validate_nn_distributed
 from dlrbnicsx.train_validate_test.train_validate_test_distributed import error_analysis as error_analysis_distributed
 from dlrbnicsx.train_validate_test.train_validate_test_distributed import online_nn as online_nn_distributed
@@ -94,15 +94,13 @@ class TestTrainValidateTest(unittest.TestCase):
 
         for epoch in range(max_epochs):
             print(f"Epoch {epoch+1} of Maximum epochs {max_epochs}")
-            loss_func = torch.nn.MSELoss()
-            optimiser = torch.optim.SGD(model.parameters(),
-                                        lr=3.e-4)
             train_loss = train_nn(reduced_problem,
                                   train_dataloader,
-                                  model, loss_func, optimiser)
+                                  model, reduced_problem.loss_fn, 
+                                  reduced_problem.optimizer)
             valid_loss = validate_nn(reduced_problem,
                                      valid_dataloader,
-                                     model, loss_func)
+                                     model, reduced_problem.loss_fn)
 
         online_mu = \
             np.random.default_rng().uniform(0., 1.,
@@ -168,8 +166,9 @@ class TestTrainValidateTest(unittest.TestCase):
         reduced_problem.output_range[1] = np.max(output_training_data)
 
         custom_partitioned_dataset = \
-            CustomPartitionedDataset(problem, reduced_problem, 10,
-                                    input_training_data, output_training_data)
+            CustomPartitionedDataset(reduced_problem,
+                                     input_training_data,
+                                     output_training_data)
 
         train_dataloader = \
             torch.utils.data.DataLoader(custom_partitioned_dataset,
@@ -195,9 +194,9 @@ class TestTrainValidateTest(unittest.TestCase):
         output_validation_data = output_validation_data.detach().numpy()
 
         custom_partitioned_dataset = \
-            CustomPartitionedDataset(problem, reduced_problem, 10,
-                                    input_validation_data,
-                                    output_validation_data)
+            CustomPartitionedDataset(reduced_problem,
+                                     input_validation_data,
+                                     output_validation_data)
         valid_dataloader = \
             torch.utils.data.DataLoader(custom_partitioned_dataset,
                                         shuffle=False)
@@ -224,12 +223,12 @@ class TestTrainValidateTest(unittest.TestCase):
         for epoch in range(max_epochs):
             print(f"Rank {dist.get_rank()} Epoch {epoch+1} of Maximum " +
                 f"epochs {max_epochs}")
-            train_loss = train_nn(reduced_problem, train_dataloader, model)
-            valid_loss = validate_nn(reduced_problem, valid_dataloader, model)
+            train_loss = train_nn_distributed(reduced_problem, train_dataloader, model)
+            valid_loss = validate_nn_distributed(reduced_problem, valid_dataloader, model)
 
         online_mu = \
             np.random.default_rng().uniform(0., 1., input_training_data.shape[1])
-        _ = online_nn(reduced_problem, problem, online_mu, model, dim_out)
+        _ = online_nn_distributed(reduced_problem, problem, online_mu, model, dim_out)
 
         '''
         error_analysis_mu = \
