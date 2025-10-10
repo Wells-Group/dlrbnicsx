@@ -167,10 +167,13 @@ class TestTrainValidateTest(unittest.TestCase):
         reduced_problem.output_range[0] = np.min(output_training_data)
         reduced_problem.output_range[1] = np.max(output_training_data)
 
+        indices = np.arange(comm.rank, num_para, comm.size)
+
         custom_partitioned_dataset = \
             CustomPartitionedDataset(reduced_problem,
                                      input_training_data,
-                                     output_training_data)
+                                     output_training_data,
+                                     input_training_data.shape[0])
 
         train_dataloader = \
             torch.utils.data.DataLoader(custom_partitioned_dataset,
