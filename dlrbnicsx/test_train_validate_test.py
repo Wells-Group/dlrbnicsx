@@ -229,7 +229,7 @@ class TestTrainValidateTest(unittest.TestCase):
     #         error = error_analysis(reduced_problem, problem,
     #                             error_analysis_mu[i,:], model,
     #                             dim_out, online_nn)
-        '''
+    #    '''
         # TODO Dummy problem for error analysis
 
 
